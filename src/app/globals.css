@@ -1,19 +1,22 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f6f1e7;
-  --background-strong: #fffaf2;
-  --foreground: #14213d;
-  --foreground-soft: #41506d;
-  --line: rgba(20, 33, 61, 0.12);
-  --line-strong: rgba(20, 33, 61, 0.22);
-  --surface: rgba(255, 255, 255, 0.82);
-  --surface-strong: rgba(255, 255, 255, 0.96);
-  --accent: #ff6b35;
-  --accent-soft: #ffd3b8;
-  --signal: #00a6a6;
-  --spark: #ffd166;
-  --shadow: 0 30px 80px rgba(20, 33, 61, 0.12);
+  --background: #070510;
+  --background-strong: #0f0b1b;
+  --foreground: #f5efff;
+  --foreground-soft: #b6aad4;
+  --foreground-muted: #8577a4;
+  --line: rgba(180, 156, 255, 0.14);
+  --line-strong: rgba(180, 156, 255, 0.24);
+  --surface: rgba(19, 15, 33, 0.8);
+  --surface-strong: rgba(14, 11, 25, 0.94);
+  --surface-muted: rgba(255, 255, 255, 0.04);
+  --accent: #9b6bff;
+  --accent-strong: #cfb5ff;
+  --accent-soft: rgba(155, 107, 255, 0.18);
+  --signal: #7f5cff;
+  --spark: #4c2e88;
+  --shadow: 0 28px 90px rgba(0, 0, 0, 0.45);
 }
 
 @theme inline {
@@ -21,11 +24,14 @@
   --color-background-strong: var(--background-strong);
   --color-foreground: var(--foreground);
   --color-foreground-soft: var(--foreground-soft);
+  --color-foreground-muted: var(--foreground-muted);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
   --color-surface: var(--surface);
   --color-surface-strong: var(--surface-strong);
+  --color-surface-muted: var(--surface-muted);
   --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
   --color-accent-soft: var(--accent-soft);
   --color-signal: var(--signal);
   --color-spark: var(--spark);
@@ -45,11 +51,12 @@ body {
   min-height: 100vh;
   background: var(--background);
   color: var(--foreground);
+  color-scheme: dark;
   font-family: var(--font-space-grotesk), sans-serif;
   background-image:
-    radial-gradient(circle at top left, rgba(255, 209, 102, 0.28), transparent 32%),
-    radial-gradient(circle at top right, rgba(0, 166, 166, 0.16), transparent 28%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(246, 241, 231, 0.92) 100%);
+    radial-gradient(circle at top left, rgba(155, 107, 255, 0.24), transparent 34%),
+    radial-gradient(circle at top right, rgba(88, 63, 151, 0.22), transparent 30%),
+    linear-gradient(180deg, rgba(11, 8, 20, 0.96) 0%, rgba(7, 5, 16, 1) 100%);
 }
 
 a,
@@ -63,11 +70,11 @@ button {
 }
 
 ::selection {
-  background: rgba(255, 107, 53, 0.22);
+  background: rgba(155, 107, 255, 0.32);
 }
 
 :focus-visible {
-  outline: 3px solid rgba(255, 107, 53, 0.45);
+  outline: 3px solid rgba(155, 107, 255, 0.5);
   outline-offset: 3px;
 }
 
@@ -82,17 +89,22 @@ button {
   z-index: -1;
   pointer-events: none;
   background-image:
-    linear-gradient(rgba(20, 33, 61, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(20, 33, 61, 0.025) 1px, transparent 1px);
+    linear-gradient(rgba(180, 156, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(180, 156, 255, 0.03) 1px, transparent 1px);
   background-size: 72px 72px;
   mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.45), transparent 80%);
 }
 
 .surface-panel {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.8));
+  background: linear-gradient(180deg, rgba(20, 16, 34, 0.94), rgba(13, 11, 24, 0.94));
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
   backdrop-filter: blur(18px);
+}
+
+.surface-subtle {
+  background: var(--surface-muted);
+  border: 1px solid var(--line);
 }
 
 .section-anchor {

@@ -11,9 +11,9 @@ export function Pill({ children, tone = "neutral", className }: PillProps) {
     <span
       className={cn(
         "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium uppercase tracking-[0.18em]",
-        tone === "neutral" && "border border-line bg-white/70 text-foreground-soft",
-        tone === "accent" && "bg-accent text-white",
-        tone === "signal" && "bg-signal text-white",
+        tone === "neutral" && "border border-line bg-surface text-foreground-soft",
+        tone === "accent" && "border border-line-strong bg-accent-soft text-accent-strong",
+        tone === "signal" && "border border-line-strong bg-surface text-foreground",
         className,
       )}
     >
