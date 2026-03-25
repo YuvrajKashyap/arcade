@@ -1,0 +1,12 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="800" rx="40" fill="#101927"/>
+  <rect x="64" y="64" width="1072" height="672" rx="32" fill="#18263F"/>
+  <rect x="140" y="190" width="920" height="360" rx="36" fill="#0E1727" stroke="rgba(248,250,252,0.08)" stroke-width="4"/>
+  <rect x="184" y="234" width="832" height="272" rx="28" fill="#0C1F32"/>
+  <text x="600" y="370" text-anchor="middle" fill="#F8FAFC" font-family="Space Grotesk, sans-serif" font-size="96" font-weight="700">Click</text>
+  <text x="600" y="446" text-anchor="middle" fill="rgba(248,250,252,0.72)" font-family="Space Grotesk, sans-serif" font-size="34" font-weight="500">Keyboard, mouse, or touch reflex test</text>
+  <rect x="184" y="584" width="228" height="92" rx="20" fill="rgba(255,255,255,0.08)"/>
+  <rect x="448" y="584" width="228" height="92" rx="20" fill="rgba(255,255,255,0.08)"/>
+  <rect x="712" y="584" width="228" height="92" rx="20" fill="rgba(255,255,255,0.08)"/>
+  <text x="92" y="136" fill="#F8FAFC" font-family="Space Grotesk, sans-serif" font-size="56" font-weight="700">Reaction Time Test</text>
+</svg>

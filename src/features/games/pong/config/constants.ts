@@ -1,0 +1,10 @@
+export const PONG_WIDTH = 720;
+export const PONG_HEIGHT = 420;
+export const PONG_PADDLE_WIDTH = 16;
+export const PONG_PADDLE_HEIGHT = 88;
+export const PONG_PADDLE_GAP = 28;
+export const PONG_BALL_RADIUS = 10;
+export const PONG_PLAYER_SPEED = 420;
+export const PONG_AI_SPEED = 320;
+export const PONG_BASE_BALL_SPEED = 340;
+export const PONG_WINNING_SCORE = 5;

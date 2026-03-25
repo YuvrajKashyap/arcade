@@ -1,0 +1,22 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="800" rx="40" fill="#0B1628"/>
+  <rect x="52" y="52" width="1096" height="696" rx="28" fill="#122039" stroke="rgba(255,255,255,0.08)" stroke-width="4"/>
+  <g opacity="0.22" stroke="#fff">
+    <path d="M52 168H1148"/>
+    <path d="M52 284H1148"/>
+    <path d="M52 400H1148"/>
+    <path d="M52 516H1148"/>
+    <path d="M52 632H1148"/>
+    <path d="M220 52V748"/>
+    <path d="M388 52V748"/>
+    <path d="M556 52V748"/>
+    <path d="M724 52V748"/>
+    <path d="M892 52V748"/>
+  </g>
+  <rect x="168" y="400" width="110" height="110" rx="22" fill="#00A6A6"/>
+  <rect x="286" y="400" width="110" height="110" rx="22" fill="#00A6A6"/>
+  <rect x="404" y="400" width="110" height="110" rx="22" fill="#FFD166"/>
+  <circle cx="890" cy="282" r="44" fill="#FF6B35"/>
+  <text x="96" y="130" fill="#F8FAFC" font-family="Space Grotesk, sans-serif" font-size="56" font-weight="700">Snake</text>
+  <text x="96" y="708" fill="rgba(248,250,252,0.72)" font-family="Space Grotesk, sans-serif" font-size="30" font-weight="500">Grid pressure, score chase, instant restart flow.</text>
+</svg>

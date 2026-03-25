@@ -1,0 +1,22 @@
+<svg width="1440" height="900" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1440" height="900" fill="#F6F1E7"/>
+  <rect x="36" y="32" width="1368" height="76" rx="24" fill="rgba(255,255,255,0.88)" stroke="rgba(20,33,61,0.08)"/>
+  <rect x="72" y="50" width="286" height="40" rx="20" fill="#14213D"/>
+  <text x="110" y="76" fill="#F8FAFC" font-family="Space Grotesk, sans-serif" font-size="20" font-weight="700">games.yuvrajkashyap.com</text>
+  <rect x="36" y="136" width="1368" height="260" rx="34" fill="rgba(255,255,255,0.9)" stroke="rgba(20,33,61,0.08)"/>
+  <text x="88" y="214" fill="#FF6B35" font-family="JetBrains Mono, monospace" font-size="18" font-weight="700">PLAY INSTANTLY</text>
+  <text x="88" y="282" fill="#14213D" font-family="Space Grotesk, sans-serif" font-size="54" font-weight="700">A polished browser arcade built as</text>
+  <text x="88" y="344" fill="#14213D" font-family="Space Grotesk, sans-serif" font-size="54" font-weight="700">a real standalone product.</text>
+  <rect x="908" y="176" width="404" height="176" rx="28" fill="#14213D"/>
+  <text x="944" y="224" fill="rgba(248,250,252,0.66)" font-family="JetBrains Mono, monospace" font-size="16" font-weight="700">CURRENT SPOTLIGHT</text>
+  <text x="944" y="284" fill="#F8FAFC" font-family="Space Grotesk, sans-serif" font-size="42" font-weight="700">Snake</text>
+  <rect x="36" y="444" width="430" height="344" rx="30" fill="rgba(255,255,255,0.88)" stroke="rgba(20,33,61,0.08)"/>
+  <rect x="504" y="444" width="430" height="344" rx="30" fill="rgba(255,255,255,0.88)" stroke="rgba(20,33,61,0.08)"/>
+  <rect x="972" y="444" width="430" height="344" rx="30" fill="rgba(255,255,255,0.88)" stroke="rgba(20,33,61,0.08)"/>
+  <rect x="72" y="482" width="358" height="176" rx="24" fill="#14213D"/>
+  <rect x="540" y="482" width="358" height="176" rx="24" fill="#14213D"/>
+  <rect x="1008" y="482" width="358" height="176" rx="24" fill="#14213D"/>
+  <text x="72" y="714" fill="#14213D" font-family="Space Grotesk, sans-serif" font-size="32" font-weight="700">Snake</text>
+  <text x="540" y="714" fill="#14213D" font-family="Space Grotesk, sans-serif" font-size="32" font-weight="700">Pong</text>
+  <text x="1008" y="714" fill="#14213D" font-family="Space Grotesk, sans-serif" font-size="32" font-weight="700">Reaction Time Test</text>
+</svg>
