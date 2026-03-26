@@ -443,7 +443,7 @@ export function Design4() {
         </div>
 
         {/* Footer */}
-        <footer className="fixed inset-x-0 bottom-0 z-20 border-t border-white/[0.03] px-8 py-8 lg:px-14">
+        <footer className="mt-40 border-t border-white/[0.03] px-8 py-8 lg:px-14">
           <div className="mx-auto flex max-w-6xl items-center justify-between text-xs text-white/12">
             <span>YUVRAJ KASHYAP</span>
             <span>Have fun!</span>
