@@ -2,16 +2,10 @@ import Link from "next/link";
 import { SectionHeading } from "@/components/homepage/section-heading";
 import { SectionReveal } from "@/components/ui/section-reveal";
 import { Pill } from "@/components/ui/pill";
-import type { GameCatalogEntry } from "@/types/game";
-
-type Category = {
-  genre: string;
-  description: string;
-  games: readonly GameCatalogEntry[];
-};
+import type { GameCategoryGroup } from "@/types/game";
 
 type CategorySectionProps = {
-  categories: readonly Category[];
+  categories: readonly GameCategoryGroup[];
 };
 
 export function CategorySection({ categories }: CategorySectionProps) {
@@ -48,7 +42,7 @@ export function CategorySection({ categories }: CategorySectionProps) {
                   <Link
                     key={game.slug}
                     href={`/games/${game.slug}`}
-                    className="rounded-full border border-line bg-white/80 px-3 py-2 text-sm font-medium text-foreground hover:-translate-y-0.5 hover:border-line-strong hover:bg-white"
+                    className="rounded-full border border-line bg-surface px-3 py-2 text-sm font-medium text-foreground hover:-translate-y-0.5 hover:border-line-strong hover:bg-surface-strong"
                   >
                     {game.title}
                   </Link>

@@ -28,7 +28,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
         <button
           type="button"
           onClick={reset}
-          className="mt-8 rounded-full bg-foreground px-5 py-3 text-sm font-semibold text-white hover:-translate-y-0.5 hover:bg-foreground/90"
+          className="mt-8 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-background hover:-translate-y-0.5 hover:bg-accent-strong"
         >
           Retry render
         </button>

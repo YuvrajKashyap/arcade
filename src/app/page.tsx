@@ -1,6 +1,5 @@
-import { HomepageView } from "@/components/homepage/homepage-view";
-import { getHomepageCollections } from "@/lib/games/catalog";
+import { Design4 } from "@/components/designs/design-4";
 
 export default function Home() {
-  return <HomepageView collections={getHomepageCollections()} />;
+  return <Design4 />;
 }

@@ -1,60 +1,81 @@
 # Design System
 
-## Product tone
+## Current Direction
 
-The platform should feel:
+The current UI foundation is intentionally restrained. It is not the final visual pass, but it establishes a coherent base for future refinement.
 
+Target feel:
+
+- dark
+- minimal
 - premium
-- arcade-inspired
-- modern
-- energetic
-- intentional
+- purple-accented
+- quiet rather than noisy
+- product-like rather than dashboard-like
 
-It should not feel:
+## Theme Foundations
 
-- childish
-- gimmicky
-- terminal-themed
-- generic SaaS
+The theme is driven primarily through CSS variables in:
 
-## Visual direction
+- [src/app/globals.css](../src/app/globals.css)
 
-- Warm editorial base background instead of default white or dark-mode bias
-- Deep navy structural surfaces
-- Orange, teal, and gold accent signals
-- Strong rounded cards with soft glass-like surfaces
-- Typography led by `Space Grotesk` with `JetBrains Mono` for technical accents
+Current token groups:
 
-## Layout rules
+- background tiers
+- foreground tiers
+- border/line tiers
+- surface tiers
+- accent colors
+- shadow treatment
 
-- Use wide content containers for the platform shell.
-- Keep sections clearly separated and easy to scan.
-- Preserve strong visual hierarchy between headings, supporting copy, and cards.
-- Game surfaces should feel framed and intentional, not dropped loose into the page.
+Design work should prefer changing tokens first before rewriting individual component styles.
 
-## Motion rules
+## Typography
 
-- Use Framer Motion for section reveals and card hover lift.
-- Keep animation subtle and structural.
-- Do not over-animate the gameplay surface.
+Current fonts:
 
-## Interaction rules
+- `Space Grotesk` for primary UI and headings
+- `JetBrains Mono` for technical accents and metadata-like labels
 
-- Keyboard-first experience is primary.
-- Visible focus states are required.
-- Mobile support should be honest on a per-game basis.
-- Controls must always be visible on the game detail page.
+Guidelines:
 
-## Component patterns
+- keep headings compact and strong
+- keep supporting copy readable and subdued
+- avoid excessive uppercase label noise
 
-- `surface-panel` for premium shell cards
-- `Pill` for compact metadata
-- `GameCard` for discovery surfaces
-- `GamePlayer` for isolated runtime mounting
+## Layout Principles
 
-## Accessibility baseline
+- use wide content containers for the shell
+- keep sections distinct and breathable
+- let the game surface dominate on the game detail page
+- keep metadata secondary
+- avoid overloading cards with too many badges or stats
 
-- readable contrast
-- keyboard navigation for shell UI
-- descriptive route copy
-- error and not-found states with recovery paths
+## Spacing and Surface Philosophy
+
+- shell surfaces should feel calm and intentional
+- borders should be subtle, not loud
+- cards should separate content without turning into panels full of dashboard chrome
+- whitespace should do more of the work than decorative elements
+
+## Motion
+
+Framer Motion is used for:
+
+- section reveal
+- card hover lift
+
+Guideline:
+
+- motion should support structure, not compete with gameplay
+
+## Future Design Iteration Guidance
+
+When doing a later design pass:
+
+- keep the current token system and refine it instead of scattering one-off colors
+- preserve the separation between page-view components and catalog logic
+- avoid turning metadata back into visual clutter
+- treat the shell and the games as separate styling layers
+
+The architecture is intentionally ready for a stronger visual pass without needing a structural rewrite.

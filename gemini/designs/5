@@ -1,0 +1,14 @@
+# Design 5: High-Tech eSports HUD (Cyberpunk)
+
+## Concept
+A sleek, modern, competitive-focused design that treats the classic games like serious eSports titles. It heavily utilizes technical UI elements, data visualization, and a "hacker/cyberpunk" aesthetic.
+
+## Visual Language
+- **Colors:** Deep charcoal/obsidian background, accented with electric blue, hazard yellow, and alarm red.
+- **Typography:** Technical, geometric sans-serif fonts (like Rajdhani or Orbitron), heavily utilizing uppercase letters and varied font weights.
+- **Effects:** Glowing borders, subtle scanlines, hexagonal grid patterns, and data-glitch animations.
+
+## Layout & Interaction
+- **Structure:** A dashboard layout. The main area features the selected game, surrounded by "telemetry" data (global high scores, recent players, game stats, and personal bests).
+- **Hover States:** UI elements have crosshair-style corner brackets that snap into place on hover. Buttons have a diagonal "cut" edge and fill with a solid accent color instantly.
+- **Animations:** Fast, digital "unfolding" or "decoding" text effects when elements load. Transitions feel like switching camera feeds on a security terminal.

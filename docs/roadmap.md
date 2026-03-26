@@ -1,25 +1,42 @@
 # Roadmap
 
-## Current version
+## V1 Scope
 
-V1 focuses on:
+Current V1 includes:
 
-- platform shell
-- homepage discovery
-- game detail pages
-- lightweight analytics
+- standalone Next.js platform shell
+- homepage with Hero, Featured, New Releases, Categories, and All Games
+- typed game registry and catalog selectors
+- dynamic game routes
+- lazy runtime mounting
 - three initial games
-- modular registry and runtime structure
+- lightweight analytics
+- documentation and public-repo setup
 
-## Next additions
+V1 intentionally does not include:
 
-- richer library sorting and filtering
-- stronger related-game logic
+- auth
+- accounts
+- backend APIs
+- database persistence
+- leaderboards
+- achievements
+- multiplayer
+
+## V1.5 Ideas
+
+Pragmatic near-term additions after the foundation is stable:
+
+- sorting and filtering for the library
+- richer related-game logic
 - local favorites
 - changelog blocks for selected games
-- sound settings
+- sound/settings refinement
+- more polished media assets and screenshots
 
-## Later platform expansion
+## Later Expansion Path
+
+Once the platform justifies more infrastructure:
 
 - accounts
 - cloud save data
@@ -28,10 +45,11 @@ V1 focuses on:
 - cross-device profiles
 - richer analytics
 - multiplayer for selected games
-- more advanced rendering paths if a specific game needs them
+- more advanced rendering paths for specific future games
 
 ## Guardrails
 
-- do not build backend systems before the product requires them
-- do not force all gameplay into React DOM
-- do not build a rigid in-house engine too early
+- do not add backend systems before the product requires them
+- do not build a custom engine too early
+- do not force every game into React DOM
+- do not add fake social or popularity systems without real data

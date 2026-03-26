@@ -41,18 +41,18 @@ function getPhaseCopy(phase: ReactionPhase) {
 
 function getStageClasses(phase: ReactionPhase) {
   if (phase === "ready") {
-    return "border-emerald-300/28 bg-[linear-gradient(180deg,rgba(12,51,46,0.95),rgba(6,95,70,0.96))]";
+    return "border-line-strong bg-[linear-gradient(180deg,rgba(28,20,52,0.96),rgba(60,34,120,0.96))]";
   }
 
   if (phase === "too-soon") {
-    return "border-red-300/24 bg-[linear-gradient(180deg,rgba(55,15,17,0.95),rgba(127,29,29,0.95))]";
+    return "border-line-strong bg-[linear-gradient(180deg,rgba(41,14,30,0.96),rgba(86,24,56,0.96))]";
   }
 
   if (phase === "waiting") {
-    return "border-amber-200/16 bg-[linear-gradient(180deg,rgba(38,28,14,0.96),rgba(61,42,17,0.96))]";
+    return "border-line bg-[linear-gradient(180deg,rgba(18,14,30,0.96),rgba(25,20,43,0.96))]";
   }
 
-  return "border-white/12 bg-[linear-gradient(180deg,rgba(10,15,28,0.96),rgba(20,33,61,0.98))]";
+  return "border-line bg-[linear-gradient(180deg,rgba(15,12,26,0.96),rgba(12,10,22,0.98))]";
 }
 
 export function ReactionTimeGame() {
@@ -170,40 +170,25 @@ export function ReactionTimeGame() {
       : null;
 
   return (
-    <div className="flex flex-col gap-6 text-white">
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-[1.25rem] border border-white/12 bg-white/8 px-4 py-4">
-          <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/60">
-            Best
-          </p>
-          <p className="mt-2 text-xl font-semibold">
-            {bestTime > 0 ? `${bestTime} ms` : "No best yet"}
-          </p>
-        </div>
-        <div className="rounded-[1.25rem] border border-white/12 bg-white/8 px-4 py-4">
-          <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/60">
-            Last run
-          </p>
-          <p className="mt-2 text-xl font-semibold">
-            {lastResult ? `${lastResult} ms` : "Waiting"}
-          </p>
-        </div>
-        <div className="rounded-[1.25rem] border border-white/12 bg-white/8 px-4 py-4">
-          <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/60">
-            Average
-          </p>
-          <p className="mt-2 text-xl font-semibold">
-            {averageTime ? `${averageTime} ms` : "No rounds yet"}
-          </p>
-        </div>
+    <div className="flex flex-col gap-6 text-foreground">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-foreground-soft">
+        <span>
+          Best <strong className="ml-1 text-foreground">{bestTime > 0 ? `${bestTime} ms` : "No best yet"}</strong>
+        </span>
+        <span>
+          Last <strong className="ml-1 text-foreground">{lastResult ? `${lastResult} ms` : "Waiting"}</strong>
+        </span>
+        <span>
+          Average <strong className="ml-1 text-foreground">{averageTime ? `${averageTime} ms` : "No rounds yet"}</strong>
+        </span>
       </div>
 
       <button
         type="button"
         onClick={handlePrimaryAction}
-        className={`min-h-[28rem] rounded-[1.75rem] border px-6 py-10 text-center ${getStageClasses(phase)}`}
+        className={`min-h-[28rem] rounded-[1.75rem] border px-6 py-10 text-center text-foreground ${getStageClasses(phase)}`}
       >
-        <p className="text-xs font-medium uppercase tracking-[0.28em] text-white/62">
+        <p className="text-xs font-medium uppercase tracking-[0.28em] text-foreground-muted">
           Reaction state
         </p>
         <p className="mt-8 text-4xl font-semibold tracking-tight sm:text-5xl">
@@ -217,44 +202,41 @@ export function ReactionTimeGame() {
                   ? `${lastResult} ms`
                   : "Ready?"}
         </p>
-        <p className="mx-auto mt-6 max-w-xl text-sm leading-8 text-white/76 sm:text-base">
+        <p className="mx-auto mt-6 max-w-xl text-sm leading-8 text-foreground-soft sm:text-base">
           {getPhaseCopy(phase)}
         </p>
       </button>
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="rounded-[1.5rem] border border-white/12 bg-white/8 px-5 py-5">
-          <p className="text-xs font-medium uppercase tracking-[0.22em] text-white/60">
+        <div className="surface-subtle rounded-[1.5rem] px-5 py-5">
+          <p className="text-xs font-medium uppercase tracking-[0.22em] text-foreground-muted">
             Controls
           </p>
-          <p className="mt-3 text-sm leading-7 text-white/74">
+          <p className="mt-3 text-sm leading-7 text-foreground-soft">
             Space, Enter, click, or tap to start and react. Press R to reset the session.
           </p>
         </div>
         <button
           type="button"
           onClick={resetSession}
-          className="rounded-full border border-white/18 px-4 py-2 text-sm font-semibold text-white hover:-translate-y-0.5 hover:bg-white/8"
+          className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-foreground hover:-translate-y-0.5 hover:bg-surface"
         >
           Reset session
         </button>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-5">
+      <div className="flex flex-wrap gap-3">
         {deferredAttempts.length > 0 ? (
           deferredAttempts.map((attempt, index) => (
             <div
               key={`${attempt}-${index}`}
-              className="rounded-[1.25rem] border border-white/12 bg-white/8 px-4 py-3"
+              className="surface-subtle rounded-full px-4 py-2 text-sm"
             >
-              <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/60">
-                Attempt {index + 1}
-              </p>
-              <p className="mt-2 text-lg font-semibold">{attempt} ms</p>
+              Attempt {index + 1}: <span className="font-semibold text-foreground">{attempt} ms</span>
             </div>
           ))
         ) : (
-          <div className="rounded-[1.25rem] border border-white/12 bg-white/8 px-4 py-5 text-sm leading-7 text-white/70 sm:col-span-5">
+          <div className="surface-subtle rounded-[1.25rem] px-4 py-5 text-sm leading-7 text-foreground-soft">
             Run a few rounds to build a local session history.
           </div>
         )}

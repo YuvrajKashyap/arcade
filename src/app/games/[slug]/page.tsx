@@ -33,7 +33,7 @@ export async function generateMetadata({
       canonical: `/games/${game.slug}`,
     },
     openGraph: {
-      title: `${game.title} | games.yuvrajkashyap.com`,
+      title: `${game.title} | arcade.yuvrajkashyap.com`,
       description: game.shortDescription,
       url: `${resolveSiteUrl()}/games/${game.slug}`,
       images: [

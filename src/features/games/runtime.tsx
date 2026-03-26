@@ -19,8 +19,14 @@ const ReactionTimeGame = dynamic(() => import("@/features/games/reaction-time"),
   loading: GameLoadingState,
 });
 
+const TicTacToeGame = dynamic(() => import("@/features/games/tic-tac-toe"), {
+  ssr: false,
+  loading: GameLoadingState,
+});
+
 export const gameComponentMap: Record<GameSlug, React.ComponentType> = {
   snake: SnakeGame,
   pong: PongGame,
   "reaction-time": ReactionTimeGame,
+  "tic-tac-toe": TicTacToeGame,
 };

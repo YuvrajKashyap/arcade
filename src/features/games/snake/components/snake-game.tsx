@@ -260,40 +260,31 @@ export function SnakeGame() {
   });
 
   return (
-    <div className="flex flex-col gap-5 text-white">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-wrap gap-3">
-          <div className="rounded-[1.25rem] border border-white/12 bg-white/8 px-4 py-3">
-            <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/60">
-              Score
-            </p>
-            <p className="mt-2 text-xl font-semibold">{hudState.score}</p>
-          </div>
-          <div className="rounded-[1.25rem] border border-white/12 bg-white/8 px-4 py-3">
-            <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/60">
-              Best
-            </p>
-            <p className="mt-2 text-xl font-semibold">{hudState.bestScore}</p>
-          </div>
-          <div className="rounded-[1.25rem] border border-white/12 bg-white/8 px-4 py-3">
-            <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/60">
-              Status
-            </p>
-            <p className="mt-2 text-xl font-semibold capitalize">{hudState.phase}</p>
-          </div>
+    <div className="flex flex-col gap-5 text-foreground">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-foreground-soft">
+          <span>
+            Score <strong className="ml-1 text-foreground">{hudState.score}</strong>
+          </span>
+          <span>
+            Best <strong className="ml-1 text-foreground">{hudState.bestScore}</strong>
+          </span>
+          <span className="capitalize">
+            Status <strong className="ml-1 text-foreground">{hudState.phase}</strong>
+          </span>
         </div>
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
             onClick={() => resetGame("playing")}
-            className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 hover:-translate-y-0.5"
+            className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-background hover:-translate-y-0.5 hover:bg-accent-strong"
           >
             {hudState.phase === "game-over" ? "Restart" : "Start"}
           </button>
           <button
             type="button"
             onClick={togglePause}
-            className="rounded-full border border-white/18 px-4 py-2 text-sm font-semibold text-white hover:-translate-y-0.5 hover:bg-white/8"
+            className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-foreground hover:-translate-y-0.5 hover:bg-surface"
           >
             {hudState.phase === "paused" ? "Resume" : "Pause"}
           </button>
@@ -302,20 +293,20 @@ export function SnakeGame() {
 
       <canvas
         ref={canvasRef}
-        className="mx-auto aspect-square w-full max-w-[34rem] rounded-[1.4rem] border border-white/12 bg-[#08111f]"
+        className="mx-auto aspect-square w-full max-w-[34rem] rounded-[1.4rem] border border-line bg-background-strong"
         aria-label="Snake game board"
       />
 
-      <p className="text-center text-sm leading-7 text-white/74">
+      <p className="text-center text-sm leading-7 text-foreground-soft">
         {getStatusCopy(hudState.phase)}
       </p>
 
-      <div className="mx-auto grid w-full max-w-[18rem] grid-cols-3 gap-2">
+      <div className="mx-auto grid w-full max-w-[18rem] grid-cols-3 gap-2 md:hidden">
         <div />
         <button
           type="button"
           onClick={() => queueDirection("up")}
-          className="rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-sm font-semibold hover:bg-white/12"
+          className="surface-subtle rounded-2xl px-4 py-3 text-sm font-semibold hover:bg-surface"
         >
           Up
         </button>
@@ -323,21 +314,21 @@ export function SnakeGame() {
         <button
           type="button"
           onClick={() => queueDirection("left")}
-          className="rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-sm font-semibold hover:bg-white/12"
+          className="surface-subtle rounded-2xl px-4 py-3 text-sm font-semibold hover:bg-surface"
         >
           Left
         </button>
         <button
           type="button"
           onClick={() => resetGame("playing")}
-          className="rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-sm font-semibold hover:bg-white/12"
+          className="surface-subtle rounded-2xl px-4 py-3 text-sm font-semibold hover:bg-surface"
         >
           Go
         </button>
         <button
           type="button"
           onClick={() => queueDirection("right")}
-          className="rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-sm font-semibold hover:bg-white/12"
+          className="surface-subtle rounded-2xl px-4 py-3 text-sm font-semibold hover:bg-surface"
         >
           Right
         </button>
@@ -345,7 +336,7 @@ export function SnakeGame() {
         <button
           type="button"
           onClick={() => queueDirection("down")}
-          className="rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-sm font-semibold hover:bg-white/12"
+          className="surface-subtle rounded-2xl px-4 py-3 text-sm font-semibold hover:bg-surface"
         >
           Down
         </button>

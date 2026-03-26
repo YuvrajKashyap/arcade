@@ -1,0 +1,14 @@
+# Design 4: The Isometric Arcade Cabinet Hall
+
+## Concept
+A highly visual and illustrative approach that presents the games not as flat web elements, but as physical arcade cabinets in a 3D or pseudo-3D space.
+
+## Visual Language
+- **Colors:** Rich, saturated colors reflecting the artwork of the individual games, set against a dark, moody background (like an arcade with carpet patterns).
+- **Typography:** Marquee-style fonts with bulb-lighting effects.
+- **Effects:** Isometric vector art or CSS 3D transforms. The screen on each cabinet emits a localized glow against the dark background.
+
+## Layout & Interaction
+- **Structure:** A carousel or a staggered isometric grid. The user "walks" through the arcade. The center of the screen focuses on one primary cabinet at a time.
+- **Hover States:** Selecting a cabinet zooms the camera in (scaling up the element), dimming the rest of the room. The marquee lights up, and the screen on the cabinet shows active gameplay.
+- **Navigation:** Left/Right sliding mechanics, mimicking walking down an aisle of machines.

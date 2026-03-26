@@ -1,0 +1,14 @@
+# Design 2: Modern Vaporwave Arcade
+
+## Concept
+A stylized, nostalgic trip back to the 1980s mixing classic arcade culture with modern Retrowave/Vaporwave aesthetics. It bridges the gap between retro gaming and modern web design techniques like glassmorphism.
+
+## Visual Language
+- **Colors:** Deep purple backgrounds, vibrant cyan, hot pink, and sunset orange accents.
+- **Typography:** Chrome-styled, cursive 80s synthwave fonts for big titles, paired with clean, modern sans-serif fonts for UI elements.
+- **Effects:** A glowing, animated wireframe floor grid in the background, a large digital sun on the horizon, and frosted glass cards (glassmorphism) for the game containers.
+
+## Layout & Interaction
+- **Structure:** A sprawling, horizontal scrolling grid of games. Each game is presented as a holographic or VHS-tape-styled cassette.
+- **Hover States:** Hovering over a game card raises it off the wireframe grid with a deep pink drop shadow, and the card's artwork transitions from static to a looped GIF/video snippet of gameplay.
+- **Animations:** CRT scanline transitions when switching pages, parallax scrolling on the background grid.

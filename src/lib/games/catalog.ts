@@ -83,8 +83,18 @@ export function getRelatedGames(slug: string, limit = 3) {
     return [];
   }
 
-  return getPublishedGames()
+  const manualRelatedGames =
+    selectedGame.relatedSlugs
+      ?.map((relatedSlug) => getPublishedGameBySlug(relatedSlug))
+      .filter((game): game is NonNullable<typeof game> => Boolean(game)) ?? [];
+
+  if (manualRelatedGames.length >= limit) {
+    return manualRelatedGames.slice(0, limit);
+  }
+
+  const inferredRelatedGames = getPublishedGames()
     .filter((game) => game.slug !== slug)
+    .filter((game) => !manualRelatedGames.some((manualGame) => manualGame.slug === game.slug))
     .sort((left, right) => {
       const sameGenreDelta =
         Number(right.genre === selectedGame.genre) -
@@ -103,7 +113,9 @@ export function getRelatedGames(slug: string, limit = 3) {
 
       return left.libraryOrder - right.libraryOrder;
     })
-    .slice(0, limit);
+    .slice(0, Math.max(limit - manualRelatedGames.length, 0));
+
+  return [...manualRelatedGames, ...inferredRelatedGames].slice(0, limit);
 }
 
 export function getHomepageCollections(now = new Date()): HomepageCollections {

@@ -1,27 +1,34 @@
 # arcade.yuvrajkashyap.com
 
-A standalone browser arcade and scalable game library built with Next.js, TypeScript, Tailwind CSS, Framer Motion, and lightweight shared game utilities.
+A standalone browser arcade platform built as a real software product, not a folder of disconnected demos. The goal is to host a growing catalog of Yuvraj Kashyap's web games inside one cohesive shell with clean routing, strong metadata, modular game integration, and enough architectural discipline to scale without turning into a mess.
 
-![Homepage preview](./public/brand/readme-home.svg)
-![Game page preview](./public/brand/readme-game.svg)
+## Product Goals
 
-## What this is
+- Provide a central home for the entire game catalog.
+- Make adding the next game fast, predictable, and low-friction.
+- Showcase frontend, interactive systems, and browser-game engineering skill through a live product.
+- Keep V1 lightweight while leaving a clean path for future growth.
 
-`games.yuvrajkashyap.com` is designed as a real product platform, not a demo bucket. It combines:
+## Project Status
 
-- a polished homepage with curated discovery
-- metadata-rich game detail pages
-- modular game registration
-- a hybrid rendering model using React for the shell and Canvas or DOM where each game needs it
-- a clean path to add more games without building a premature in-house engine
+Current status: active V1 foundation
 
-V1 ships with three games:
+- Core platform shell is in place.
+- Registry-driven discovery is live.
+- Dynamic game routes and lazy runtime mounting are implemented.
+- Three initial games are included.
+- Documentation and repo setup are ready for public GitHub exposure.
 
-- `snake`
-- `pong`
-- `reaction-time`
+## Screenshots
 
-## Tech stack
+Current placeholders / lightweight previews:
+
+- Homepage preview: ![Homepage preview](./public/brand/readme-home.svg)
+- Game page preview: ![Game page preview](./public/brand/readme-game.svg)
+
+Replace these with real screenshots or GIFs when final design polish is ready.
+
+## Tech Stack
 
 - Next.js 16 App Router
 - React 19
@@ -30,130 +37,197 @@ V1 ships with three games:
 - Framer Motion
 - Vercel Analytics
 
-## Local setup
+## Architecture Summary
+
+The repo is one standalone Next.js application.
+
+- The platform layer owns routing, layout, metadata, discovery, and shell UI.
+- The registry defines all published game metadata in one place.
+- The selector layer derives homepage and per-game collections.
+- Game runtimes are lazy-loaded separately from metadata to keep catalog logic clean.
+- Shared utilities exist for low-level browser/game concerns, but there is no custom in-house engine.
+
+Detailed architecture: [docs/architecture.md](./docs/architecture.md)
+
+## Current Games
+
+| Slug | Game | Role in the architecture |
+| --- | --- | --- |
+| `snake` | Snake | Grid-based Canvas loop, restart flow, score tracking |
+| `pong` | Pong | Continuous Canvas loop, collision logic, AI opponent |
+| `reaction-time` | Reaction Time Test | DOM/timing-based interaction without a full Canvas loop |
+
+## Design Direction
+
+The current foundation is intentionally restrained and easy to iterate on:
+
+- dark default shell
+- purple-accented theme tokens
+- minimal metadata presentation
+- premium / luxury-cyber direction
+- clear separation between structural styling and game logic
+
+More detail: [docs/design-system.md](./docs/design-system.md)
+
+## Local Development
+
+### Requirements
+
+- Node.js `>=20.9.0`
+- npm `11.6.2` or compatible
+
+Node version pin: [`.nvmrc`](./.nvmrc)
+
+### Setup
 
 ```bash
 npm install
 npm run dev
 ```
 
-The app runs on `http://localhost:3000`.
+Local app URL:
+
+```txt
+http://localhost:3000
+```
 
 ## Environment
 
-Copy values from [`.env.example`](./.env.example).
+Environment variables are intentionally minimal in V1.
+
+See [`.env.example`](./.env.example):
 
 ```bash
-NEXT_PUBLIC_SITE_URL=https://games.yuvrajkashyap.com
+NEXT_PUBLIC_SITE_URL=https://arcade.yuvrajkashyap.com
 ```
 
-## Routes
+Used for:
 
-- `/` homepage with Hero, Featured, New Releases, Categories, and All Games
-- `/games/[slug]` metadata-rich game detail and play page
-- `/about` platform overview and product posture
+- canonical metadata
+- sitemap URLs
+- Open Graph URLs
 
-## How routing and discovery work
-
-All published games live in [`src/content/games/registry.ts`](./src/content/games/registry.ts). The registry powers:
-
-- homepage sections
-- static route generation
-- per-game metadata
-- related game recommendations
-
-`New Releases` is automatic. Any published game whose `releaseDate` falls within the last 14 days is surfaced there, then drops off without manual cleanup.
-
-## Project structure
-
-```txt
-src/
-├── app/
-├── components/
-├── content/
-│   └── games/
-│       └── registry.ts
-├── features/
-│   └── games/
-│       ├── shared/
-│       ├── snake/
-│       ├── pong/
-│       └── reaction-time/
-├── lib/
-└── types/
-```
-
-## Adding a game
-
-1. Create `src/features/games/<slug>/`.
-2. Export the game from `src/features/games/<slug>/index.ts`.
-3. Add assets under `public/games/<slug>/`.
-4. Register metadata in [`src/content/games/registry.ts`](./src/content/games/registry.ts).
-5. Register the lazy runtime import in [`src/features/games/runtime.tsx`](./src/features/games/runtime.tsx).
-
-The route becomes available automatically at `/games/<slug>`.
-
-## Commands
+## Scripts
 
 ```bash
 npm run dev
+npm run build
+npm run start
 npm run lint
 npm run typecheck
-npm run build
+npm run check
 ```
 
-## Deployment
+`npm run check` is the full local verification pass.
 
-Deploy on Vercel and point the custom domain to:
+## Folder Structure
 
 ```txt
-games.yuvrajkashyap.com
+src/
+  app/                  Next.js routes, metadata routes, and app shell entrypoints
+  components/           Shared shell, homepage, game-page, and UI components
+  content/games/        Typed registry for game metadata
+  features/games/
+    runtime.tsx         Lazy runtime map for playable games
+    shared/             Lightweight shared utilities for browser games
+    snake/
+    pong/
+    reaction-time/
+  lib/
+    constants/          Site-level constants and theme-adjacent config
+    games/              Catalog selectors and derived collection logic
+    utils/              Small general helpers
+  types/                Shared TypeScript types
+public/
+  brand/                Brand and README preview assets
+  games/                Per-game thumbnails and assets
+docs/                   Project documentation
 ```
 
-Set `NEXT_PUBLIC_SITE_URL` in the Vercel project environment to the production origin.
+## How Games Are Registered
 
-## Documentation
+Source of truth:
 
-- [Architecture](./docs/architecture.md)
-- [Adding a Game](./docs/adding-a-game.md)
-- [Design System](./docs/design-system.md)
-- [Roadmap](./docs/roadmap.md)
+- [src/content/games/registry.ts](./src/content/games/registry.ts)
 
-## Current scope
+Derived collections:
 
-Included:
+- [src/lib/games/catalog.ts](./src/lib/games/catalog.ts)
 
-- platform shell
-- homepage discovery sections
-- game detail/play pages
-- lightweight analytics
-- three initial games
-- shared game utilities
+Runtime mounting:
 
-Intentionally excluded from V1:
+- [src/features/games/runtime.tsx](./src/features/games/runtime.tsx)
+- [src/components/games/game-player.tsx](./src/components/games/game-player.tsx)
 
-- accounts
+Key metadata rules:
+
+- `published: true` makes a game part of the live library.
+- `featured: true` makes it eligible for the Featured section.
+- `releaseDate` within the last 14 days makes it appear in New Releases automatically.
+- `relatedSlugs` can manually shape related-game ordering when needed.
+
+## How to Add a New Game
+
+1. Create `src/features/games/<slug>/`.
+2. Export the runtime from `src/features/games/<slug>/index.ts`.
+3. Add assets to `public/games/<slug>/`.
+4. Add the metadata entry to [src/content/games/registry.ts](./src/content/games/registry.ts).
+5. Add the lazy runtime import entry to [src/features/games/runtime.tsx](./src/features/games/runtime.tsx).
+6. Run `npm run check`.
+
+Full guide: [docs/adding-a-game.md](./docs/adding-a-game.md)
+
+## Deployment Notes
+
+Target host:
+
+```txt
+arcade.yuvrajkashyap.com
+```
+
+Recommended platform:
+
+- Vercel
+
+Deployment notes:
+
+- set `NEXT_PUBLIC_SITE_URL` to the production origin
+- verify metadata routes and OG previews
+- run `npm run check` before shipping
+
+## Why There Is No Backend in V1
+
+V1 does not need:
+
 - auth
+- accounts
+- cloud saves
 - leaderboards
 - multiplayer
-- backend APIs
 - database persistence
-- achievements
+
+Those systems would add complexity without improving the current product goal. The repo is intentionally frontend-first until the catalog and product maturity justify more infrastructure.
 
 ## Roadmap
 
-Near-term additions after V1 stability:
+- V1: platform shell, registry-driven discovery, game routes, three initial games
+- V1.5: filtering, favorites, richer related games, changelog blocks, sound/settings refinement
+- Later: accounts, cloud save data, leaderboards, achievements, multiplayer for selected games
 
-- sorting and filtering
-- richer related games
-- local favorites
-- per-game changelog blocks
-- sound settings
+Detailed roadmap: [docs/roadmap.md](./docs/roadmap.md)
 
-Longer-term direction:
+## Known Limitations
 
-- accounts and cloud profiles
-- leaderboards
-- achievements
-- saves across devices
-- multiplayer for selected games
+- No backend or cross-device persistence in V1
+- Mobile support varies by game and is intentionally described honestly in metadata
+- The current UI foundation is structurally strong but still intended to receive a later visual refinement pass
+
+## Contribution Note
+
+This repo is primarily a solo-built product, but it is documented and structured so outside review or future collaboration remains practical.
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md)
+
+## License Note
+
+No open-source license has been selected yet. Until that changes, treat the repository as all rights reserved.

@@ -17,7 +17,7 @@ export function GamePlayer({ slug }: GamePlayerProps) {
   }
 
   return (
-    <GameRuntimeBoundary>
+    <GameRuntimeBoundary resetKey={slug}>
       <GameComponent />
     </GameRuntimeBoundary>
   );

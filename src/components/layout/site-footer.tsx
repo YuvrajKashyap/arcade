@@ -16,7 +16,7 @@ export function SiteFooter() {
           <Link href="/" className="hover:text-foreground">
             Home
           </Link>
-          <Link href="/#all-games" className="hover:text-foreground">
+          <Link href="/library" className="hover:text-foreground">
             Library
           </Link>
           <Link href="/about" className="hover:text-foreground">
