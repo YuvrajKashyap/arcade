@@ -270,7 +270,7 @@ export function Design4() {
 
       <div className="vapor-bg" />
 
-      <div className="relative z-10 min-h-screen">
+      <div className="relative z-10 flex min-h-screen flex-col">
         {/* Nav */}
         <nav className="flex items-center justify-between px-8 py-6 lg:px-14">
           <span className="text-xs tracking-[0.25em] text-white/30">ARCADE</span>
@@ -443,12 +443,14 @@ export function Design4() {
         </div>
 
         {/* Footer */}
-        <footer className="mt-40 border-t border-white/[0.03] px-8 py-8 lg:px-14">
-          <div className="mx-auto flex max-w-6xl items-center justify-between text-xs text-white/12">
-            <span>YUVRAJ KASHYAP</span>
-            <span>Have fun!</span>
-          </div>
-        </footer>
+        <div className="mt-auto pt-24">
+          <footer className="border-t border-white/[0.03] px-8 py-8 lg:px-14">
+            <div className="mx-auto flex max-w-6xl items-center justify-between text-xs text-white/12">
+              <span>YUVRAJ KASHYAP</span>
+              <span>Have fun!</span>
+            </div>
+          </footer>
+        </div>
       </div>
     </>
   );
