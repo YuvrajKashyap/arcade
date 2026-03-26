@@ -1,4 +1,4 @@
-# games.yuvrajkashyap.com
+# arcade.yuvrajkashyap.com
 
 A standalone browser arcade and scalable game library built with Next.js, TypeScript, Tailwind CSS, Framer Motion, and lightweight shared game utilities.
 
