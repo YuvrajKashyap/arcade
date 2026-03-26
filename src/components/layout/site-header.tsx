@@ -2,17 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { navigationLinks } from "@/lib/constants/site";
 import { cn } from "@/lib/utils/cn";
 
 export function SiteHeader() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  useEffect(() => {
-    setIsMenuOpen(false);
-  }, [pathname]);
 
   return (
     <header className="sticky top-0 z-40 border-b border-line/70 bg-background/80 backdrop-blur-xl">
@@ -24,7 +20,7 @@ export function SiteHeader() {
           <span className="flex size-8 items-center justify-center rounded-full border border-line bg-accent-soft text-xs text-accent-strong group-hover:border-line-strong">
             GY
           </span>
-          games.yuvrajkashyap.com
+          arcade.yuvrajkashyap.com
         </Link>
 
         <button

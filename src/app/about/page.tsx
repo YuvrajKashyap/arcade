@@ -4,7 +4,7 @@ import { SectionReveal } from "@/components/ui/section-reveal";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Learn how the games.yuvrajkashyap.com platform is structured, how games are added, and how the arcade is intended to grow.",
+    "Learn how the arcade.yuvrajkashyap.com platform is structured, how games are added, and how the arcade is intended to grow.",
 };
 
 const pillars = [
@@ -37,7 +37,7 @@ export default function AboutPage() {
             A standalone browser arcade designed as a real product, not a side folder.
           </h1>
           <p className="mt-5 max-w-3xl text-base leading-8 text-foreground-soft sm:text-lg">
-            games.yuvrajkashyap.com combines a premium arcade shell with modular game modules,
+            arcade.yuvrajkashyap.com combines a premium arcade shell with modular game modules,
             typed metadata, and a clean route-based structure. The current version focuses on a
             tight V1: instant play, strong browsing, polished presentation, and clean expansion
             paths for future systems like saves, profiles, and leaderboards.

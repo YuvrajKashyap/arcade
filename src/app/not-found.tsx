@@ -19,7 +19,7 @@ export default function NotFound() {
           </ButtonLink>
           <Link
             href="/#all-games"
-            className="rounded-full border border-line px-5 py-3 text-sm font-medium text-foreground hover:border-line-strong hover:bg-white/70"
+            className="rounded-full border border-line bg-surface px-5 py-3 text-sm font-medium text-foreground hover:border-line-strong hover:bg-surface-strong"
           >
             Browse All Games
           </Link>

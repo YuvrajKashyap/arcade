@@ -95,6 +95,10 @@ button {
   mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.45), transparent 80%);
 }
 
+.page-grid--immersive::before {
+  display: none;
+}
+
 .surface-panel {
   background: linear-gradient(180deg, rgba(20, 16, 34, 0.94), rgba(13, 11, 24, 0.94));
   border: 1px solid var(--line);

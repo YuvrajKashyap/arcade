@@ -1,11 +1,11 @@
 import type { GameGenre, MobileSupport } from "@/types/game";
 
 export const siteConfig = {
-  name: "games.yuvrajkashyap.com",
+  name: "arcade.yuvrajkashyap.com",
   creator: "Yuvraj Kashyap",
   description:
     "A premium browser arcade platform built to host Yuvraj Kashyap's growing catalog of playable web games.",
-  domain: "games.yuvrajkashyap.com",
+  domain: "arcade.yuvrajkashyap.com",
   heroTitle: "A polished browser arcade built as a real standalone product.",
   heroDescription:
     "Browse a growing catalog of keyboard-first web games, jump into play instantly, and explore a portfolio designed as a scalable arcade platform instead of a loose collection of demos.",
@@ -13,8 +13,7 @@ export const siteConfig = {
 
 export const navigationLinks = [
   { label: "Home", href: "/" },
-  { label: "Featured", href: "/#featured" },
-  { label: "Library", href: "/#all-games" },
+  { label: "Library", href: "/library" },
   { label: "About", href: "/about" },
 ] as const;
 
@@ -44,5 +43,5 @@ export const mobileSupportCopy: Record<MobileSupport, string> = {
 };
 
 export function resolveSiteUrl() {
-  return process.env.NEXT_PUBLIC_SITE_URL || "https://games.yuvrajkashyap.com";
+  return process.env.NEXT_PUBLIC_SITE_URL || "https://arcade.yuvrajkashyap.com";
 }

@@ -1,0 +1,14 @@
+# Design 10: Afterglow Windows
+
+## Concept
+A future-facing product shell that borrows from windowed desktop systems without feeling like enterprise software.
+
+## Visual Language
+- Dark layered panels with cool afterglow accents.
+- Multiple surfaces that imply depth and expansion potential.
+- Product-like, but still clearly an arcade.
+
+## Layout and Interaction
+- A main content window for featured launches and a sidecar panel for context.
+- Useful if the platform may later grow into richer discovery, filtering, or saved states.
+- Needs restraint to avoid becoming a generic dashboard.

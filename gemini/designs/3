@@ -1,0 +1,14 @@
+# Design 3: Minimalist Playdate / 1-Bit Style
+
+## Concept
+Inspired by modern indie consoles like the Playdate or classic Game Boy, this design strips away color and relies entirely on high contrast, shape, and typography to create a playful, ultra-clean aesthetic.
+
+## Visual Language
+- **Colors:** Strictly limited palette. Either stark Black and White, or Black and a vibrant "Playdate Yellow" (#FFCC00), or classic Game Boy "Spinach Green".
+- **Typography:** Bold, oversized, sans-serif or custom dot-matrix fonts. Very legible and geometric.
+- **Effects:** Dithering patterns instead of gradients. Heavy, solid black borders around all elements. Flat design, zero drop shadows (or solid block drop shadows).
+
+## Layout & Interaction
+- **Structure:** A masonry or rigid grid layout with large, playful iconography. The UI feels like a physical toy or a printed zine.
+- **Hover States:** Inverting colors (black becomes yellow, yellow becomes black) on hover. Hard, snappy transitions with no easing.
+- **Animations:** Stop-motion style frame-by-frame animations for loading states and interactions. UI elements slide in with mechanical, spring-like physics.

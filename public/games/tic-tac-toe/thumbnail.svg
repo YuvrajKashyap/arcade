@@ -1,0 +1,16 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="800" rx="40" fill="#0C0A16"/>
+  <rect x="64" y="64" width="1072" height="672" rx="32" fill="#141025" stroke="rgba(255,255,255,0.06)" stroke-width="4"/>
+  <rect x="264" y="164" width="672" height="472" rx="36" fill="#0F1020"/>
+  <path d="M488 188V612" stroke="rgba(255,255,255,0.16)" stroke-width="16" stroke-linecap="round"/>
+  <path d="M712 188V612" stroke="rgba(255,255,255,0.16)" stroke-width="16" stroke-linecap="round"/>
+  <path d="M288 324H912" stroke="rgba(255,255,255,0.16)" stroke-width="16" stroke-linecap="round"/>
+  <path d="M288 476H912" stroke="rgba(255,255,255,0.16)" stroke-width="16" stroke-linecap="round"/>
+  <path d="M352 236L424 308M424 236L352 308" stroke="#A78BFA" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="600" cy="248" r="48" stroke="#67E8F9" stroke-width="18"/>
+  <path d="M776 388L848 460M848 388L776 460" stroke="#A78BFA" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="376" cy="548" r="48" stroke="#67E8F9" stroke-width="18"/>
+  <path d="M756 232L860 576" stroke="rgba(167,139,250,0.28)" stroke-width="10" stroke-linecap="round"/>
+  <text x="96" y="138" fill="#F8FAFC" font-family="Space Grotesk, sans-serif" font-size="56" font-weight="700">Tic Tac Toe</text>
+  <text x="96" y="708" fill="rgba(248,250,252,0.72)" font-family="Space Grotesk, sans-serif" font-size="30" font-weight="500">Clean board control and an unbeatable CPU.</text>
+</svg>

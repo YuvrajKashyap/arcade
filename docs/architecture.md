@@ -1,102 +1,155 @@
 # Architecture
 
-## Product shape
+## High-Level Structure
 
-The repo is a single standalone Next.js application. The platform owns:
+The application is a single Next.js App Router project with three main layers:
 
-- routing
-- metadata
-- discovery sections
+1. Platform shell
+2. Catalog/registry logic
+3. Game runtimes
+
+That split is deliberate. The shell should stay stable even as the game catalog grows, and individual games should stay mostly self-contained.
+
+## Top-Level App Structure
+
+```txt
+src/
+  app/                  Route files and app-level metadata
+  components/           Shared UI and page-view components
+  content/games/        Typed registry source of truth
+  features/games/       Playable game modules and shared game helpers
+  lib/games/            Derived catalog selectors
+  lib/constants/        Site-wide constants
+  types/                Shared contracts
+```
+
+## Platform Shell
+
+The platform shell is responsible for:
+
+- global layout
 - navigation
-- presentation shells
+- metadata
+- homepage discovery sections
+- game detail page framing
 - analytics
 
-Each game owns:
+Core shell files:
 
-- initialization
-- update loop
-- rendering
-- input handling
-- cleanup
+- [src/app/layout.tsx](../src/app/layout.tsx)
+- [src/components/layout/site-shell.tsx](../src/components/layout/site-shell.tsx)
+- [src/components/layout/site-header.tsx](../src/components/layout/site-header.tsx)
+- [src/components/layout/site-footer.tsx](../src/components/layout/site-footer.tsx)
 
-## Registry-driven model
+## Registry and Catalog Flow
 
-The source of truth for the library is [`src/content/games/registry.ts`](../src/content/games/registry.ts).
+The source of truth for all published games is:
 
-Each entry defines:
+- [src/content/games/registry.ts](../src/content/games/registry.ts)
 
-- slug
-- title and descriptions
-- thumbnail
-- discovery metadata
-- controls
-- difficulty
-- release date
-- publication and featured state
-- device/input support
+The registry is metadata-only. It does not import runtime components.
 
-Catalog helpers in [`src/lib/games/catalog.ts`](../src/lib/games/catalog.ts) derive:
+Selectors in:
 
+- [src/lib/games/catalog.ts](../src/lib/games/catalog.ts)
+
+derive all platform-facing collections, including:
+
+- homepage collections
 - featured games
 - new releases
-- genre groups
+- category groups
 - related games
+- static slugs for route generation
 
-## Runtime mounting
+This keeps collection logic centralized and prevents homepage/game-route code from duplicating rules.
 
-The registry stays metadata-only. Actual game components are lazy-loaded from [`src/features/games/runtime.tsx`](../src/features/games/runtime.tsx), which keeps homepage and route-level metadata work from importing every game module eagerly.
+## Route Model
 
-The game route mounts a game through:
+Primary routes:
 
-1. registry lookup
-2. metadata rendering
-3. `GamePlayer`
-4. `GameRuntimeBoundary`
-5. lazy runtime import
+- `/`
+- `/games/[slug]`
+- `/about`
 
-## Rendering strategy
+Supporting routes:
 
-Platform UI:
+- `not-found`
+- `loading`
+- `error`
+- `robots`
+- `sitemap`
 
-- React components
-- Tailwind CSS
-- Framer Motion for light reveal/hover polish
+The route files stay intentionally thin. Most rendering lives in page-view components:
 
-Gameplay:
+- [src/components/homepage/homepage-view.tsx](../src/components/homepage/homepage-view.tsx)
+- [src/components/games/game-page-view.tsx](../src/components/games/game-page-view.tsx)
 
-- `Snake` and `Pong` use Canvas 2D
-- `Reaction Time Test` uses direct DOM/state interaction
+## Runtime Mounting Pattern
 
-This keeps gameplay loops out of React rerender pressure when Canvas is the better fit.
+Game metadata and game runtime loading are separated.
 
-## Shared utilities
+Runtime path:
 
-Shared game utilities live under [`src/features/games/shared`](../src/features/games/shared).
+1. route resolves slug
+2. selector returns validated page data
+3. `GamePlayer` chooses the runtime component
+4. `GameRuntimeBoundary` isolates game-specific failures
+5. the runtime component is lazy-loaded from `src/features/games/runtime.tsx`
 
-Current utilities include:
+This keeps non-game routes from eagerly importing all game bundles and makes runtime failures easier to isolate.
+
+## Shared Utilities Philosophy
+
+Shared utilities live under:
+
+- [src/features/games/shared](../src/features/games/shared)
+
+They are intentionally small and low-level:
 
 - requestAnimationFrame loop helper
 - keyboard state helper
-- HiDPI canvas setup
-- math helpers
+- HiDPI canvas helper
 - local storage helpers
+- math helpers
 
-This is intentionally not a formal engine.
+This is not a custom engine.
 
-## Error handling
+Rule of thumb:
 
-- Invalid game slugs resolve to the app `not-found` route.
-- Game runtime failures are isolated with `GameRuntimeBoundary`.
-- Unsupported device expectations are communicated through per-game metadata on the detail page.
+- share browser-level mechanics when repeated
+- keep gameplay rules, state, rendering, and feel local to each game
 
-## Growth path
+## Rendering Strategy
 
-The current architecture leaves room for:
+Use React/DOM for:
 
-- more game modules
-- richer discovery
-- local save data
-- accounts and cloud systems later
-- leaderboards and platform progression later
+- shell layout
+- metadata
+- discovery cards
+- controls copy
+- page structure
 
-V1 avoids implementing those systems until the product actually needs them.
+Use Canvas when the game needs a continuous frame loop:
+
+- Snake
+- Pong
+
+Use DOM/state directly when Canvas is unnecessary:
+
+- Reaction Time Test
+
+This keeps gameplay responsive without forcing every game into the same rendering pattern.
+
+## Why V1 Has No Backend
+
+V1 intentionally excludes:
+
+- auth
+- accounts
+- database
+- cloud saves
+- leaderboards
+- multiplayer
+
+The product is still valuable without those systems, and the current architecture stays cleaner by not pretending they already exist.

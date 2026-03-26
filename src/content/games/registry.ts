@@ -33,6 +33,7 @@ export const gameCatalog = [
       "The game loop is intentionally lightweight: local state, Canvas rendering, and shared utility hooks instead of a heavyweight engine layer.",
     libraryOrder: 1,
     featurePriority: 1,
+    relatedSlugs: ["pong", "reaction-time"],
   },
   {
     slug: "pong",
@@ -66,6 +67,7 @@ export const gameCatalog = [
       "Pong uses the same animation and canvas helpers as Snake, but its update loop is fully time-based instead of tick-based.",
     libraryOrder: 2,
     featurePriority: 2,
+    relatedSlugs: ["snake", "reaction-time"],
   },
   {
     slug: "reaction-time",
@@ -97,6 +99,40 @@ export const gameCatalog = [
     developerNotes:
       "This module intentionally uses direct DOM interaction and stateful timing logic to keep the overall architecture flexible.",
     libraryOrder: 3,
+    relatedSlugs: ["snake", "pong"],
+  },
+  {
+    slug: "tic-tac-toe",
+    title: "Tic Tac Toe",
+    shortDescription:
+      "A clean three-by-three duel against an unbeatable CPU with keyboard, mouse, and touch support.",
+    description:
+      "Tic Tac Toe adds a turn-based strategy loop to the arcade. Claim the center, fight for corners, and pressure the board before the CPU blocks every fork. It is fast to read, easy to control, and useful for validating the platform's non-canvas interaction patterns.",
+    thumbnail: "/games/tic-tac-toe/thumbnail.svg",
+    genre: "Puzzle",
+    tags: ["Strategy", "Board", "AI", "Keyboard", "Touch"],
+    controls: {
+      summary: "Click, tap, or press Enter on a focused cell to place X. Arrow keys or WASD move focus.",
+      items: [
+        { label: "Place mark", action: "Click, tap, Enter, or Space" },
+        { label: "Move focus", action: "Arrow keys or WASD" },
+        { label: "Restart round", action: "R" },
+        { label: "Clear local stats", action: "C" },
+      ],
+    },
+    difficulty: "medium",
+    sessionLength: "1-3 min",
+    releaseDate: "2026-03-25",
+    status: "live",
+    featured: false,
+    published: true,
+    supports: ["keyboard", "mouse", "touch"],
+    mobileSupport: "full",
+    version: "1.0.0",
+    developerNotes:
+      "The CPU uses a full minimax search with ordered moves, so the game stays deterministic and never throws a winnable line by accident.",
+    libraryOrder: 4,
+    relatedSlugs: ["reaction-time", "snake"],
   },
 ] satisfies readonly GameCatalogEntry[];
 

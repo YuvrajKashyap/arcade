@@ -1,0 +1,15 @@
+# Design 1: The CRT Monitor Experience
+
+## Concept
+A highly immersive, retro-authentic design that makes the user feel like they are staring directly into an old-school CRT arcade cabinet monitor in a dimly lit arcade hall.
+
+## Visual Language
+- **Colors:** True black backgrounds, glowing neon green or amber text (phosphor aesthetic).
+- **Typography:** Chunky, monospace pixel fonts for headings, and slightly more readable pixel-styled sans-serifs for body text.
+- **Effects:** Heavy scanlines overlay, subtle screen curvature (vignette and barrel distortion), chromatic aberration on the edges, and text flicker/glow effects.
+
+## Layout & Interaction
+- **Structure:** The main screen acts as an "Insert Coin" attract mode. The game selection is a vertical list resembling a high-score table or boot sequence.
+- **Hover States:** Hovering over a game triggers an aggressive, staticky glitch effect and a bright neon highlight.
+- **Navigation:** Arrow-key-friendly. The active selection blinks, mimicking a retro UI cursor.
+- **Audio (Optional):** Soft hum of a CRT monitor in the background, sharp beep sound on navigation.

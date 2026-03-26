@@ -1,0 +1,14 @@
+# Design 7: Signal Deck
+
+## Concept
+A launch-console interface that feels like a polished command deck for switching between active arcade modules.
+
+## Visual Language
+- Dark navy and black foundations with cool blue-purple accents.
+- Dense but controlled system framing.
+- Large rectangular launch modules instead of poster cards.
+
+## Layout and Interaction
+- Sidebar summary and a main launch surface.
+- Each game reads like an active channel with status, duration, and mode.
+- Strong option if the product should feel technical without going full dashboard.

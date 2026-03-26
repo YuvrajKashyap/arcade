@@ -1,13 +1,19 @@
 {
-  "name": "games-yuvrajkashyap-com",
+  "name": "arcade-yuvrajkashyap-com",
   "version": "0.1.0",
   "private": true,
+  "description": "Standalone browser arcade platform for arcade.yuvrajkashyap.com.",
+  "packageManager": "npm@11.6.2",
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check": "npm run lint && npm run typecheck && npm run build"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
