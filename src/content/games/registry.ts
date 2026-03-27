@@ -8,7 +8,7 @@ export const gameCatalog = [
       "Classic grid pressure with crisp controls, score chase tension, and instant restart flow.",
     description:
       "Guide a growing snake across a tight grid, chain food pickups, and protect your line as the board closes in. Snake validates the platform's Canvas loop, grid logic, collision rules, and restart flow while still feeling polished enough to stand on its own.",
-    thumbnail: "/games/snake/thumbnail.svg",
+    thumbnail: "/games/snake/thumbnail.png",
     genre: "Arcade",
     tags: ["Canvas", "Grid", "High Score", "Keyboard"],
     controls: {
@@ -42,7 +42,7 @@ export const gameCatalog = [
       "A single-player paddle duel with tuned ball speed, responsive control, and an AI opponent.",
     description:
       "Pong pushes the shared utility layer harder with continuous movement, collision response, score handling, and a simple AI paddle. It is keyboard-first, playable instantly, and representative of the sort of arcade loops the platform should be able to host cleanly.",
-    thumbnail: "/games/pong/thumbnail.svg",
+    thumbnail: "/games/pong/thumbnail.png",
     genre: "Arcade",
     tags: ["Canvas", "Collision", "AI", "Score Loop"],
     controls: {
@@ -76,7 +76,7 @@ export const gameCatalog = [
       "A timing-focused reflex test with keyboard, mouse, and touch support plus session tracking.",
     description:
       "Reaction Time Test gives the platform a lighter game shape that does not need a continuous Canvas loop. Wait for the signal, react without jumping early, and track your recent attempts and personal best locally in the browser.",
-    thumbnail: "/games/reaction-time/thumbnail.svg",
+    thumbnail: "/games/reaction-time/thumbnail.png",
     genre: "Reaction",
     tags: ["DOM", "Timing", "Input", "Session Stats"],
     controls: {
@@ -108,16 +108,18 @@ export const gameCatalog = [
       "A clean three-by-three duel against an unbeatable CPU with keyboard, mouse, and touch support.",
     description:
       "Tic Tac Toe adds a turn-based strategy loop to the arcade. Claim the center, fight for corners, and pressure the board before the CPU blocks every fork. It is fast to read, easy to control, and useful for validating the platform's non-canvas interaction patterns.",
-    thumbnail: "/games/tic-tac-toe/thumbnail.svg",
+    thumbnail: "/games/tic-tac-toe/thumbnail.png",
     genre: "Puzzle",
     tags: ["Strategy", "Board", "AI", "Keyboard", "Touch"],
     controls: {
-      summary: "Click, tap, or press Enter on a focused cell to place X. Arrow keys or WASD move focus.",
+      summary:
+        "Choose easy, medium, hard, or impossible, then click, tap, or press Enter on a focused cell to place X.",
       items: [
         { label: "Place mark", action: "Click, tap, Enter, or Space" },
         { label: "Move focus", action: "Arrow keys or WASD" },
+        { label: "Set difficulty", action: "Easy, Medium, Hard, or Impossible" },
         { label: "Restart round", action: "R" },
-        { label: "Clear local stats", action: "C" },
+        { label: "Clear current record", action: "C" },
       ],
     },
     difficulty: "medium",
@@ -130,10 +132,11 @@ export const gameCatalog = [
     mobileSupport: "full",
     version: "1.0.0",
     developerNotes:
-      "The CPU uses a full minimax search with ordered moves, so the game stays deterministic and never throws a winnable line by accident.",
+      "The CPU now exposes four difficulty bands, ranging from loose random play to a full ordered minimax search on impossible.",
     libraryOrder: 4,
     relatedSlugs: ["reaction-time", "snake"],
   },
 ] satisfies readonly GameCatalogEntry[];
 
 export type GameSlug = (typeof gameCatalog)[number]["slug"];
+
