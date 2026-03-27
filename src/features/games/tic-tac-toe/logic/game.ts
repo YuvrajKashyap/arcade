@@ -1,10 +1,13 @@
 import type {
   TicTacToeBoard,
   TicTacToeCell,
+  TicTacToeDifficulty,
   TicTacToeMark,
 } from "@/features/games/tic-tac-toe/types";
 
 const orderedMoves = [4, 0, 2, 6, 8, 1, 3, 5, 7] as const;
+const cornerMoves = [0, 2, 6, 8] as const;
+const sideMoves = [1, 3, 5, 7] as const;
 
 export const winningLines = [
   [0, 1, 2],
@@ -41,6 +44,35 @@ export function isBoardFull(board: TicTacToeBoard) {
 
 function getAvailableMoves(board: TicTacToeBoard) {
   return orderedMoves.filter((move) => board[move] === null);
+}
+
+function pickRandomMove(moves: readonly number[]) {
+  if (moves.length === 0) {
+    return -1;
+  }
+
+  return moves[Math.floor(Math.random() * moves.length)];
+}
+
+function getImmediateMove(board: TicTacToeBoard, mark: TicTacToeMark) {
+  for (const move of getAvailableMoves(board)) {
+    board[move] = mark;
+    const winner = getWinner(board);
+    board[move] = null;
+
+    if (winner === mark) {
+      return move;
+    }
+  }
+
+  return -1;
+}
+
+function getRandomPreferredMove(
+  board: TicTacToeBoard,
+  moves: readonly number[],
+) {
+  return pickRandomMove(moves.filter((move) => board[move] === null));
 }
 
 function scoreBoard(board: TicTacToeBoard, depth: number, isCpuTurn: boolean): number {
@@ -99,6 +131,87 @@ export function getBestCpuMove(board: TicTacToeBoard) {
   }
 
   return bestMove;
+}
+
+function getEasyCpuMove(board: TicTacToeBoard) {
+  const winningMove = getImmediateMove(board, "o");
+
+  if (winningMove !== -1) {
+    return winningMove;
+  }
+
+  return pickRandomMove(getAvailableMoves(board));
+}
+
+function getMediumCpuMove(board: TicTacToeBoard) {
+  const winningMove = getImmediateMove(board, "o");
+
+  if (winningMove !== -1) {
+    return winningMove;
+  }
+
+  const blockingMove = getImmediateMove(board, "x");
+
+  if (blockingMove !== -1) {
+    return blockingMove;
+  }
+
+  if (board[4] === null) {
+    return 4;
+  }
+
+  const cornerMove = getRandomPreferredMove(board, cornerMoves);
+
+  if (cornerMove !== -1) {
+    return cornerMove;
+  }
+
+  const sideMove = getRandomPreferredMove(board, sideMoves);
+
+  if (sideMove !== -1) {
+    return sideMove;
+  }
+
+  return pickRandomMove(getAvailableMoves(board));
+}
+
+function getHardCpuMove(board: TicTacToeBoard) {
+  const winningMove = getImmediateMove(board, "o");
+
+  if (winningMove !== -1) {
+    return winningMove;
+  }
+
+  const blockingMove = getImmediateMove(board, "x");
+
+  if (blockingMove !== -1) {
+    return blockingMove;
+  }
+
+  if (Math.random() < 0.82) {
+    return getBestCpuMove(board);
+  }
+
+  return getMediumCpuMove(board);
+}
+
+export function getCpuMove(
+  board: TicTacToeBoard,
+  difficulty: TicTacToeDifficulty,
+) {
+  if (difficulty === "easy") {
+    return getEasyCpuMove(board);
+  }
+
+  if (difficulty === "medium") {
+    return getMediumCpuMove(board);
+  }
+
+  if (difficulty === "hard") {
+    return getHardCpuMove(board);
+  }
+
+  return getBestCpuMove(board);
 }
 
 export function getNextKeyboardCellIndex(currentIndex: number, key: string) {

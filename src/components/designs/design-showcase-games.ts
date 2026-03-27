@@ -20,7 +20,7 @@ export const designShowcaseGames: readonly DesignShowcaseGame[] = [
     metric: "2-5 MIN",
     mode: "ENDLESS",
     code: "SNK-01",
-    thumbnail: "/games/snake/thumbnail.svg",
+    thumbnail: "/games/snake/thumbnail.png",
   },
   {
     title: "Pong",
@@ -31,7 +31,7 @@ export const designShowcaseGames: readonly DesignShowcaseGame[] = [
     metric: "3-6 MIN",
     mode: "DUEL",
     code: "PNG-02",
-    thumbnail: "/games/pong/thumbnail.svg",
+    thumbnail: "/games/pong/thumbnail.png",
   },
   {
     title: "Reaction Time",
@@ -42,7 +42,7 @@ export const designShowcaseGames: readonly DesignShowcaseGame[] = [
     metric: "30 SEC",
     mode: "TIMED",
     code: "RCT-03",
-    thumbnail: "/games/reaction-time/thumbnail.svg",
+    thumbnail: "/games/reaction-time/thumbnail.png",
   },
   {
     title: "Tic Tac Toe",
@@ -53,6 +53,7 @@ export const designShowcaseGames: readonly DesignShowcaseGame[] = [
     metric: "1-3 MIN",
     mode: "TACTICAL",
     code: "TTT-04",
-    thumbnail: "/games/tic-tac-toe/thumbnail.svg",
+    thumbnail: "/games/tic-tac-toe/thumbnail.png",
   },
 ] as const;
+
