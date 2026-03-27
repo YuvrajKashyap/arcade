@@ -443,7 +443,10 @@ export function Design4() {
         </div>
 
         {/* Footer */}
-        <footer className="mt-40 border-t border-white/[0.03] px-8 py-8 lg:px-14">
+        <footer
+          className="border-t border-white/[0.03] px-8 py-8 lg:px-14"
+          style={{ marginTop: "max(10rem, calc(100vh - 46rem))" }}
+        >
           <div className="mx-auto flex max-w-6xl items-center justify-between text-xs text-white/12">
             <span>YUVRAJ KASHYAP</span>
             <span>Have fun!</span>
