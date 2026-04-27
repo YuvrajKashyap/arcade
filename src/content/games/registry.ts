@@ -39,12 +39,12 @@ export const gameCatalog = [
     slug: "pong",
     title: "Pong",
     shortDescription:
-      "A single-player paddle duel with tuned ball speed, responsive control, and an AI opponent.",
+      "A neon paddle duel with glowing impacts, smooth ball trails, responsive control, and an AI opponent.",
     description:
-      "Pong pushes the shared utility layer harder with continuous movement, collision response, score handling, and a simple AI paddle. It is keyboard-first, playable instantly, and representative of the sort of arcade loops the platform should be able to host cleanly.",
+      "Pong turns the classic paddle duel into a premium neon arena with glowing paddles, luminous ball trails, impact sparks, score bursts, and a tuned AI opponent. The match still proves the platform's continuous Canvas loop, collision response, score handling, and instant restart flow.",
     thumbnail: "/games/pong/thumbnail.png",
     genre: "Arcade",
-    tags: ["Canvas", "Collision", "AI", "Score Loop"],
+    tags: ["Canvas", "Neon", "AI", "Score Loop"],
     controls: {
       summary: "W and S or the arrow keys move your paddle. Space serves and restarts.",
       items: [
@@ -64,7 +64,7 @@ export const gameCatalog = [
     mobileSupport: "desktop-best",
     version: "1.0.0",
     developerNotes:
-      "Pong uses the same animation and canvas helpers as Snake, but its update loop is fully time-based instead of tick-based.",
+      "Pong keeps its time-based rule loop separate from the renderer, so visual effects can feel premium without changing match scoring or collision behavior.",
     libraryOrder: 2,
     featurePriority: 2,
     relatedSlugs: ["snake", "reaction-time"],
