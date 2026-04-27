@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   GameButton,
   GamePanel,
@@ -12,12 +12,19 @@ const FLUTTER_PINBALL_URL = "/vendor/flutter-pinball/index.html";
 const FLUTTER_PINBALL_SOURCE = "https://github.com/flutter/pinball";
 
 export function PinballGame() {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+
+  function focusGame() {
+    iframeRef.current?.focus();
+    iframeRef.current?.contentWindow?.focus();
+  }
 
   function reloadGame() {
     setIsLoaded(false);
     setReloadKey((current) => current + 1);
+    window.setTimeout(focusGame, 250);
   }
 
   return (
@@ -50,10 +57,17 @@ export function PinballGame() {
             </GameButton>
             <GameButton
               onClick={() => {
-                window.open(FLUTTER_PINBALL_SOURCE, "_blank", "noreferrer");
+                focusGame();
               }}
             >
-              Source
+              Focus Game
+            </GameButton>
+            <GameButton
+              onClick={() => {
+                window.open(FLUTTER_PINBALL_URL, "_blank", "noreferrer");
+              }}
+            >
+              Open Game
             </GameButton>
           </div>
         </div>
@@ -61,7 +75,7 @@ export function PinballGame() {
 
       <GamePlayfield className="relative mx-auto aspect-[10/16] min-h-[38rem] w-full max-w-[28rem] md:aspect-[16/10] md:max-h-[78vh] md:max-w-6xl">
         {!isLoaded ? (
-          <div className="absolute inset-0 z-10 grid place-items-center bg-background-strong text-center">
+          <div className="pointer-events-none absolute inset-0 z-10 grid place-items-center bg-background-strong text-center">
             <div>
               <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-accent border-t-transparent" />
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground-muted">
@@ -71,18 +85,34 @@ export function PinballGame() {
           </div>
         ) : null}
         <iframe
+          ref={iframeRef}
           key={reloadKey}
           title="Pinball"
           src={FLUTTER_PINBALL_URL}
-          className="h-full w-full border-0"
+          className="h-full w-full border-0 outline-none"
           allow="fullscreen; autoplay"
-          onLoad={() => setIsLoaded(true)}
+          allowFullScreen
+          tabIndex={0}
+          onLoad={() => {
+            setIsLoaded(true);
+            window.setTimeout(focusGame, 150);
+          }}
+          onPointerDown={focusGame}
+          onPointerEnter={focusGame}
         />
       </GamePlayfield>
 
       <GameStatus>
-        The open-source Flutter Pinball table runs as a local static embed with
-        online leaderboard services disabled.
+        Click the table once to focus controls. Source:{" "}
+        <a
+          href={FLUTTER_PINBALL_SOURCE}
+          target="_blank"
+          rel="noreferrer"
+          className="font-semibold text-accent hover:text-accent-strong"
+        >
+          flutter/pinball
+        </a>
+        , MIT licensed.
       </GameStatus>
     </GamePanel>
   );
