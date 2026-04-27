@@ -1,0 +1,8 @@
+﻿Flutter Pinball vendored web build
+
+Source: https://github.com/flutter/pinball
+Commit: feabc63d4de0d3f9a5f6038334d89a8baa5ed88b
+Original project: Google I/O 2022 Pinball game built with Flutter and Firebase
+License: MIT License, copyright (c) 2021 Very Good Ventures
+
+This arcade embed uses a static web build with Firebase authentication, Firestore leaderboard persistence, service worker registration, and analytics scripts disabled for reliable offline/local play inside arcade.yuvrajkashyap.com.
