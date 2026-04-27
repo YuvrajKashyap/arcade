@@ -321,7 +321,6 @@ function drawSnakeHead(
   context: CanvasRenderingContext2D,
   head: { x: number; y: number },
   direction: SnakeDirection,
-  elapsedSeconds: number,
 ) {
   const vector = getDirectionVector(direction);
   const sideVector = { x: -vector.y, y: vector.x };
@@ -399,34 +398,6 @@ function drawSnakeHead(
     context.fill();
   });
 
-  if (Math.sin(elapsedSeconds * 9) > 0.35) {
-    context.strokeStyle = "#ff6482";
-    context.lineWidth = 2;
-    context.lineCap = "round";
-    const tongueStartX = snoutX + vector.x * 1.5;
-    const tongueStartY = snoutY + vector.y * 1.5;
-    const tongueEndX = snoutX + vector.x * SNAKE_CELL_SIZE * 0.42;
-    const tongueEndY = snoutY + vector.y * SNAKE_CELL_SIZE * 0.42;
-
-    context.beginPath();
-    context.moveTo(tongueStartX, tongueStartY);
-    context.lineTo(tongueEndX, tongueEndY);
-    context.stroke();
-
-    context.beginPath();
-    context.moveTo(tongueEndX, tongueEndY);
-    context.lineTo(
-      tongueEndX + sideVector.x * 4 - vector.x * 3,
-      tongueEndY + sideVector.y * 4 - vector.y * 3,
-    );
-    context.moveTo(tongueEndX, tongueEndY);
-    context.lineTo(
-      tongueEndX - sideVector.x * 4 - vector.x * 3,
-      tongueEndY - sideVector.y * 4 - vector.y * 3,
-    );
-    context.stroke();
-  }
-
   context.restore();
 }
 
@@ -447,7 +418,7 @@ function drawSnakeScene(
 
   const head = snakePoints[0];
   if (head) {
-    drawSnakeHead(context, head, state.direction, elapsedSeconds);
+    drawSnakeHead(context, head, state.direction);
   }
 
   if (state.phase !== "playing") {
