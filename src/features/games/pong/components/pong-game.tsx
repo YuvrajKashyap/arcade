@@ -12,6 +12,14 @@ import {
 import { createPongState, updatePong } from "@/features/games/pong/logic/game";
 import type { PongPhase, PongState } from "@/features/games/pong/types";
 import { configureHiDPICanvas } from "@/features/games/shared/canvas/configure-canvas";
+import {
+  GameButton,
+  GameHud,
+  GamePanel,
+  GamePlayfield,
+  GameStatus,
+  TouchControls,
+} from "@/features/games/shared/components/game-ui";
 import { useAnimationFrameLoop } from "@/features/games/shared/hooks/use-animation-frame-loop";
 import { useKeyboardState } from "@/features/games/shared/hooks/use-keyboard-state";
 
@@ -213,50 +221,34 @@ export function PongGame() {
   });
 
   return (
-    <div className="flex flex-col gap-5 text-foreground">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-foreground-soft">
-          <span>
-            Player <strong className="ml-1 text-foreground">{hudState.playerScore}</strong>
-          </span>
-          <span>
-            AI <strong className="ml-1 text-foreground">{hudState.aiScore}</strong>
-          </span>
-          <span className="capitalize">
-            Status <strong className="ml-1 text-foreground">{hudState.phase}</strong>
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={startMatch}
-            className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-background hover:-translate-y-0.5 hover:bg-accent-strong"
-          >
-            {hudState.phase === "finished" ? "Restart" : "Start"}
-          </button>
-          <button
-            type="button"
-            onClick={togglePause}
-            className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-foreground hover:-translate-y-0.5 hover:bg-surface"
-          >
-            {hudState.phase === "paused" ? "Resume" : "Pause"}
-          </button>
-        </div>
-      </div>
-
-      <canvas
-        ref={canvasRef}
-        className="mx-auto aspect-[12/7] w-full rounded-[1.4rem] border border-line bg-background-strong"
-        aria-label="Pong match"
+    <GamePanel>
+      <GameHud
+        items={[
+          { label: "Player", value: hudState.playerScore },
+          { label: "AI", value: hudState.aiScore },
+          { label: "Status", value: hudState.phase },
+        ]}
+        actions={
+          <>
+            <GameButton variant="primary" onClick={startMatch}>
+              {hudState.phase === "finished" ? "Restart" : "Start"}
+            </GameButton>
+            <GameButton onClick={togglePause}>
+              {hudState.phase === "paused" ? "Resume" : "Pause"}
+            </GameButton>
+          </>
+        }
       />
 
-      <p className="text-center text-sm leading-7 text-foreground-soft">
-        {getStatusCopy(hudState.phase, hudState.winner)}
-      </p>
+      <GamePlayfield className="mx-auto aspect-[12/7] w-full">
+        <canvas ref={canvasRef} className="h-full w-full" aria-label="Pong match" />
+      </GamePlayfield>
 
-      <div className="mx-auto flex w-full max-w-[18rem] gap-3 md:hidden">
-        <button
-          type="button"
+      <GameStatus>{getStatusCopy(hudState.phase, hudState.winner)}</GameStatus>
+
+      <TouchControls className="max-w-[18rem]">
+        <div className="flex gap-3">
+        <GameButton
           onPointerDown={() => {
             touchDirectionRef.current = -1;
           }}
@@ -266,12 +258,12 @@ export function PongGame() {
           onPointerLeave={() => {
             touchDirectionRef.current = 0;
           }}
-          className="surface-subtle flex-1 rounded-2xl px-4 py-3 text-sm font-semibold hover:bg-surface"
+          variant="touch"
+          className="flex-1 rounded-2xl"
         >
           Up
-        </button>
-        <button
-          type="button"
+        </GameButton>
+        <GameButton
           onPointerDown={() => {
             touchDirectionRef.current = 1;
           }}
@@ -281,11 +273,13 @@ export function PongGame() {
           onPointerLeave={() => {
             touchDirectionRef.current = 0;
           }}
-          className="surface-subtle flex-1 rounded-2xl px-4 py-3 text-sm font-semibold hover:bg-surface"
+          variant="touch"
+          className="flex-1 rounded-2xl"
         >
           Down
-        </button>
+        </GameButton>
       </div>
-    </div>
+      </TouchControls>
+    </GamePanel>
   );
 }
