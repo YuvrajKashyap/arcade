@@ -24,6 +24,13 @@ import type {
   TicTacToeStatsByDifficulty,
   TicTacToeTurn,
 } from "@/features/games/tic-tac-toe/types";
+import {
+  GameButton,
+  GameHud,
+  GamePanel,
+  GamePlayfield,
+  GameStatus,
+} from "@/features/games/shared/components/game-ui";
 
 function getDefaultStats(): TicTacToeStats {
   return {
@@ -399,9 +406,26 @@ export function TicTacToeGame() {
   }, []);
 
   return (
-    <div className="flex flex-col gap-6 text-foreground">
+    <GamePanel>
+      <GameHud
+        items={[
+          { label: "Difficulty", value: getDifficultyLabel(difficulty) },
+          { label: "Turn", value: phase === "finished" ? outcome ?? "draw" : turn },
+          { label: "Wins", value: activeStats.wins },
+          { label: "Losses", value: activeStats.losses },
+          { label: "Draws", value: activeStats.draws },
+        ]}
+        actions={
+          <>
+            <GameButton variant="primary" onClick={resetBoard}>
+              New Round
+            </GameButton>
+            <GameButton onClick={clearStats}>Clear Record</GameButton>
+          </>
+        }
+      />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        <section className="rounded-[2rem] border border-line bg-[linear-gradient(180deg,rgba(12,10,24,0.96),rgba(8,8,16,0.98))] p-5 shadow-[0_30px_80px_rgba(0,0,0,0.34)] sm:p-6">
+        <GamePlayfield className="p-5 sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs font-medium uppercase tracking-[0.28em] text-foreground-muted">
@@ -463,7 +487,7 @@ export function TicTacToeGame() {
           <p className="mt-5 text-center text-sm leading-7 text-foreground-soft">
             {getStatusCopy(phase, turn, outcome, difficulty)}
           </p>
-        </section>
+        </GamePlayfield>
 
         <aside className="flex flex-col gap-4">
           <div className="rounded-[1.75rem] border border-line bg-surface px-5 py-5">
@@ -482,18 +506,17 @@ export function TicTacToeGame() {
                 const isActive = level === difficulty;
 
                 return (
-                  <button
+                  <GameButton
                     key={level}
-                    type="button"
                     onClick={() => handleDifficultyChange(level)}
-                    className={`rounded-[1.1rem] border px-3 py-3 text-sm font-semibold transition-all ${
+                    className={`rounded-[1.1rem] px-3 py-3 transition-all ${
                       isActive
                         ? "border-violet-300/40 bg-violet-500/12 text-violet-100 shadow-[0_10px_30px_rgba(124,58,237,0.12)]"
                         : "border-line bg-background-strong text-foreground-soft hover:-translate-y-0.5 hover:border-line-strong hover:bg-background"
                     }`}
                   >
                     {getDifficultyLabel(level)}
-                  </button>
+                  </GameButton>
                 );
               })}
             </div>
@@ -548,23 +571,18 @@ export function TicTacToeGame() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={resetBoard}
-              className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-background hover:-translate-y-0.5 hover:bg-accent-strong"
-            >
+            <GameButton variant="primary" onClick={resetBoard}>
               New round
-            </button>
-            <button
-              type="button"
-              onClick={clearStats}
-              className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-foreground hover:-translate-y-0.5 hover:bg-surface"
-            >
+            </GameButton>
+            <GameButton onClick={clearStats}>
               Clear record
-            </button>
+            </GameButton>
           </div>
         </aside>
       </div>
-    </div>
+      <GameStatus>
+        Arrow keys or WASD move focus. Enter or Space places X. R starts a new round.
+      </GameStatus>
+    </GamePanel>
   );
 }
