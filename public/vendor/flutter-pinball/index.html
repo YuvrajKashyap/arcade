@@ -14,7 +14,63 @@
     body { position: fixed; inset: 0; }
   </style>
 </head>
-<body>
+<body tabindex="0">
   <script src="main.dart.js" type="application/javascript"></script>
+  <script>
+    window.addEventListener('message', function (event) {
+      if (event.origin !== window.location.origin) {
+        return;
+      }
+
+      var data = event.data || {};
+      if (data.type !== 'arcade-pinball-key') {
+        return;
+      }
+
+      var options = {
+        key: data.key,
+        code: data.code,
+        location: data.location || 0,
+        repeat: Boolean(data.repeat),
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        altKey: Boolean(data.altKey),
+        ctrlKey: Boolean(data.ctrlKey),
+        metaKey: Boolean(data.metaKey),
+        shiftKey: Boolean(data.shiftKey)
+      };
+      var keyboardEvent = new KeyboardEvent(data.eventType, options);
+      var targets = [
+        document.activeElement,
+        document.querySelector('flt-glass-pane'),
+        document.querySelector('flutter-view'),
+        document.querySelector('canvas'),
+        document.body,
+        document,
+        window
+      ];
+
+      for (var index = 0; index < targets.length; index += 1) {
+        var target = targets[index];
+        if (target && typeof target.dispatchEvent === 'function') {
+          target.dispatchEvent(keyboardEvent);
+        }
+      }
+    });
+
+    window.addEventListener('pointerdown', function () {
+      window.focus();
+      document.body.focus();
+      var focusTarget =
+        document.querySelector('flt-glass-pane') ||
+        document.querySelector('flutter-view') ||
+        document.querySelector('canvas');
+      if (focusTarget && typeof focusTarget.focus === 'function') {
+        focusTarget.setAttribute('tabindex', '0');
+        focusTarget.focus();
+      }
+    }, true);
+  </script>
 </body>
 </html>

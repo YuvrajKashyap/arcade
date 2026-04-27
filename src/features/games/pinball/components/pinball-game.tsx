@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   GameButton,
   GamePanel,
@@ -10,13 +10,24 @@ import {
 
 const FLUTTER_PINBALL_URL = "/vendor/flutter-pinball/index.html";
 const FLUTTER_PINBALL_SOURCE = "https://github.com/flutter/pinball";
+const PINBALL_KEYS = new Set([
+  " ",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
+  "KeyA",
+  "KeyD",
+  "Space",
+]);
 
 export function PinballGame() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const gameFocusedRef = useRef(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
   function focusGame() {
+    gameFocusedRef.current = true;
     iframeRef.current?.focus();
     iframeRef.current?.contentWindow?.focus();
   }
@@ -26,6 +37,52 @@ export function PinballGame() {
     setReloadKey((current) => current + 1);
     window.setTimeout(focusGame, 250);
   }
+
+  useEffect(() => {
+    function forwardKeyboardEvent(event: KeyboardEvent) {
+      if (!gameFocusedRef.current || !PINBALL_KEYS.has(event.code)) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      iframeRef.current?.contentWindow?.postMessage(
+        {
+          type: "arcade-pinball-key",
+          eventType: event.type,
+          key: event.key,
+          code: event.code,
+          location: event.location,
+          repeat: event.repeat,
+          altKey: event.altKey,
+          ctrlKey: event.ctrlKey,
+          metaKey: event.metaKey,
+          shiftKey: event.shiftKey,
+        },
+        window.location.origin,
+      );
+    }
+
+    function blurGame(event: PointerEvent) {
+      if (
+        iframeRef.current &&
+        event.target instanceof Node &&
+        !iframeRef.current.contains(event.target)
+      ) {
+        gameFocusedRef.current = false;
+      }
+    }
+
+    window.addEventListener("keydown", forwardKeyboardEvent, true);
+    window.addEventListener("keyup", forwardKeyboardEvent, true);
+    window.addEventListener("pointerdown", blurGame, true);
+
+    return () => {
+      window.removeEventListener("keydown", forwardKeyboardEvent, true);
+      window.removeEventListener("keyup", forwardKeyboardEvent, true);
+      window.removeEventListener("pointerdown", blurGame, true);
+    };
+  }, []);
 
   return (
     <GamePanel>
