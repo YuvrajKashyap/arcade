@@ -1,0 +1,10 @@
+export const ASTEROIDS_WIDTH = 760;
+export const ASTEROIDS_HEIGHT = 520;
+export const ASTEROIDS_STORAGE_KEY = "arcade.asteroids.bestScore";
+export const ASTEROIDS_SHIP_RADIUS = 14;
+export const ASTEROIDS_TURN_SPEED = 4.2;
+export const ASTEROIDS_THRUST = 250;
+export const ASTEROIDS_FRICTION = 0.992;
+export const ASTEROIDS_BULLET_SPEED = 520;
+export const ASTEROIDS_BULLET_LIFE = 0.9;
+export const ASTEROIDS_RESPAWN_INVULNERABLE_SECONDS = 1.8;
