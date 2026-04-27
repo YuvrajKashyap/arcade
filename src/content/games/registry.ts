@@ -140,22 +140,20 @@ export const gameCatalog = [
     slug: "pinball",
     title: "Pinball",
     shortDescription:
-      "A cabinet-style physics table with flippers, bumpers, plunger charge, lives, and score pressure.",
+      "The open-source Flutter Pinball table embedded as a full arcade cabinet experience.",
     description:
-      "Pinball brings a richer arcade table into the platform with Matter.js physics, responsive flippers, a charged launch lane, bumper scoring, drain pressure, and local best-score tracking. It expands the arcade beyond grid and paddle loops while keeping instant browser play.",
+      "Pinball now runs the open-source Flutter Pinball game as a local static web embed, bringing a polished table, character selection, responsive controls, audio, scoring, and mobile support into the arcade without relying on external services.",
     thumbnail: "/games/pinball/thumbnail.png",
     genre: "Arcade",
     tags: ["Canvas", "Physics", "Score Loop", "Keyboard", "Touch"],
     controls: {
       summary:
-        "A/D or left/right arrows fire the flippers. Hold Space or Down to charge the plunger. Press S to start and P to pause.",
+        "Use the Flutter Pinball on-screen prompts. Keyboard and touch controls are handled inside the embedded game.",
       items: [
-        { label: "Left flipper", action: "A or Arrow Left" },
-        { label: "Right flipper", action: "D or Arrow Right" },
-        { label: "Plunger", action: "Hold Space or Arrow Down" },
-        { label: "Start", action: "S or on-screen Start" },
-        { label: "Pause", action: "P" },
-        { label: "Touch", action: "On-screen flipper and plunge controls" },
+        { label: "Start", action: "Follow the in-game start flow" },
+        { label: "Flippers", action: "Keyboard controls or on-screen mobile controls" },
+        { label: "Launch", action: "In-game launcher control" },
+        { label: "Restart", action: "Use the arcade Restart button to reload the table" },
       ],
     },
     difficulty: "medium",
@@ -168,7 +166,7 @@ export const gameCatalog = [
     mobileSupport: "desktop-best",
     version: "1.0.0",
     developerNotes:
-      "Pinball uses Matter.js inside the client-only game component so physics never enters the server component graph.",
+      "Pinball vendors the MIT-licensed Flutter Pinball web build as static assets and embeds it client-side so Vercel does not need Flutter during deployment.",
     libraryOrder: 5,
     featurePriority: 3,
     relatedSlugs: ["breakout", "pong"],
