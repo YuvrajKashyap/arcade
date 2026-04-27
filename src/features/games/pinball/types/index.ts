@@ -6,4 +6,6 @@ export type PinballHudState = {
   bestScore: number;
   lives: number;
   charge: number;
+  ballSave: number;
+  combo: number;
 };
