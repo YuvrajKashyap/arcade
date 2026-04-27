@@ -324,22 +324,21 @@ function drawSnakeHead(
 ) {
   const vector = getDirectionVector(direction);
   const sideVector = { x: -vector.y, y: vector.x };
-  const headLength = SNAKE_CELL_SIZE * 1.14;
+  const headLength = SNAKE_CELL_SIZE * 0.96;
   const headWidth = SNAKE_CELL_SIZE * 0.78;
-  const snoutX = head.x + vector.x * headLength * 0.46;
-  const snoutY = head.y + vector.y * headLength * 0.46;
-  const jawX = head.x - vector.x * headLength * 0.32;
-  const jawY = head.y - vector.y * headLength * 0.32;
+  const headCenterX = head.x + vector.x * SNAKE_CELL_SIZE * 0.1;
+  const headCenterY = head.y + vector.y * SNAKE_CELL_SIZE * 0.1;
+  const headAngle = Math.atan2(vector.y, vector.x);
 
   context.save();
   context.shadowBlur = 24;
   context.shadowColor = "rgba(102, 255, 116, 0.58)";
   const headGradient = context.createRadialGradient(
-    head.x - sideVector.x * 5 - vector.x * 4,
-    head.y - sideVector.y * 5 - vector.y * 4,
+    headCenterX - sideVector.x * 5 - vector.x * 4,
+    headCenterY - sideVector.y * 5 - vector.y * 4,
     2,
-    head.x,
-    head.y,
+    headCenterX,
+    headCenterY,
     headLength,
   );
   headGradient.addColorStop(0, "#ddffaf");
@@ -347,26 +346,15 @@ function drawSnakeHead(
   headGradient.addColorStop(1, "#137f32");
   context.fillStyle = headGradient;
   context.beginPath();
-  context.moveTo(snoutX, snoutY);
-  context.quadraticCurveTo(
-    head.x + sideVector.x * headWidth * 0.48,
-    head.y + sideVector.y * headWidth * 0.48,
-    jawX + sideVector.x * headWidth * 0.34,
-    jawY + sideVector.y * headWidth * 0.34,
+  context.ellipse(
+    headCenterX,
+    headCenterY,
+    headLength * 0.52,
+    headWidth * 0.48,
+    headAngle,
+    0,
+    Math.PI * 2,
   );
-  context.quadraticCurveTo(
-    head.x - vector.x * headLength * 0.04,
-    head.y - vector.y * headLength * 0.04,
-    jawX - sideVector.x * headWidth * 0.34,
-    jawY - sideVector.y * headWidth * 0.34,
-  );
-  context.quadraticCurveTo(
-    head.x - sideVector.x * headWidth * 0.48,
-    head.y - sideVector.y * headWidth * 0.48,
-    snoutX,
-    snoutY,
-  );
-  context.closePath();
   context.fill();
 
   context.shadowBlur = 0;
@@ -377,24 +365,15 @@ function drawSnakeHead(
   context.fillStyle = "#06101d";
   [-1, 1].forEach((side) => {
     const eyeX =
-      head.x + vector.x * headLength * 0.2 + sideVector.x * side * headWidth * 0.26;
+      headCenterX +
+      vector.x * headLength * 0.18 +
+      sideVector.x * side * headWidth * 0.24;
     const eyeY =
-      head.y + vector.y * headLength * 0.2 + sideVector.y * side * headWidth * 0.26;
+      headCenterY +
+      vector.y * headLength * 0.18 +
+      sideVector.y * side * headWidth * 0.24;
     context.beginPath();
-    context.ellipse(eyeX, eyeY, 2.3, 3.5, Math.atan2(vector.y, vector.x), 0, Math.PI * 2);
-    context.fill();
-  });
-
-  context.fillStyle = "rgba(4, 32, 18, 0.72)";
-  [-1, 1].forEach((side) => {
-    context.beginPath();
-    context.arc(
-      snoutX - vector.x * 4 + sideVector.x * side * 3,
-      snoutY - vector.y * 4 + sideVector.y * side * 3,
-      1.3,
-      0,
-      Math.PI * 2,
-    );
+    context.ellipse(eyeX, eyeY, 2.3, 3.5, headAngle, 0, Math.PI * 2);
     context.fill();
   });
 
