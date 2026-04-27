@@ -18,6 +18,14 @@ import type {
   SnakeState,
 } from "@/features/games/snake/types";
 import { configureHiDPICanvas } from "@/features/games/shared/canvas/configure-canvas";
+import {
+  GameButton,
+  GameHud,
+  GamePanel,
+  GamePlayfield,
+  GameStatus,
+  TouchControls,
+} from "@/features/games/shared/components/game-ui";
 import { useAnimationFrameLoop } from "@/features/games/shared/hooks/use-animation-frame-loop";
 import {
   readStoredNumber,
@@ -260,88 +268,78 @@ export function SnakeGame() {
   });
 
   return (
-    <div className="flex flex-col gap-5 text-foreground">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-foreground-soft">
-          <span>
-            Score <strong className="ml-1 text-foreground">{hudState.score}</strong>
-          </span>
-          <span>
-            Best <strong className="ml-1 text-foreground">{hudState.bestScore}</strong>
-          </span>
-          <span className="capitalize">
-            Status <strong className="ml-1 text-foreground">{hudState.phase}</strong>
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={() => resetGame("playing")}
-            className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-background hover:-translate-y-0.5 hover:bg-accent-strong"
-          >
-            {hudState.phase === "game-over" ? "Restart" : "Start"}
-          </button>
-          <button
-            type="button"
-            onClick={togglePause}
-            className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-foreground hover:-translate-y-0.5 hover:bg-surface"
-          >
-            {hudState.phase === "paused" ? "Resume" : "Pause"}
-          </button>
-        </div>
-      </div>
-
-      <canvas
-        ref={canvasRef}
-        className="mx-auto aspect-square w-full max-w-[34rem] rounded-[1.4rem] border border-line bg-background-strong"
-        aria-label="Snake game board"
+    <GamePanel>
+      <GameHud
+        items={[
+          { label: "Score", value: hudState.score },
+          { label: "Best", value: hudState.bestScore },
+          { label: "Status", value: hudState.phase },
+        ]}
+        actions={
+          <>
+            <GameButton variant="primary" onClick={() => resetGame("playing")}>
+              {hudState.phase === "game-over" ? "Restart" : "Start"}
+            </GameButton>
+            <GameButton onClick={togglePause}>
+              {hudState.phase === "paused" ? "Resume" : "Pause"}
+            </GameButton>
+          </>
+        }
       />
 
-      <p className="text-center text-sm leading-7 text-foreground-soft">
-        {getStatusCopy(hudState.phase)}
-      </p>
+      <GamePlayfield className="mx-auto aspect-square w-full max-w-[34rem]">
+        <canvas
+          ref={canvasRef}
+          className="h-full w-full"
+          aria-label="Snake game board"
+        />
+      </GamePlayfield>
 
-      <div className="mx-auto grid w-full max-w-[18rem] grid-cols-3 gap-2 md:hidden">
+      <GameStatus>{getStatusCopy(hudState.phase)}</GameStatus>
+
+      <TouchControls className="max-w-[18rem]">
+        <div className="grid grid-cols-3 gap-2">
         <div />
-        <button
-          type="button"
+        <GameButton
           onClick={() => queueDirection("up")}
-          className="surface-subtle rounded-2xl px-4 py-3 text-sm font-semibold hover:bg-surface"
+          variant="touch"
+          className="rounded-2xl"
         >
           Up
-        </button>
+        </GameButton>
         <div />
-        <button
-          type="button"
+        <GameButton
           onClick={() => queueDirection("left")}
-          className="surface-subtle rounded-2xl px-4 py-3 text-sm font-semibold hover:bg-surface"
+          variant="touch"
+          className="rounded-2xl"
         >
           Left
-        </button>
-        <button
-          type="button"
+        </GameButton>
+        <GameButton
           onClick={() => resetGame("playing")}
-          className="surface-subtle rounded-2xl px-4 py-3 text-sm font-semibold hover:bg-surface"
+          variant="touch"
+          className="rounded-2xl"
         >
           Go
-        </button>
-        <button
-          type="button"
+        </GameButton>
+        <GameButton
           onClick={() => queueDirection("right")}
-          className="surface-subtle rounded-2xl px-4 py-3 text-sm font-semibold hover:bg-surface"
+          variant="touch"
+          className="rounded-2xl"
         >
           Right
-        </button>
+        </GameButton>
         <div />
-        <button
-          type="button"
+        <GameButton
           onClick={() => queueDirection("down")}
-          className="surface-subtle rounded-2xl px-4 py-3 text-sm font-semibold hover:bg-surface"
+          variant="touch"
+          className="rounded-2xl"
         >
           Down
-        </button>
+        </GameButton>
         <div />
       </div>
-    </div>
+      </TouchControls>
+    </GamePanel>
   );
 }
