@@ -1,12 +1,9 @@
 "use client";
 
-import Matter from "matter-js";
-import { useCallback, useEffect, useEffectEvent, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import {
   PINBALL_BALL_RADIUS,
   PINBALL_BALL_SAVE_SECONDS,
-  PINBALL_FLIPPER_HEIGHT,
-  PINBALL_FLIPPER_WIDTH,
   PINBALL_HEIGHT,
   PINBALL_LIVES,
   PINBALL_STORAGE_KEY,
@@ -30,34 +27,73 @@ import {
 } from "@/features/games/shared/utils/local-storage";
 import { clamp } from "@/features/games/shared/utils/math";
 
-type PinballWorld = {
-  engine: Matter.Engine;
-  ball: Matter.Body;
-  leftFlipper: Matter.Body;
-  rightFlipper: Matter.Body;
-  plunger: Matter.Body;
-  bumpers: Matter.Body[];
-  targets: Matter.Body[];
-  slingshots: Matter.Body[];
-  lanes: Matter.Body[];
-};
+type Vector = { x: number; y: number };
+type Segment = { a: Vector; b: Vector; bounce?: number; color?: string };
+type Bumper = { x: number; y: number; radius: number; points: number; color: string };
+type Target = { x: number; y: number; width: number; height: number; points: number };
+type FlipperSide = "left" | "right";
+type Ball = Vector & { vx: number; vy: number };
 
-type ImpactKind = "bumper" | "target" | "lane" | "slingshot" | "flipper";
+const LAUNCH_X = 472;
+const LAUNCH_Y = 640;
+const GRAVITY = 680;
+const MAX_SPEED = 980;
+const TABLE: Segment[] = [
+  { a: { x: 42, y: 52 }, b: { x: 42, y: 704 }, bounce: 0.88 },
+  { a: { x: 420, y: 52 }, b: { x: 420, y: 704 }, bounce: 0.88 },
+  { a: { x: 42, y: 52 }, b: { x: 420, y: 52 }, bounce: 0.9 },
+  { a: { x: 420, y: 52 }, b: { x: 494, y: 126 }, bounce: 0.9 },
+  { a: { x: 42, y: 188 }, b: { x: 132, y: 98 }, bounce: 1.05, color: "#ffd166" },
+  { a: { x: 420, y: 188 }, b: { x: 330, y: 98 }, bounce: 1.05, color: "#ffd166" },
+  { a: { x: 74, y: 560 }, b: { x: 172, y: 620 }, bounce: 1.1, color: "#ff6b35" },
+  { a: { x: 388, y: 560 }, b: { x: 290, y: 620 }, bounce: 1.1, color: "#ff6b35" },
+  { a: { x: 42, y: 704 }, b: { x: 130, y: 704 }, bounce: 0.92 },
+  { a: { x: 332, y: 704 }, b: { x: 420, y: 704 }, bounce: 0.92 },
+  { a: { x: 452, y: 112 }, b: { x: 452, y: 704 }, bounce: 0.86, color: "#00a6a6" },
+  { a: { x: 496, y: 96 }, b: { x: 496, y: 704 }, bounce: 0.86, color: "#00a6a6" },
+  { a: { x: 452, y: 112 }, b: { x: 496, y: 96 }, bounce: 0.86, color: "#00a6a6" },
+];
+const BUMPERS: Bumper[] = [
+  { x: 160, y: 210, radius: 31, points: 120, color: "#ff6b35" },
+  { x: 300, y: 230, radius: 31, points: 120, color: "#ff6b35" },
+  { x: 230, y: 350, radius: 36, points: 160, color: "#ff6b35" },
+];
+const TARGETS: Target[] = [
+  { x: 112, y: 450, width: 18, height: 64, points: 220 },
+  { x: 332, y: 450, width: 18, height: 64, points: 220 },
+  { x: 190, y: 490, width: 82, height: 16, points: 300 },
+];
 
-const LAUNCH_X = 474;
-const LAUNCH_Y = 610;
-const LEFT_FLIPPER_REST = 0.22;
-const LEFT_FLIPPER_ACTIVE = -0.72;
-const RIGHT_FLIPPER_REST = -0.22;
-const RIGHT_FLIPPER_ACTIVE = 0.72;
+function length(vector: Vector) {
+  return Math.hypot(vector.x, vector.y);
+}
+
+function normalize(vector: Vector) {
+  const value = length(vector) || 1;
+  return { x: vector.x / value, y: vector.y / value };
+}
+
+function dot(left: Vector, right: Vector) {
+  return left.x * right.x + left.y * right.y;
+}
+
+function getFlipper(side: FlipperSide, active: boolean): Segment {
+  if (side === "left") {
+    return active
+      ? { a: { x: 142, y: 662 }, b: { x: 242, y: 630 }, bounce: 1.08, color: "#cfb5ff" }
+      : { a: { x: 142, y: 662 }, b: { x: 232, y: 682 }, bounce: 1.02, color: "#cfb5ff" };
+  }
+
+  return active
+    ? { a: { x: 320, y: 662 }, b: { x: 220, y: 630 }, bounce: 1.08, color: "#cfb5ff" }
+    : { a: { x: 320, y: 662 }, b: { x: 230, y: 682 }, bounce: 1.02, color: "#cfb5ff" };
+}
 
 function getStatusCopy(phase: PinballPhase, ballSave: number) {
   if (phase === "playing") {
-    if (ballSave > 0) {
-      return `Ball save is live for ${Math.ceil(ballSave)}s. Launch hard and aim for bumpers, lanes, and drop targets.`;
-    }
-
-    return "Keep the ball above the flippers. Late flips send it up the ramps; lane and target chains build combo.";
+    return ballSave > 0
+      ? `Ball save is live for ${Math.ceil(ballSave)}s. Hit bumpers, slingshots, and drop targets.`
+      : "Keep the ball above the flippers. Clean late flips send it back into the top field.";
   }
 
   if (phase === "paused") {
@@ -65,310 +101,197 @@ function getStatusCopy(phase: PinballPhase, ballSave: number) {
   }
 
   if (phase === "game-over") {
-    return "Last ball drained. Restart for another table run.";
+    return "Last ball drained. Restart for another run.";
   }
 
   return "Hold Space or Plunge to charge. Release to launch, then use A/D or arrows for flippers.";
 }
 
-function createWall(
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  angle = 0,
-  label = "wall",
-) {
-  return Matter.Bodies.rectangle(x, y, width, height, {
-    isStatic: true,
-    angle,
-    restitution: 0.72,
-    friction: 0.01,
-    label,
-  });
+function createBall(): Ball {
+  return { x: LAUNCH_X, y: LAUNCH_Y, vx: 0, vy: 0 };
 }
 
-function createPinballWorld(onImpact: (kind: ImpactKind) => void): PinballWorld {
-  const engine = Matter.Engine.create({
-    gravity: { x: 0, y: 0.72 },
-  });
+function collideSegment(ball: Ball, segment: Segment, activeKick = 0) {
+  const ab = { x: segment.b.x - segment.a.x, y: segment.b.y - segment.a.y };
+  const ap = { x: ball.x - segment.a.x, y: ball.y - segment.a.y };
+  const t = clamp(dot(ap, ab) / Math.max(dot(ab, ab), 1), 0, 1);
+  const closest = { x: segment.a.x + ab.x * t, y: segment.a.y + ab.y * t };
+  const delta = { x: ball.x - closest.x, y: ball.y - closest.y };
+  const distance = length(delta);
 
-  const walls = [
-    createWall(PINBALL_WIDTH / 2, -12, PINBALL_WIDTH, 24),
-    createWall(11, PINBALL_HEIGHT / 2, 22, PINBALL_HEIGHT),
-    createWall(PINBALL_WIDTH + 11, PINBALL_HEIGHT / 2, 22, PINBALL_HEIGHT),
-    createWall(252, 28, 355, 18, 0.05),
-    createWall(96, 88, 118, 16, 0.52),
-    createWall(338, 88, 118, 16, -0.52),
-    createWall(70, 366, 16, 420, -0.08),
-    createWall(386, 368, 16, 430, 0.08),
-    createWall(462, 450, 16, 520),
-    createWall(432, 116, 100, 16, -0.58),
-    createWall(116, 600, 154, 18, 0.62, "return"),
-    createWall(336, 600, 154, 18, -0.62, "return"),
-    createWall(30, 668, 116, 18, 0.86, "outlane"),
-    createWall(420, 668, 116, 18, -0.86, "outlane"),
-  ];
-
-  const bumpers = [
-    Matter.Bodies.circle(158, 184, 30, {
-      isStatic: true,
-      restitution: 1.72,
-      label: "bumper",
-    }),
-    Matter.Bodies.circle(292, 206, 32, {
-      isStatic: true,
-      restitution: 1.72,
-      label: "bumper",
-    }),
-    Matter.Bodies.circle(224, 328, 36, {
-      isStatic: true,
-      restitution: 1.62,
-      label: "bumper",
-    }),
-  ];
-
-  const lanes = [
-    createWall(126, 116, 58, 10, 0.28, "lane"),
-    createWall(220, 103, 58, 10, 0, "lane"),
-    createWall(314, 116, 58, 10, -0.28, "lane"),
-  ];
-
-  const targets = [
-    createWall(116, 438, 18, 60, 0.2, "target"),
-    createWall(342, 438, 18, 60, -0.2, "target"),
-    createWall(244, 474, 72, 14, 0, "target"),
-  ];
-
-  const slingshots = [
-    createWall(128, 548, 92, 18, 0.48, "slingshot"),
-    createWall(326, 548, 92, 18, -0.48, "slingshot"),
-  ];
-
-  const leftFlipper = Matter.Bodies.rectangle(
-    170,
-    666,
-    PINBALL_FLIPPER_WIDTH,
-    PINBALL_FLIPPER_HEIGHT,
-    {
-      isStatic: true,
-      angle: LEFT_FLIPPER_REST,
-      restitution: 1.08,
-      friction: 0,
-      label: "flipper",
-    },
-  );
-  const rightFlipper = Matter.Bodies.rectangle(
-    322,
-    666,
-    PINBALL_FLIPPER_WIDTH,
-    PINBALL_FLIPPER_HEIGHT,
-    {
-      isStatic: true,
-      angle: RIGHT_FLIPPER_REST,
-      restitution: 1.08,
-      friction: 0,
-      label: "flipper",
-    },
-  );
-  const plunger = Matter.Bodies.rectangle(474, 694, 42, 20, {
-    isStatic: true,
-    restitution: 1.2,
-    friction: 0,
-    label: "plunger",
-  });
-  const ball = Matter.Bodies.circle(LAUNCH_X, LAUNCH_Y, PINBALL_BALL_RADIUS, {
-    density: 0.0022,
-    restitution: 0.86,
-    friction: 0,
-    frictionAir: 0.0026,
-    label: "ball",
-  });
-
-  Matter.Composite.add(engine.world, [
-    ...walls,
-    ...bumpers,
-    ...lanes,
-    ...targets,
-    ...slingshots,
-    leftFlipper,
-    rightFlipper,
-    plunger,
-    ball,
-  ]);
-
-  Matter.Events.on(engine, "collisionStart", (event) => {
-    for (const pair of event.pairs) {
-      const labels = [pair.bodyA.label, pair.bodyB.label];
-      if (!labels.includes("ball")) {
-        continue;
-      }
-
-      if (labels.includes("bumper")) {
-        onImpact("bumper");
-      } else if (labels.includes("target")) {
-        onImpact("target");
-      } else if (labels.includes("lane")) {
-        onImpact("lane");
-      } else if (labels.includes("slingshot")) {
-        onImpact("slingshot");
-      } else if (labels.includes("flipper")) {
-        onImpact("flipper");
-      }
-    }
-  });
-
-  return {
-    engine,
-    ball,
-    leftFlipper,
-    rightFlipper,
-    plunger,
-    bumpers,
-    targets,
-    slingshots,
-    lanes,
-  };
-}
-
-function resetBall(world: PinballWorld) {
-  Matter.Body.setPosition(world.ball, { x: LAUNCH_X, y: LAUNCH_Y });
-  Matter.Body.setVelocity(world.ball, { x: 0, y: 0 });
-  Matter.Body.setAngularVelocity(world.ball, 0);
-  Matter.Body.setAngle(world.ball, 0);
-}
-
-function drawBody(
-  context: CanvasRenderingContext2D,
-  body: Matter.Body,
-  fill: string,
-  stroke = "rgba(255,255,255,0.08)",
-) {
-  context.beginPath();
-  const firstVertex = body.vertices[0];
-  context.moveTo(firstVertex.x, firstVertex.y);
-  for (const vertex of body.vertices.slice(1)) {
-    context.lineTo(vertex.x, vertex.y);
+  if (distance >= PINBALL_BALL_RADIUS || distance === 0) {
+    return false;
   }
-  context.closePath();
-  context.fillStyle = fill;
-  context.fill();
-  context.strokeStyle = stroke;
-  context.lineWidth = 1.5;
-  context.stroke();
+
+  const normal = normalize(delta);
+  const velocity = { x: ball.vx, y: ball.vy };
+  const normalVelocity = dot(velocity, normal);
+
+  ball.x = closest.x + normal.x * PINBALL_BALL_RADIUS;
+  ball.y = closest.y + normal.y * PINBALL_BALL_RADIUS;
+
+  if (normalVelocity < 0) {
+    const bounce = segment.bounce ?? 0.9;
+    ball.vx = velocity.x - (1 + bounce) * normalVelocity * normal.x;
+    ball.vy = velocity.y - (1 + bounce) * normalVelocity * normal.y;
+    ball.vy -= activeKick;
+    ball.vx += normal.x * activeKick * 0.26;
+  }
+
+  return true;
 }
 
-function drawCircleTarget(
-  context: CanvasRenderingContext2D,
-  body: Matter.Body,
-  fill: string,
-  ring: string,
-) {
+function collideBumper(ball: Ball, bumper: Bumper) {
+  const delta = { x: ball.x - bumper.x, y: ball.y - bumper.y };
+  const distance = length(delta);
+  const minimumDistance = PINBALL_BALL_RADIUS + bumper.radius;
+
+  if (distance >= minimumDistance || distance === 0) {
+    return false;
+  }
+
+  const normal = normalize(delta);
+  ball.x = bumper.x + normal.x * minimumDistance;
+  ball.y = bumper.y + normal.y * minimumDistance;
+  ball.vx = normal.x * 560 + ball.vx * 0.2;
+  ball.vy = normal.y * 560 + ball.vy * 0.2;
+  return true;
+}
+
+function collideTarget(ball: Ball, target: Target) {
+  const nearestX = clamp(ball.x, target.x, target.x + target.width);
+  const nearestY = clamp(ball.y, target.y, target.y + target.height);
+  const delta = { x: ball.x - nearestX, y: ball.y - nearestY };
+
+  if (length(delta) >= PINBALL_BALL_RADIUS) {
+    return false;
+  }
+
+  const normal = normalize(delta.x === 0 && delta.y === 0 ? { x: 0, y: -1 } : delta);
+  ball.x = nearestX + normal.x * PINBALL_BALL_RADIUS;
+  ball.y = nearestY + normal.y * PINBALL_BALL_RADIUS;
+  const normalVelocity = dot({ x: ball.vx, y: ball.vy }, normal);
+  if (normalVelocity < 0) {
+    ball.vx -= 1.9 * normalVelocity * normal.x;
+    ball.vy -= 1.9 * normalVelocity * normal.y;
+  }
+  return true;
+}
+
+function clampSpeed(ball: Ball) {
+  const speed = Math.hypot(ball.vx, ball.vy);
+  if (speed <= MAX_SPEED) {
+    return;
+  }
+
+  const ratio = MAX_SPEED / speed;
+  ball.vx *= ratio;
+  ball.vy *= ratio;
+}
+
+function drawSegment(context: CanvasRenderingContext2D, segment: Segment, width = 16) {
+  context.strokeStyle = segment.color ?? "rgba(248,250,252,0.22)";
+  context.lineWidth = width;
+  context.lineCap = "round";
   context.beginPath();
-  context.fillStyle = fill;
-  context.arc(body.position.x, body.position.y, body.circleRadius ?? 28, 0, Math.PI * 2);
-  context.fill();
-  context.lineWidth = 4;
-  context.strokeStyle = ring;
+  context.moveTo(segment.a.x, segment.a.y);
+  context.lineTo(segment.b.x, segment.b.y);
   context.stroke();
-  context.beginPath();
-  context.arc(body.position.x, body.position.y, (body.circleRadius ?? 28) * 0.42, 0, Math.PI * 2);
-  context.fillStyle = ring;
-  context.fill();
 }
 
 function drawPinballScene(
   context: CanvasRenderingContext2D,
-  world: PinballWorld,
+  ball: Ball,
   hud: PinballHudState,
+  leftActive: boolean,
+  rightActive: boolean,
 ) {
-  context.clearRect(0, 0, PINBALL_WIDTH, PINBALL_HEIGHT);
-
-  const tableGradient = context.createLinearGradient(0, 0, 0, PINBALL_HEIGHT);
-  tableGradient.addColorStop(0, "#120a21");
-  tableGradient.addColorStop(0.52, "#08111f");
-  tableGradient.addColorStop(1, "#05040b");
-  context.fillStyle = tableGradient;
+  const gradient = context.createLinearGradient(0, 0, 0, PINBALL_HEIGHT);
+  gradient.addColorStop(0, "#120a21");
+  gradient.addColorStop(0.5, "#08111f");
+  gradient.addColorStop(1, "#05040b");
+  context.fillStyle = gradient;
   context.fillRect(0, 0, PINBALL_WIDTH, PINBALL_HEIGHT);
 
-  context.strokeStyle = "rgba(207,181,255,0.18)";
+  context.strokeStyle = "rgba(207,181,255,0.2)";
   context.lineWidth = 2;
-  context.strokeRect(18, 18, PINBALL_WIDTH - 36, PINBALL_HEIGHT - 36);
+  context.strokeRect(24, 24, PINBALL_WIDTH - 48, PINBALL_HEIGHT - 48);
 
   context.fillStyle = "rgba(0,166,166,0.12)";
-  context.fillRect(452, 78, 44, 650);
-  context.fillStyle = "rgba(207,181,255,0.18)";
-  context.fillRect(456, 704 - hud.charge * 84, 36, Math.max(5, hud.charge * 84));
-
-  for (const body of Matter.Composite.allBodies(world.engine.world)) {
-    if (body.label === "ball" || body.label === "bumper") {
-      continue;
-    }
-
-    const fill =
-      body.label === "lane"
-        ? "#ffd166"
-        : body.label === "target"
-          ? "#00a6a6"
-          : body.label === "slingshot"
-            ? "#ff6b35"
-            : body.label === "flipper"
-              ? "#cfb5ff"
-              : body.label === "plunger"
-                ? "#00a6a6"
-                : "rgba(248,250,252,0.2)";
-    drawBody(context, body, fill);
-  }
-
-  for (const bumper of world.bumpers) {
-    drawCircleTarget(context, bumper, "#ff6b35", "#ffd166");
-  }
-
-  context.beginPath();
-  context.fillStyle = "#f8fafc";
-  context.shadowColor = "rgba(248,250,252,0.55)";
-  context.shadowBlur = 14;
-  context.arc(world.ball.position.x, world.ball.position.y, PINBALL_BALL_RADIUS, 0, Math.PI * 2);
-  context.fill();
-  context.shadowBlur = 0;
-
-  context.fillStyle = "rgba(248,250,252,0.72)";
+  context.fillRect(452, 96, 44, 608);
+  context.fillStyle = "#00a6a6";
+  context.fillRect(452, 686, 44, 18);
+  context.fillStyle = "rgba(248,250,252,0.74)";
   context.font = "700 12px sans-serif";
   context.textAlign = "center";
-  context.fillText("LANE", 474, 64);
-  context.fillText("DROP TARGETS", 244, 512);
+  context.fillText("LANE", 474, 86);
+
+  for (const segment of TABLE) {
+    drawSegment(context, segment, segment.color ? 14 : 16);
+  }
+
+  for (const bumper of BUMPERS) {
+    context.beginPath();
+    context.fillStyle = bumper.color;
+    context.arc(bumper.x, bumper.y, bumper.radius, 0, Math.PI * 2);
+    context.fill();
+    context.lineWidth = 4;
+    context.strokeStyle = "#ffd166";
+    context.stroke();
+    context.beginPath();
+    context.fillStyle = "#ffd166";
+    context.arc(bumper.x, bumper.y, bumper.radius * 0.38, 0, Math.PI * 2);
+    context.fill();
+  }
+
+  for (const target of TARGETS) {
+    context.fillStyle = "#00a6a6";
+    context.fillRect(target.x, target.y, target.width, target.height);
+  }
+  context.fillStyle = "rgba(248,250,252,0.7)";
+  context.fillText("DROP TARGETS", 231, 536);
+
+  drawSegment(context, getFlipper("left", leftActive), 18);
+  drawSegment(context, getFlipper("right", rightActive), 18);
 
   if (hud.ballSave > 0 && hud.phase === "playing") {
     context.fillStyle = "rgba(0,166,166,0.18)";
-    context.fillRect(132, 704, 250, 10);
+    context.fillRect(132, 718, 198, 10);
     context.fillStyle = "#00a6a6";
-    context.fillRect(132, 704, 250 * clamp(hud.ballSave / PINBALL_BALL_SAVE_SECONDS, 0, 1), 10);
+    context.fillRect(132, 718, 198 * clamp(hud.ballSave / PINBALL_BALL_SAVE_SECONDS, 0, 1), 10);
   }
+
+  context.beginPath();
+  context.shadowColor = "rgba(248,250,252,0.58)";
+  context.shadowBlur = 14;
+  context.fillStyle = "#f8fafc";
+  context.arc(ball.x, ball.y, PINBALL_BALL_RADIUS, 0, Math.PI * 2);
+  context.fill();
+  context.shadowBlur = 0;
 
   if (hud.phase !== "playing") {
     context.fillStyle = "rgba(5,4,11,0.66)";
     context.fillRect(0, 0, PINBALL_WIDTH, PINBALL_HEIGHT);
-    context.textAlign = "center";
     context.fillStyle = "#f8fafc";
     context.font = "700 34px sans-serif";
     context.fillText(
       hud.phase === "game-over" ? "Run over" : hud.phase === "paused" ? "Paused" : "Pinball",
       PINBALL_WIDTH / 2,
-      PINBALL_HEIGHT / 2 - 14,
+      PINBALL_HEIGHT / 2 - 12,
     );
     context.font = "500 15px sans-serif";
     context.fillStyle = "rgba(248,250,252,0.78)";
-    context.fillText("Charge the plunger, then keep the combo alive", PINBALL_WIDTH / 2, PINBALL_HEIGHT / 2 + 20);
+    context.fillText("Charge the plunger, launch, then keep it alive", PINBALL_WIDTH / 2, PINBALL_HEIGHT / 2 + 20);
   }
 }
 
 export function PinballGame() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
-  const worldRef = useRef<PinballWorld | null>(null);
+  const ballRef = useRef<Ball>(createBall());
   const chargeRef = useRef(0);
-  const leftFlipLockRef = useRef(false);
-  const rightFlipLockRef = useRef(false);
+  const leftWasActiveRef = useRef(false);
+  const rightWasActiveRef = useRef(false);
   const touchRef = useRef({ left: false, right: false, plunger: false });
   const pressedKeysRef = useKeyboardState({
     preventDefaultKeys: ["a", "d", "arrowleft", "arrowright", " ", "arrowdown", "s"],
@@ -384,56 +307,32 @@ export function PinballGame() {
   }));
   const hudRef = useRef(hudState);
 
-  const commitHud = useCallback((nextHud: PinballHudState) => {
+  function commitHud(nextHud: PinballHudState) {
     hudRef.current = nextHud;
     setHudState(nextHud);
     writeStoredNumber(PINBALL_STORAGE_KEY, nextHud.bestScore);
-  }, []);
+  }
 
-  const addScore = useCallback((kind: ImpactKind) => {
+  function score(points: number) {
     const current = hudRef.current;
     if (current.phase !== "playing") {
       return;
     }
 
-    const basePoints =
-      kind === "bumper"
-        ? 120
-        : kind === "target"
-          ? 180
-          : kind === "lane"
-            ? 250
-            : kind === "slingshot"
-              ? 80
-              : 10;
-    const nextCombo = kind === "flipper" ? current.combo : Math.min(current.combo + 1, 9);
-    const nextScore = current.score + basePoints * current.combo;
+    const nextScore = current.score + points * current.combo;
     commitHud({
       ...current,
       score: nextScore,
       bestScore: Math.max(current.bestScore, nextScore),
-      combo: nextCombo,
+      combo: Math.min(current.combo + 1, 9),
     });
-  }, [commitHud]);
-
-  function renderCurrentState() {
-    const context = contextRef.current;
-    const world = worldRef.current;
-    if (context && world) {
-      drawPinballScene(context, world, hudRef.current);
-    }
   }
 
-  function serveBall(resetScore: boolean) {
-    const world = worldRef.current;
-    if (!world) {
-      return;
-    }
-
-    resetBall(world);
+  function serve(resetScore: boolean) {
+    ballRef.current = createBall();
     chargeRef.current = 0;
-    leftFlipLockRef.current = false;
-    rightFlipLockRef.current = false;
+    leftWasActiveRef.current = false;
+    rightWasActiveRef.current = false;
     commitHud({
       phase: "playing",
       score: resetScore ? 0 : hudRef.current.score,
@@ -443,11 +342,20 @@ export function PinballGame() {
       ballSave: PINBALL_BALL_SAVE_SECONDS,
       combo: 1,
     });
-    renderCurrentState();
   }
 
   function startGame() {
-    serveBall(hudRef.current.phase === "game-over");
+    const current = hudRef.current;
+    if (current.phase === "playing") {
+      return;
+    }
+
+    if (current.phase === "paused") {
+      commitHud({ ...current, phase: "playing" });
+      return;
+    }
+
+    serve(current.phase === "game-over");
   }
 
   function togglePause() {
@@ -457,64 +365,20 @@ export function PinballGame() {
     } else if (current.phase === "paused") {
       commitHud({ ...current, phase: "playing" });
     }
-    renderCurrentState();
   }
 
   function releasePlunger() {
-    const world = worldRef.current;
-    if (!world || hudRef.current.phase !== "playing" || chargeRef.current <= 0) {
+    const ball = ballRef.current;
+    if (hudRef.current.phase !== "playing" || chargeRef.current <= 0) {
       return;
     }
 
-    Matter.Body.setVelocity(world.ball, {
-      x: -5.5 - chargeRef.current * 4.5,
-      y: -28 - chargeRef.current * 20,
-    });
-    Matter.Body.setPosition(world.ball, { x: LAUNCH_X, y: LAUNCH_Y - 16 });
+    ball.x = 386;
+    ball.y = 142;
+    ball.vx = -300 - chargeRef.current * 180;
+    ball.vy = -120 - chargeRef.current * 180;
     chargeRef.current = 0;
     commitHud({ ...hudRef.current, charge: 0 });
-  }
-
-  function applyFlipperKick(leftActive: boolean, rightActive: boolean) {
-    const world = worldRef.current;
-    if (!world || hudRef.current.phase !== "playing") {
-      return;
-    }
-
-    const ball = world.ball;
-    const leftDistance = Matter.Vector.magnitude(
-      Matter.Vector.sub(ball.position, { x: 170, y: 656 }),
-    );
-    const rightDistance = Matter.Vector.magnitude(
-      Matter.Vector.sub(ball.position, { x: 322, y: 656 }),
-    );
-
-    if (leftActive && !leftFlipLockRef.current && leftDistance < 98) {
-      Matter.Body.setVelocity(ball, {
-        x: Math.max(ball.velocity.x + 9, 7),
-        y: Math.min(ball.velocity.y - 20, -16),
-      });
-      Matter.Body.setPosition(ball, {
-        x: Math.max(ball.position.x, 132),
-        y: Math.min(ball.position.y, 648),
-      });
-      addScore("flipper");
-    }
-
-    if (rightActive && !rightFlipLockRef.current && rightDistance < 98) {
-      Matter.Body.setVelocity(ball, {
-        x: Math.min(ball.velocity.x - 9, -7),
-        y: Math.min(ball.velocity.y - 20, -16),
-      });
-      Matter.Body.setPosition(ball, {
-        x: Math.min(ball.position.x, 360),
-        y: Math.min(ball.position.y, 648),
-      });
-      addScore("flipper");
-    }
-
-    leftFlipLockRef.current = leftActive;
-    rightFlipLockRef.current = rightActive;
   }
 
   const handleKeyboardInput = useEffectEvent((event: KeyboardEvent) => {
@@ -542,10 +406,14 @@ export function PinballGame() {
       return;
     }
 
-    contextRef.current = configureHiDPICanvas(canvas, PINBALL_WIDTH, PINBALL_HEIGHT);
-    worldRef.current = createPinballWorld(addScore);
-    renderCurrentState();
-  }, [addScore]);
+    const context = configureHiDPICanvas(canvas, PINBALL_WIDTH, PINBALL_HEIGHT);
+    if (!context) {
+      return;
+    }
+
+    contextRef.current = context;
+    drawPinballScene(context, ballRef.current, hudRef.current, false, false);
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => handleKeyboardInput(event);
@@ -559,8 +427,8 @@ export function PinballGame() {
   }, []);
 
   useAnimationFrameLoop((deltaSeconds) => {
-    const world = worldRef.current;
-    if (!world) {
+    const context = contextRef.current;
+    if (!context) {
       return;
     }
 
@@ -568,13 +436,11 @@ export function PinballGame() {
     const leftActive = keys.has("a") || keys.has("arrowleft") || touchRef.current.left;
     const rightActive = keys.has("d") || keys.has("arrowright") || touchRef.current.right;
     const charging = keys.has(" ") || keys.has("arrowdown") || touchRef.current.plunger;
-    Matter.Body.setAngle(world.leftFlipper, leftActive ? LEFT_FLIPPER_ACTIVE : LEFT_FLIPPER_REST);
-    Matter.Body.setAngle(world.rightFlipper, rightActive ? RIGHT_FLIPPER_ACTIVE : RIGHT_FLIPPER_REST);
-    applyFlipperKick(leftActive, rightActive);
+    const ball = ballRef.current;
 
     if (hudRef.current.phase === "playing") {
-      if (charging && world.ball.position.x > 438 && world.ball.position.y > 536) {
-        chargeRef.current = clamp(chargeRef.current + deltaSeconds * 0.92, 0, 1);
+      if (charging && ball.x > 438 && ball.y > 540) {
+        chargeRef.current = clamp(chargeRef.current + deltaSeconds * 0.95, 0, 1);
         if (Math.abs(chargeRef.current - hudRef.current.charge) > 0.01) {
           commitHud({ ...hudRef.current, charge: chargeRef.current });
         }
@@ -582,30 +448,75 @@ export function PinballGame() {
         releasePlunger();
       }
 
-      Matter.Body.setPosition(world.plunger, {
-        x: LAUNCH_X,
-        y: 694 + chargeRef.current * 54,
-      });
-      Matter.Engine.update(world.engine, deltaSeconds * 1000);
+      const steps = 4;
+      const stepSeconds = deltaSeconds / steps;
+      for (let step = 0; step < steps; step += 1) {
+        ball.vy += GRAVITY * stepSeconds;
+        ball.x += ball.vx * stepSeconds;
+        ball.y += ball.vy * stepSeconds;
+
+        for (const segment of TABLE) {
+          if (collideSegment(ball, segment)) {
+            if (segment.color === "#ffd166") {
+              score(80);
+            } else if (segment.color === "#ff6b35") {
+              score(60);
+            }
+          }
+        }
+
+        const flipperKick = 430;
+        if (collideSegment(ball, getFlipper("left", leftActive), leftActive ? flipperKick : 0)) {
+          if (leftActive && !leftWasActiveRef.current) score(20);
+        }
+        if (collideSegment(ball, getFlipper("right", rightActive), rightActive ? flipperKick : 0)) {
+          if (rightActive && !rightWasActiveRef.current) score(20);
+        }
+
+        for (const bumper of BUMPERS) {
+          if (collideBumper(ball, bumper)) {
+            score(bumper.points);
+          }
+        }
+
+        for (const target of TARGETS) {
+          if (collideTarget(ball, target)) {
+            score(target.points);
+          }
+        }
+
+        if (ball.x > 496 - PINBALL_BALL_RADIUS && ball.x < PINBALL_WIDTH) {
+          ball.x = 496 - PINBALL_BALL_RADIUS;
+          ball.vx = -Math.abs(ball.vx) * 0.82;
+        }
+        if (ball.x < PINBALL_BALL_RADIUS) {
+          ball.x = PINBALL_BALL_RADIUS;
+          ball.vx = Math.abs(ball.vx) * 0.82;
+        }
+        if (ball.y < PINBALL_BALL_RADIUS) {
+          ball.y = PINBALL_BALL_RADIUS;
+          ball.vy = Math.abs(ball.vy) * 0.82;
+        }
+
+        clampSpeed(ball);
+      }
+
+      leftWasActiveRef.current = leftActive;
+      rightWasActiveRef.current = rightActive;
 
       const nextBallSave = Math.max(0, hudRef.current.ballSave - deltaSeconds);
       if (Math.floor(nextBallSave * 10) !== Math.floor(hudRef.current.ballSave * 10)) {
         commitHud({ ...hudRef.current, ballSave: nextBallSave });
       }
 
-      if (world.ball.position.y > PINBALL_HEIGHT + 28) {
+      if (ball.y > PINBALL_HEIGHT + 18) {
         if (hudRef.current.ballSave > 0) {
-          resetBall(world);
+          ballRef.current = createBall();
           chargeRef.current = 0;
-          commitHud({
-            ...hudRef.current,
-            charge: 0,
-            combo: 1,
-            ballSave: Math.max(3, hudRef.current.ballSave),
-          });
+          commitHud({ ...hudRef.current, charge: 0, combo: 1, ballSave: 4 });
         } else {
           const nextLives = hudRef.current.lives - 1;
-          resetBall(world);
+          ballRef.current = createBall();
           chargeRef.current = 0;
           commitHud({
             ...hudRef.current,
@@ -613,13 +524,13 @@ export function PinballGame() {
             phase: nextLives <= 0 ? "game-over" : "playing",
             charge: 0,
             combo: 1,
-            ballSave: nextLives <= 0 ? 0 : PINBALL_BALL_SAVE_SECONDS * 0.65,
+            ballSave: nextLives <= 0 ? 0 : 6,
           });
         }
       }
     }
 
-    renderCurrentState();
+    drawPinballScene(context, ballRef.current, hudRef.current, leftActive, rightActive);
   });
 
   return (
@@ -636,7 +547,13 @@ export function PinballGame() {
         actions={
           <>
             <GameButton variant="primary" onClick={startGame}>
-              {hudState.phase === "game-over" ? "Restart" : "Start"}
+              {hudState.phase === "playing"
+                ? "Playing"
+                : hudState.phase === "paused"
+                  ? "Resume"
+                  : hudState.phase === "game-over"
+                    ? "Restart"
+                    : "Start"}
             </GameButton>
             <GameButton onClick={togglePause}>
               {hudState.phase === "paused" ? "Resume" : "Pause"}
