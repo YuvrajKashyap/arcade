@@ -18,6 +18,12 @@ import {
   readStoredNumber,
   writeStoredNumber,
 } from "@/features/games/shared/utils/local-storage";
+import {
+  GameButton,
+  GameHud,
+  GamePanel,
+  GameStatus,
+} from "@/features/games/shared/components/game-ui";
 
 function getPhaseCopy(phase: ReactionPhase) {
   if (phase === "waiting") {
@@ -170,23 +176,28 @@ export function ReactionTimeGame() {
       : null;
 
   return (
-    <div className="flex flex-col gap-6 text-foreground">
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-foreground-soft">
-        <span>
-          Best <strong className="ml-1 text-foreground">{bestTime > 0 ? `${bestTime} ms` : "No best yet"}</strong>
-        </span>
-        <span>
-          Last <strong className="ml-1 text-foreground">{lastResult ? `${lastResult} ms` : "Waiting"}</strong>
-        </span>
-        <span>
-          Average <strong className="ml-1 text-foreground">{averageTime ? `${averageTime} ms` : "No rounds yet"}</strong>
-        </span>
-      </div>
+    <GamePanel>
+      <GameHud
+        items={[
+          { label: "Best", value: bestTime > 0 ? `${bestTime} ms` : "None" },
+          { label: "Last", value: lastResult ? `${lastResult} ms` : "Waiting" },
+          { label: "Average", value: averageTime ? `${averageTime} ms` : "None" },
+          { label: "Status", value: phase },
+        ]}
+        actions={
+          <>
+            <GameButton variant="primary" onClick={handlePrimaryAction}>
+              {phase === "idle" ? "Start" : "Next"}
+            </GameButton>
+            <GameButton onClick={resetSession}>Reset</GameButton>
+          </>
+        }
+      />
 
       <button
         type="button"
         onClick={handlePrimaryAction}
-        className={`min-h-[28rem] rounded-[1.75rem] border px-6 py-10 text-center text-foreground ${getStageClasses(phase)}`}
+        className={`min-h-[28rem] rounded-[1.4rem] border px-6 py-10 text-center text-foreground shadow-[0_28px_80px_rgba(0,0,0,0.3)] ${getStageClasses(phase)}`}
       >
         <p className="text-xs font-medium uppercase tracking-[0.28em] text-foreground-muted">
           Reaction state
@@ -207,23 +218,9 @@ export function ReactionTimeGame() {
         </p>
       </button>
 
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="surface-subtle rounded-[1.5rem] px-5 py-5">
-          <p className="text-xs font-medium uppercase tracking-[0.22em] text-foreground-muted">
-            Controls
-          </p>
-          <p className="mt-3 text-sm leading-7 text-foreground-soft">
-            Space, Enter, click, or tap to start and react. Press R to reset the session.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={resetSession}
-          className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-foreground hover:-translate-y-0.5 hover:bg-surface"
-        >
-          Reset session
-        </button>
-      </div>
+      <GameStatus>
+        Space, Enter, click, or tap to start and react. Press R to reset the session.
+      </GameStatus>
 
       <div className="flex flex-wrap gap-3">
         {deferredAttempts.length > 0 ? (
@@ -241,6 +238,6 @@ export function ReactionTimeGame() {
           </div>
         )}
       </div>
-    </div>
+    </GamePanel>
   );
 }
