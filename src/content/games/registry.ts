@@ -136,6 +136,147 @@ export const gameCatalog = [
     libraryOrder: 4,
     relatedSlugs: ["reaction-time", "snake"],
   },
+  {
+    slug: "pinball",
+    title: "Pinball",
+    shortDescription:
+      "A cabinet-style physics table with flippers, bumpers, plunger charge, lives, and score pressure.",
+    description:
+      "Pinball brings a richer arcade table into the platform with Matter.js physics, responsive flippers, a charged launch lane, bumper scoring, drain pressure, and local best-score tracking. It expands the arcade beyond grid and paddle loops while keeping instant browser play.",
+    thumbnail: "/games/pinball/thumbnail.png",
+    genre: "Arcade",
+    tags: ["Canvas", "Physics", "Score Loop", "Keyboard", "Touch"],
+    controls: {
+      summary:
+        "A/D or left/right arrows fire the flippers. Hold Space or Down to charge the plunger. Press S to start and P to pause.",
+      items: [
+        { label: "Left flipper", action: "A or Arrow Left" },
+        { label: "Right flipper", action: "D or Arrow Right" },
+        { label: "Plunger", action: "Hold Space or Arrow Down" },
+        { label: "Start", action: "S or on-screen Start" },
+        { label: "Pause", action: "P" },
+        { label: "Touch", action: "On-screen flipper and plunge controls" },
+      ],
+    },
+    difficulty: "medium",
+    sessionLength: "3-8 min",
+    releaseDate: "2026-04-27",
+    status: "live",
+    featured: true,
+    published: true,
+    supports: ["keyboard", "touch"],
+    mobileSupport: "desktop-best",
+    version: "1.0.0",
+    developerNotes:
+      "Pinball uses Matter.js inside the client-only game component so physics never enters the server component graph.",
+    libraryOrder: 5,
+    featurePriority: 3,
+    relatedSlugs: ["breakout", "pong"],
+  },
+  {
+    slug: "breakout",
+    title: "Breakout",
+    shortDescription:
+      "A three-level brick breaker with paddle angles, lives, best score, and a wide-paddle powerup.",
+    description:
+      "Breakout extends the paddle-and-ball foundation with level progression, durable bricks, score routing, lives, pointer movement, touch controls, and a catchable wide-paddle capsule. It is quick to learn but rewards sharper rebound control.",
+    thumbnail: "/games/breakout/thumbnail.png",
+    genre: "Arcade",
+    tags: ["Canvas", "Collision", "Powerups", "Score Loop"],
+    controls: {
+      summary:
+        "Move with A/D, arrow keys, mouse, or touch. Space starts the serve and P pauses.",
+      items: [
+        { label: "Move paddle", action: "A/D, Arrow Left/Right, mouse, or touch" },
+        { label: "Start / Restart", action: "Space or Start" },
+        { label: "Pause", action: "P" },
+        { label: "Touch", action: "On-screen left, serve, and right controls" },
+      ],
+    },
+    difficulty: "medium",
+    sessionLength: "3-6 min",
+    releaseDate: "2026-04-27",
+    status: "live",
+    featured: true,
+    published: true,
+    supports: ["keyboard", "mouse", "touch"],
+    mobileSupport: "full",
+    version: "1.0.0",
+    developerNotes:
+      "Breakout reuses the shared canvas loop while adding pointer-targeted paddle control and local best-score persistence.",
+    libraryOrder: 6,
+    featurePriority: 4,
+    relatedSlugs: ["pinball", "pong"],
+  },
+  {
+    slug: "asteroids",
+    title: "Asteroids",
+    shortDescription:
+      "Ship inertia, screen wrap, shooting, splitting rocks, waves, lives, and local high-score chasing.",
+    description:
+      "Asteroids adds momentum-based flight and projectile combat to the arcade. Rotate through drifting rock fields, break large asteroids into smaller threats, survive escalating waves, and protect your remaining ships.",
+    thumbnail: "/games/asteroids/thumbnail.png",
+    genre: "Arcade",
+    tags: ["Canvas", "Inertia", "Shooting", "Waves", "Keyboard"],
+    controls: {
+      summary:
+        "A/D or arrows rotate, W or Arrow Up thrusts, Space fires, and P pauses.",
+      items: [
+        { label: "Rotate", action: "A/D or Arrow Left/Right" },
+        { label: "Thrust", action: "W or Arrow Up" },
+        { label: "Fire", action: "Space" },
+        { label: "Pause", action: "P" },
+        { label: "Touch", action: "On-screen turn, thrust, and fire controls" },
+      ],
+    },
+    difficulty: "hard",
+    sessionLength: "4-8 min",
+    releaseDate: "2026-04-27",
+    status: "live",
+    featured: false,
+    published: true,
+    supports: ["keyboard", "touch"],
+    mobileSupport: "partial",
+    version: "1.0.0",
+    developerNotes:
+      "The wave system is intentionally deterministic in shape but still uses varied asteroid entry points and velocities for replayability.",
+    libraryOrder: 7,
+    relatedSlugs: ["pinball", "breakout"],
+  },
+  {
+    slug: "minesweeper",
+    title: "Minesweeper",
+    shortDescription:
+      "A clean minefield puzzle with three board sizes, protected first reveal, flags, timer, and best times.",
+    description:
+      "Minesweeper gives the arcade a slower tactical puzzle. Choose a board size, reveal safe regions, flag suspected mines, and race your local best time without leaving the same instant-play game shell.",
+    thumbnail: "/games/minesweeper/thumbnail.png",
+    genre: "Puzzle",
+    tags: ["Puzzle", "Grid", "Timing", "Mouse", "Touch"],
+    controls: {
+      summary:
+        "Click or tap to reveal, right-click or flag mode to mark mines, F flags the focused cell, and R restarts.",
+      items: [
+        { label: "Reveal", action: "Click, tap, Enter, or Space" },
+        { label: "Flag", action: "Right-click, long-press, Flag Mode, or F" },
+        { label: "Move focus", action: "Arrow keys or WASD" },
+        { label: "Restart", action: "R or Restart" },
+      ],
+    },
+    difficulty: "medium",
+    sessionLength: "2-10 min",
+    releaseDate: "2026-04-27",
+    status: "live",
+    featured: false,
+    published: true,
+    supports: ["keyboard", "mouse", "touch"],
+    mobileSupport: "full",
+    version: "1.0.0",
+    developerNotes:
+      "Minesweeper stays DOM-based to support keyboard focus, right-click flagging, long-press flagging, and responsive board layouts.",
+    libraryOrder: 8,
+    relatedSlugs: ["tic-tac-toe", "reaction-time"],
+  },
 ] satisfies readonly GameCatalogEntry[];
 
 export type GameSlug = (typeof gameCatalog)[number]["slug"];

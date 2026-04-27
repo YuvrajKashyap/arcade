@@ -24,9 +24,33 @@ const TicTacToeGame = dynamic(() => import("@/features/games/tic-tac-toe"), {
   loading: GameLoadingState,
 });
 
+const PinballGame = dynamic(() => import("@/features/games/pinball"), {
+  ssr: false,
+  loading: GameLoadingState,
+});
+
+const BreakoutGame = dynamic(() => import("@/features/games/breakout"), {
+  ssr: false,
+  loading: GameLoadingState,
+});
+
+const AsteroidsGame = dynamic(() => import("@/features/games/asteroids"), {
+  ssr: false,
+  loading: GameLoadingState,
+});
+
+const MinesweeperGame = dynamic(() => import("@/features/games/minesweeper"), {
+  ssr: false,
+  loading: GameLoadingState,
+});
+
 export const gameComponentMap: Record<GameSlug, React.ComponentType> = {
   snake: SnakeGame,
   pong: PongGame,
   "reaction-time": ReactionTimeGame,
   "tic-tac-toe": TicTacToeGame,
+  pinball: PinballGame,
+  breakout: BreakoutGame,
+  asteroids: AsteroidsGame,
+  minesweeper: MinesweeperGame,
 };
