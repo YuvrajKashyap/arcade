@@ -37,7 +37,8 @@ type BallTrailPoint = {
 
 const PONG_EFFECT_SECONDS = 0.5;
 const PONG_SCORE_EFFECT_SECONDS = 0.9;
-const PONG_TRAIL_SECONDS = 0.34;
+const PONG_TRAIL_SECONDS = 0.24;
+const PONG_PREVENT_DEFAULT_KEYS = ["w", "s", "arrowup", "arrowdown", " "];
 
 function getStatusCopy(phase: PongPhase, winner: PongState["winner"]) {
   if (phase === "finished") {
@@ -89,11 +90,11 @@ function drawPongArena(
   context.fillRect(0, 0, PONG_WIDTH, PONG_HEIGHT);
 
   context.save();
-  context.globalAlpha = 0.18;
+  context.globalAlpha = 0.12;
   context.strokeStyle = "#6ee7ff";
   context.lineWidth = 1;
-  for (let y = 46; y < PONG_HEIGHT; y += 34) {
-    const sway = Math.sin(elapsedSeconds * 0.9 + y * 0.02) * 10;
+  for (let y = 54; y < PONG_HEIGHT; y += 48) {
+    const sway = Math.sin(elapsedSeconds * 0.7 + y * 0.02) * 6;
     context.beginPath();
     context.moveTo(0, y + sway);
     context.lineTo(PONG_WIDTH, y - sway);
@@ -102,7 +103,7 @@ function drawPongArena(
   context.restore();
 
   context.save();
-  context.shadowBlur = 28;
+  context.shadowBlur = 18;
   context.shadowColor = "rgba(110, 231, 255, 0.58)";
   context.strokeStyle = "rgba(110, 231, 255, 0.72)";
   context.lineWidth = 4;
@@ -111,7 +112,7 @@ function drawPongArena(
   context.restore();
 
   context.save();
-  context.shadowBlur = 18;
+  context.shadowBlur = 10;
   context.shadowColor = "rgba(168, 85, 247, 0.7)";
   context.strokeStyle = "rgba(168, 85, 247, 0.72)";
   context.lineWidth = 3;
@@ -131,7 +132,7 @@ function drawScore(context: CanvasRenderingContext2D, state: PongState) {
   context.save();
   context.textAlign = "center";
   context.font = "800 58px sans-serif";
-  context.shadowBlur = 18;
+  context.shadowBlur = 10;
   context.shadowColor = "rgba(110, 231, 255, 0.45)";
   context.fillStyle = "rgba(236, 253, 255, 0.92)";
   context.fillText(String(state.playerScore), PONG_WIDTH / 2 - 56, 74);
@@ -148,7 +149,7 @@ function drawPaddle(
   glow: string,
 ) {
   context.save();
-  context.shadowBlur = 26;
+  context.shadowBlur = 16;
   context.shadowColor = glow;
 
   const paddleGradient = context.createLinearGradient(
@@ -189,9 +190,9 @@ function drawBallTrail(
     const radius = PONG_BALL_RADIUS * (1.2 - progress * 0.55);
 
     context.save();
-    context.globalAlpha = alpha * 0.42;
+    context.globalAlpha = alpha * 0.32;
     context.fillStyle = "#ff9f5a";
-    context.shadowBlur = 18 + point.speed * 0.02;
+    context.shadowBlur = 9 + point.speed * 0.01;
     context.shadowColor = "rgba(255, 130, 74, 0.85)";
     context.beginPath();
     context.arc(point.x, point.y, radius, 0, Math.PI * 2);
@@ -216,7 +217,7 @@ function drawBall(context: CanvasRenderingContext2D, state: PongState) {
   glow.addColorStop(1, "rgba(255, 92, 59, 0)");
 
   context.save();
-  context.shadowBlur = 28 + speed * 0.025;
+  context.shadowBlur = 18 + speed * 0.012;
   context.shadowColor = "rgba(255, 122, 72, 0.95)";
   context.fillStyle = glow;
   context.beginPath();
@@ -243,7 +244,7 @@ function drawPongEffects(
 
     context.save();
     context.globalAlpha = alpha;
-    context.shadowBlur = 20;
+  context.shadowBlur = 12;
 
     if (effect.type === "score") {
       context.strokeStyle =
@@ -442,7 +443,7 @@ export function PongGame() {
   const elapsedSecondsRef = useRef(0);
   const touchDirectionRef = useRef(0);
   const pressedKeysRef = useKeyboardState({
-    preventDefaultKeys: ["w", "s", "arrowup", "arrowdown", " "],
+    preventDefaultKeys: PONG_PREVENT_DEFAULT_KEYS,
   });
   const [hudState, setHudState] = useState(() => ({
     playerScore: 0,
@@ -450,15 +451,28 @@ export function PongGame() {
     phase: "idle" as PongPhase,
     winner: null as PongState["winner"],
   }));
+  const hudStateRef = useRef(hudState);
 
   function syncState(nextState: PongState) {
     stateRef.current = nextState;
-    setHudState({
+    const currentHudState = hudStateRef.current;
+    if (
+      currentHudState.playerScore === nextState.playerScore &&
+      currentHudState.aiScore === nextState.aiScore &&
+      currentHudState.phase === nextState.phase &&
+      currentHudState.winner === nextState.winner
+    ) {
+      return;
+    }
+
+    const nextHudState = {
       playerScore: nextState.playerScore,
       aiScore: nextState.aiScore,
       phase: nextState.phase,
       winner: nextState.winner,
-    });
+    };
+    hudStateRef.current = nextHudState;
+    setHudState(nextHudState);
   }
 
   function renderCurrentState(elapsedSeconds = elapsedSecondsRef.current) {
@@ -572,7 +586,7 @@ export function PongGame() {
         age: 0,
         speed: Math.hypot(nextState.ball.vx, nextState.ball.vy),
       });
-      ballTrailRef.current = ballTrailRef.current.slice(0, 18);
+      ballTrailRef.current = ballTrailRef.current.slice(0, 9);
     }
 
     renderCurrentState(elapsedSecondsRef.current);
