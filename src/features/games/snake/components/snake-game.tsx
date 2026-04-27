@@ -264,7 +264,7 @@ function drawSnakeBody(
   context.lineCap = "round";
   context.lineJoin = "round";
   context.shadowBlur = 22;
-  context.shadowColor = "rgba(43, 232, 179, 0.55)";
+  context.shadowColor = "rgba(91, 255, 126, 0.55)";
 
   if (points.length > 1) {
     context.beginPath();
@@ -283,12 +283,12 @@ function drawSnakeBody(
 
     const tailPoint = points[points.length - 1];
     context.lineTo(tailPoint.x, tailPoint.y);
-    context.strokeStyle = "#19d3a2";
+    context.strokeStyle = "#24d95f";
     context.lineWidth = SNAKE_CELL_SIZE * 0.82;
     context.stroke();
 
     context.shadowBlur = 0;
-    context.strokeStyle = "rgba(225, 255, 244, 0.34)";
+    context.strokeStyle = "rgba(226, 255, 219, 0.4)";
     context.lineWidth = SNAKE_CELL_SIZE * 0.24;
     context.stroke();
   }
@@ -304,9 +304,9 @@ function drawSnakeBody(
       point.y,
       radius,
     );
-    segmentGradient.addColorStop(0, "#b9ffe8");
-    segmentGradient.addColorStop(0.22, "#38edba");
-    segmentGradient.addColorStop(1, "#087c74");
+    segmentGradient.addColorStop(0, "#d7ffb8");
+    segmentGradient.addColorStop(0.22, "#5cff74");
+    segmentGradient.addColorStop(1, "#128737");
 
     context.fillStyle = segmentGradient;
     context.beginPath();
@@ -325,38 +325,77 @@ function drawSnakeHead(
 ) {
   const vector = getDirectionVector(direction);
   const sideVector = { x: -vector.y, y: vector.x };
-  const headRadius = SNAKE_CELL_SIZE * 0.53;
-  const faceX = head.x + vector.x * headRadius * 0.2;
-  const faceY = head.y + vector.y * headRadius * 0.2;
+  const headLength = SNAKE_CELL_SIZE * 1.14;
+  const headWidth = SNAKE_CELL_SIZE * 0.78;
+  const snoutX = head.x + vector.x * headLength * 0.46;
+  const snoutY = head.y + vector.y * headLength * 0.46;
+  const jawX = head.x - vector.x * headLength * 0.32;
+  const jawY = head.y - vector.y * headLength * 0.32;
 
   context.save();
   context.shadowBlur = 24;
-  context.shadowColor = "rgba(255, 209, 102, 0.54)";
+  context.shadowColor = "rgba(102, 255, 116, 0.58)";
   const headGradient = context.createRadialGradient(
-    head.x - 5,
-    head.y - 7,
+    head.x - sideVector.x * 5 - vector.x * 4,
+    head.y - sideVector.y * 5 - vector.y * 4,
     2,
     head.x,
     head.y,
-    headRadius,
+    headLength,
   );
-  headGradient.addColorStop(0, "#fff2b8");
-  headGradient.addColorStop(0.48, "#ffd166");
-  headGradient.addColorStop(1, "#d69320");
+  headGradient.addColorStop(0, "#ddffaf");
+  headGradient.addColorStop(0.46, "#55ef63");
+  headGradient.addColorStop(1, "#137f32");
   context.fillStyle = headGradient;
   context.beginPath();
-  context.arc(head.x, head.y, headRadius, 0, Math.PI * 2);
+  context.moveTo(snoutX, snoutY);
+  context.quadraticCurveTo(
+    head.x + sideVector.x * headWidth * 0.48,
+    head.y + sideVector.y * headWidth * 0.48,
+    jawX + sideVector.x * headWidth * 0.34,
+    jawY + sideVector.y * headWidth * 0.34,
+  );
+  context.quadraticCurveTo(
+    head.x - vector.x * headLength * 0.04,
+    head.y - vector.y * headLength * 0.04,
+    jawX - sideVector.x * headWidth * 0.34,
+    jawY - sideVector.y * headWidth * 0.34,
+  );
+  context.quadraticCurveTo(
+    head.x - sideVector.x * headWidth * 0.48,
+    head.y - sideVector.y * headWidth * 0.48,
+    snoutX,
+    snoutY,
+  );
+  context.closePath();
   context.fill();
 
   context.shadowBlur = 0;
+  context.strokeStyle = "rgba(220, 255, 196, 0.4)";
+  context.lineWidth = 1.4;
+  context.stroke();
+
   context.fillStyle = "#06101d";
   [-1, 1].forEach((side) => {
     const eyeX =
-      faceX + sideVector.x * side * headRadius * 0.34 + vector.x * 2;
+      head.x + vector.x * headLength * 0.2 + sideVector.x * side * headWidth * 0.26;
     const eyeY =
-      faceY + sideVector.y * side * headRadius * 0.34 + vector.y * 2;
+      head.y + vector.y * headLength * 0.2 + sideVector.y * side * headWidth * 0.26;
     context.beginPath();
-    context.arc(eyeX, eyeY, 2.8, 0, Math.PI * 2);
+    context.ellipse(eyeX, eyeY, 2.3, 3.5, Math.atan2(vector.y, vector.x), 0, Math.PI * 2);
+    context.fill();
+  });
+
+  context.fillStyle = "rgba(4, 32, 18, 0.72)";
+  [-1, 1].forEach((side) => {
+    context.beginPath();
+    context.arc(
+      snoutX - vector.x * 4 + sideVector.x * side * 3,
+      snoutY - vector.y * 4 + sideVector.y * side * 3,
+      1.3,
+      0,
+      Math.PI * 2,
+    );
     context.fill();
   });
 
@@ -364,10 +403,10 @@ function drawSnakeHead(
     context.strokeStyle = "#ff6482";
     context.lineWidth = 2;
     context.lineCap = "round";
-    const tongueStartX = head.x + vector.x * headRadius * 0.76;
-    const tongueStartY = head.y + vector.y * headRadius * 0.76;
-    const tongueEndX = head.x + vector.x * headRadius * 1.24;
-    const tongueEndY = head.y + vector.y * headRadius * 1.24;
+    const tongueStartX = snoutX + vector.x * 1.5;
+    const tongueStartY = snoutY + vector.y * 1.5;
+    const tongueEndX = snoutX + vector.x * SNAKE_CELL_SIZE * 0.42;
+    const tongueEndY = snoutY + vector.y * SNAKE_CELL_SIZE * 0.42;
 
     context.beginPath();
     context.moveTo(tongueStartX, tongueStartY);
