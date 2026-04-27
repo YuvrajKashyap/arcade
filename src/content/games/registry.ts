@@ -5,12 +5,12 @@ export const gameCatalog = [
     slug: "snake",
     title: "Snake",
     shortDescription:
-      "Classic grid pressure with crisp controls, score chase tension, and instant restart flow.",
+      "A smooth animated snake run with arcade lighting, expressive motion, and instant score-chase flow.",
     description:
-      "Guide a growing snake across a tight grid, chain food pickups, and protect your line as the board closes in. Snake validates the platform's Canvas loop, grid logic, collision rules, and restart flow while still feeling polished enough to stand on its own.",
+      "Guide a living neon snake through a polished arcade arena, chain glowing food pickups, and protect your tail as the run accelerates. Snake keeps the classic collision rules underneath while using interpolated Canvas animation, character styling, and pickup effects to feel like a real game.",
     thumbnail: "/games/snake/thumbnail.png",
     genre: "Arcade",
-    tags: ["Canvas", "Grid", "High Score", "Keyboard"],
+    tags: ["Canvas", "Animation", "High Score", "Keyboard"],
     controls: {
       summary: "Arrow keys or WASD move. Space starts or restarts the run.",
       items: [
@@ -30,7 +30,7 @@ export const gameCatalog = [
     mobileSupport: "partial",
     version: "1.0.0",
     developerNotes:
-      "The game loop is intentionally lightweight: local state, Canvas rendering, and shared utility hooks instead of a heavyweight engine layer.",
+      "The rule engine remains grid-based for clean collisions and scoring, while the Canvas renderer interpolates movement and draws the snake as a polished animated character.",
     libraryOrder: 1,
     featurePriority: 1,
     relatedSlugs: ["pong", "reaction-time"],
