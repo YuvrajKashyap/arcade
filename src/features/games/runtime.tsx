@@ -44,6 +44,16 @@ const MinesweeperGame = dynamic(() => import("@/features/games/minesweeper"), {
   loading: GameLoadingState,
 });
 
+const TwentyFortyEightGame = dynamic(() => import("@/features/games/2048"), {
+  ssr: false,
+  loading: GameLoadingState,
+});
+
+const DoodleJumpGame = dynamic(() => import("@/features/games/doodle-jump"), {
+  ssr: false,
+  loading: GameLoadingState,
+});
+
 export const gameComponentMap: Record<GameSlug, React.ComponentType> = {
   snake: SnakeGame,
   pong: PongGame,
@@ -53,4 +63,6 @@ export const gameComponentMap: Record<GameSlug, React.ComponentType> = {
   breakout: BreakoutGame,
   asteroids: AsteroidsGame,
   minesweeper: MinesweeperGame,
+  "2048": TwentyFortyEightGame,
+  "doodle-jump": DoodleJumpGame,
 };

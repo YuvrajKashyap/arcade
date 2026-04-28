@@ -277,6 +277,73 @@ export const gameCatalog = [
     libraryOrder: 8,
     relatedSlugs: ["tic-tac-toe", "reaction-time"],
   },
+  {
+    slug: "2048",
+    title: "2048",
+    shortDescription:
+      "A warm cartoon take on 2048 with chunky tiles, swipe controls, local best score, and classic merges.",
+    description:
+      "2048 brings the classic sliding-number puzzle into the arcade with a warm toy-board look, playful tile pops, keyboard and swipe controls, local best-score persistence, and the standard chase to merge up to the 2048 tile.",
+    thumbnail: "/games/2048/thumbnail.png?v=20260428",
+    genre: "Puzzle",
+    tags: ["Puzzle", "Board", "Swipe", "Keyboard", "High Score"],
+    controls: {
+      summary:
+        "Use arrow keys, WASD, or touch swipes to slide the board. R starts a new game.",
+      items: [
+        { label: "Slide", action: "Arrow keys, WASD, or touch swipe" },
+        { label: "Restart", action: "R or New Game" },
+        { label: "Goal", action: "Merge matching tiles up to 2048" },
+      ],
+    },
+    difficulty: "medium",
+    sessionLength: "2-8 min",
+    releaseDate: "2026-04-28",
+    status: "live",
+    featured: false,
+    published: true,
+    supports: ["keyboard", "mouse", "touch"],
+    mobileSupport: "full",
+    version: "1.0.0",
+    developerNotes:
+      "2048 is implemented as a DOM grid with deterministic merge semantics and local best-score persistence.",
+    libraryOrder: 9,
+    relatedSlugs: ["minesweeper", "tic-tac-toe"],
+  },
+  {
+    slug: "doodle-jump",
+    title: "Doodle Jump",
+    shortDescription:
+      "A paper-doodle platform climber with bouncing movement, hand-drawn platforms, and local high scores.",
+    description:
+      "Doodle Jump adds a vertical platformer loop to the arcade: steer a cute jumper across a paper-like playfield, wrap around the sides, bounce from platform to platform, climb for score, and restart instantly when you fall.",
+    thumbnail: "/games/doodle-jump/thumbnail.png?v=20260428",
+    genre: "Platformer",
+    tags: ["Canvas", "Platformer", "Cartoon", "High Score", "Touch"],
+    controls: {
+      summary:
+        "Use A/D or Arrow Left/Right to steer. Space starts or restarts, and P pauses.",
+      items: [
+        { label: "Steer", action: "A/D or Arrow Left/Right" },
+        { label: "Start / Restart", action: "Space or Start" },
+        { label: "Pause", action: "P" },
+        { label: "Touch", action: "On-screen left and right controls" },
+      ],
+    },
+    difficulty: "medium",
+    sessionLength: "3-8 min",
+    releaseDate: "2026-04-28",
+    status: "live",
+    featured: false,
+    published: true,
+    supports: ["keyboard", "touch"],
+    mobileSupport: "full",
+    version: "1.0.0",
+    developerNotes:
+      "Doodle Jump is a self-coded canvas platformer inspired by the genre, with keyboard and touch controls instead of mobile tilt.",
+    libraryOrder: 10,
+    relatedSlugs: ["snake", "asteroids"],
+  },
 ] satisfies readonly GameCatalogEntry[];
 
 export type GameSlug = (typeof gameCatalog)[number]["slug"];
