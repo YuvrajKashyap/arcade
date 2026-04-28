@@ -41,13 +41,15 @@ export const gameCatalog = [
     shortDescription:
       "A neon paddle duel with glowing impacts, smooth ball trails, responsive control, and an AI opponent.",
     description:
-      "Pong turns the classic paddle duel into a premium neon arena with glowing paddles, luminous ball trails, impact sparks, score bursts, and a tuned AI opponent. The match still proves the platform's continuous Canvas loop, collision response, score handling, and instant restart flow.",
+      "Pong turns the classic paddle duel into a premium neon arena with glowing paddles, luminous ball trails, impact sparks, score bursts, and three tuned AI difficulties. The match still proves the platform's continuous Canvas loop, collision response, score handling, and instant restart flow.",
     thumbnail: "/games/pong/thumbnail.png",
     genre: "Arcade",
     tags: ["Canvas", "Neon", "AI", "Score Loop"],
     controls: {
-      summary: "W and S or the arrow keys move your paddle. Space serves and restarts.",
+      summary:
+        "Pick a difficulty, then use W/S or the arrow keys to move. Space serves and restarts.",
       items: [
+        { label: "Difficulty", action: "Easy, Medium, or Difficult" },
         { label: "Move paddle", action: "W / S or Arrow Up / Arrow Down" },
         { label: "Start / Restart", action: "Space" },
         { label: "Pause", action: "P" },
