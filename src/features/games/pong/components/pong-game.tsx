@@ -10,7 +10,11 @@ import {
   PONG_WIDTH,
 } from "@/features/games/pong/config/constants";
 import { createPongState, updatePong } from "@/features/games/pong/logic/game";
-import type { PongPhase, PongState } from "@/features/games/pong/types";
+import type {
+  PongDifficulty,
+  PongPhase,
+  PongState,
+} from "@/features/games/pong/types";
 import { configureHiDPICanvas } from "@/features/games/shared/canvas/configure-canvas";
 import {
   GameButton,
@@ -39,6 +43,27 @@ const PONG_EFFECT_SECONDS = 0.5;
 const PONG_SCORE_EFFECT_SECONDS = 0.9;
 const PONG_TRAIL_SECONDS = 0.24;
 const PONG_PREVENT_DEFAULT_KEYS = ["w", "s", "arrowup", "arrowdown", " "];
+const PONG_DIFFICULTY_OPTIONS: Array<{
+  value: PongDifficulty;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: "easy",
+    label: "Easy",
+    description: "AI cracks after 2-3 returns.",
+  },
+  {
+    value: "medium",
+    label: "Medium",
+    description: "Fair rallies around 8 hits.",
+  },
+  {
+    value: "difficult",
+    label: "Difficult",
+    description: "Long rallies near 25 hits.",
+  },
+];
 
 function getStatusCopy(phase: PongPhase, winner: PongState["winner"]) {
   if (phase === "finished") {
@@ -56,6 +81,18 @@ function getStatusCopy(phase: PongPhase, winner: PongState["winner"]) {
   }
 
   return "Start the match and hold the left paddle against the AI.";
+}
+
+function getDifficultyCopy(difficulty: PongDifficulty) {
+  if (difficulty === "easy") {
+    return "Easy gives you quick openings. The AI should start missing after a short exchange.";
+  }
+
+  if (difficulty === "difficult") {
+    return "Difficult is built for long rallies. The AI holds shape until deep exchanges.";
+  }
+
+  return "Medium keeps the AI beatable, but you still have to build the rally.";
 }
 
 function drawRoundedRect(
@@ -244,7 +281,7 @@ function drawPongEffects(
 
     context.save();
     context.globalAlpha = alpha;
-  context.shadowBlur = 12;
+    context.shadowBlur = 12;
 
     if (effect.type === "score") {
       context.strokeStyle =
@@ -448,6 +485,8 @@ export function PongGame() {
   const [hudState, setHudState] = useState(() => ({
     playerScore: 0,
     aiScore: 0,
+    difficulty: "medium" as PongDifficulty,
+    rallyHits: 0,
     phase: "idle" as PongPhase,
     winner: null as PongState["winner"],
   }));
@@ -459,6 +498,8 @@ export function PongGame() {
     if (
       currentHudState.playerScore === nextState.playerScore &&
       currentHudState.aiScore === nextState.aiScore &&
+      currentHudState.difficulty === nextState.difficulty &&
+      currentHudState.rallyHits === nextState.rallyHits &&
       currentHudState.phase === nextState.phase &&
       currentHudState.winner === nextState.winner
     ) {
@@ -468,6 +509,8 @@ export function PongGame() {
     const nextHudState = {
       playerScore: nextState.playerScore,
       aiScore: nextState.aiScore,
+      difficulty: nextState.difficulty,
+      rallyHits: nextState.rallyHits,
       phase: nextState.phase,
       winner: nextState.winner,
     };
@@ -494,9 +537,17 @@ export function PongGame() {
     effectsRef.current = [];
     ballTrailRef.current = [];
     const nextState = {
-      ...createPongState(),
+      ...createPongState(stateRef.current.difficulty),
       phase: "playing" as const,
     };
+    syncState(nextState);
+    renderCurrentState();
+  }
+
+  function selectDifficulty(difficulty: PongDifficulty) {
+    effectsRef.current = [];
+    ballTrailRef.current = [];
+    const nextState = createPongState(difficulty);
     syncState(nextState);
     renderCurrentState();
   }
@@ -598,6 +649,7 @@ export function PongGame() {
         items={[
           { label: "Player", value: hudState.playerScore },
           { label: "AI", value: hudState.aiScore },
+          { label: "Rally", value: hudState.rallyHits },
           { label: "Status", value: hudState.phase },
         ]}
         actions={
@@ -611,6 +663,41 @@ export function PongGame() {
           </>
         }
       />
+
+      <div className="rounded-[1.35rem] border border-line bg-surface px-4 py-3 shadow-[0_18px_60px_rgba(0,0,0,0.2)]">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-foreground-muted">
+              Difficulty
+            </p>
+            <p className="mt-1 text-sm text-foreground-soft">
+              {getDifficultyCopy(hudState.difficulty)}
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-2 rounded-full border border-line bg-background-strong p-1">
+            {PONG_DIFFICULTY_OPTIONS.map((option) => {
+              const isSelected = hudState.difficulty === option.value;
+
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => selectDifficulty(option.value)}
+                  aria-pressed={isSelected}
+                  title={option.description}
+                  className={`rounded-full px-3 py-2 text-sm font-bold transition ${
+                    isSelected
+                      ? "bg-accent text-background shadow-[0_0_24px_rgba(168,85,247,0.35)]"
+                      : "text-foreground-muted hover:bg-surface hover:text-foreground"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
 
       <GamePlayfield className="mx-auto aspect-[12/7] w-full">
         <canvas ref={canvasRef} className="h-full w-full" aria-label="Pong match" />
