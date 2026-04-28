@@ -119,19 +119,78 @@ function getDirectionVector(direction: SnakeDirection) {
 
 function drawArena(context: CanvasRenderingContext2D) {
   const backgroundGradient = context.createRadialGradient(
+    SNAKE_CANVAS_SIZE * 0.45,
+    SNAKE_CANVAS_SIZE * 0.36,
+    SNAKE_CANVAS_SIZE * 0.08,
     SNAKE_CANVAS_SIZE * 0.5,
-    SNAKE_CANVAS_SIZE * 0.42,
-    SNAKE_CANVAS_SIZE * 0.05,
-    SNAKE_CANVAS_SIZE * 0.5,
-    SNAKE_CANVAS_SIZE * 0.5,
-    SNAKE_CANVAS_SIZE * 0.72,
+    SNAKE_CANVAS_SIZE * 0.54,
+    SNAKE_CANVAS_SIZE * 0.78,
   );
-  backgroundGradient.addColorStop(0, "#11243b");
-  backgroundGradient.addColorStop(0.62, "#081522");
-  backgroundGradient.addColorStop(1, "#030712");
+  backgroundGradient.addColorStop(0, "#eaffbd");
+  backgroundGradient.addColorStop(0.58, "#9ce669");
+  backgroundGradient.addColorStop(1, "#53bd58");
 
   context.fillStyle = backgroundGradient;
   context.fillRect(0, 0, SNAKE_CANVAS_SIZE, SNAKE_CANVAS_SIZE);
+
+  context.fillStyle = "rgba(255, 255, 255, 0.16)";
+  for (let y = 28; y < SNAKE_CANVAS_SIZE; y += 56) {
+    context.beginPath();
+    context.moveTo(0, y);
+    context.bezierCurveTo(
+      SNAKE_CANVAS_SIZE * 0.25,
+      y - 16,
+      SNAKE_CANVAS_SIZE * 0.66,
+      y + 18,
+      SNAKE_CANVAS_SIZE,
+      y - 5,
+    );
+    context.lineTo(SNAKE_CANVAS_SIZE, y + 18);
+    context.bezierCurveTo(
+      SNAKE_CANVAS_SIZE * 0.66,
+      y + 40,
+      SNAKE_CANVAS_SIZE * 0.25,
+      y + 8,
+      0,
+      y + 24,
+    );
+    context.closePath();
+    context.fill();
+  }
+
+  for (const flower of [
+    { x: 58, y: 72, color: "#ff7bbd" },
+    { x: 380, y: 86, color: "#ffe166" },
+    { x: 76, y: 356, color: "#7bdcff" },
+    { x: 405, y: 386, color: "#ff9671" },
+  ]) {
+    context.save();
+    context.translate(flower.x, flower.y);
+    context.fillStyle = flower.color;
+    for (let index = 0; index < 5; index += 1) {
+      context.rotate((Math.PI * 2) / 5);
+      context.beginPath();
+      context.ellipse(0, -7, 4, 8, 0, 0, Math.PI * 2);
+      context.fill();
+    }
+    context.fillStyle = "#6a4b1b";
+    context.beginPath();
+    context.arc(0, 0, 3, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
+  }
+
+  context.lineWidth = 10;
+  context.strokeStyle = "#2f8f38";
+  context.beginPath();
+  context.roundRect(8, 8, SNAKE_CANVAS_SIZE - 16, SNAKE_CANVAS_SIZE - 16, 28);
+  context.stroke();
+
+  context.lineWidth = 4;
+  context.strokeStyle = "rgba(255,255,255,0.58)";
+  context.beginPath();
+  context.roundRect(16, 16, SNAKE_CANVAS_SIZE - 32, SNAKE_CANVAS_SIZE - 32, 22);
+  context.stroke();
 }
 
 function drawFood(
@@ -151,9 +210,9 @@ function drawFood(
     center.y,
     glowRadius,
   );
-  glow.addColorStop(0, "rgba(255, 126, 76, 0.78)");
-  glow.addColorStop(0.46, "rgba(255, 70, 86, 0.24)");
-  glow.addColorStop(1, "rgba(255, 70, 86, 0)");
+  glow.addColorStop(0, "rgba(255, 255, 255, 0.72)");
+  glow.addColorStop(0.38, "rgba(255, 101, 81, 0.28)");
+  glow.addColorStop(1, "rgba(255, 101, 81, 0)");
 
   context.fillStyle = glow;
   context.beginPath();
@@ -162,8 +221,8 @@ function drawFood(
 
   context.save();
   context.shadowBlur = 18;
-  context.shadowColor = "rgba(255, 92, 59, 0.85)";
-  context.fillStyle = "#ff6b3d";
+  context.shadowColor = "rgba(255, 91, 75, 0.48)";
+  context.fillStyle = "#ff4f46";
   context.beginPath();
   context.ellipse(
     center.x,
@@ -176,6 +235,19 @@ function drawFood(
   );
   context.fill();
   context.restore();
+
+  context.fillStyle = "rgba(255,255,255,0.58)";
+  context.beginPath();
+  context.ellipse(center.x - 5, center.y - 6, 4, 6, Math.PI * 0.72, 0, Math.PI * 2);
+  context.fill();
+
+  context.strokeStyle = "#6f3d17";
+  context.lineWidth = 3;
+  context.lineCap = "round";
+  context.beginPath();
+  context.moveTo(center.x, center.y - 10);
+  context.lineTo(center.x + 4, center.y - 16);
+  context.stroke();
 
   context.fillStyle = "#35e1a2";
   context.beginPath();
@@ -202,7 +274,7 @@ function drawPickupEffects(
 
     context.save();
     context.globalAlpha = alpha;
-    context.strokeStyle = "#ffd166";
+    context.strokeStyle = "#fff07a";
     context.lineWidth = 3 * alpha + 1;
     context.shadowBlur = 18;
     context.shadowColor = "rgba(255, 209, 102, 0.8)";
@@ -224,8 +296,8 @@ function drawSnakeBody(
   context.save();
   context.lineCap = "round";
   context.lineJoin = "round";
-  context.shadowBlur = 22;
-  context.shadowColor = "rgba(91, 255, 126, 0.55)";
+  context.shadowBlur = 16;
+  context.shadowColor = "rgba(50, 130, 34, 0.35)";
 
   if (points.length > 1) {
     context.beginPath();
@@ -244,13 +316,13 @@ function drawSnakeBody(
 
     const tailPoint = points[points.length - 1];
     context.lineTo(tailPoint.x, tailPoint.y);
-    context.strokeStyle = "#24d95f";
-    context.lineWidth = SNAKE_CELL_SIZE * 0.82;
+    context.strokeStyle = "#41c94b";
+    context.lineWidth = SNAKE_CELL_SIZE * 0.9;
     context.stroke();
 
     context.shadowBlur = 0;
-    context.strokeStyle = "rgba(226, 255, 219, 0.4)";
-    context.lineWidth = SNAKE_CELL_SIZE * 0.24;
+    context.strokeStyle = "rgba(255, 255, 210, 0.48)";
+    context.lineWidth = SNAKE_CELL_SIZE * 0.22;
     context.stroke();
   }
 
@@ -265,9 +337,9 @@ function drawSnakeBody(
       point.y,
       radius,
     );
-    segmentGradient.addColorStop(0, "#d7ffb8");
-    segmentGradient.addColorStop(0.22, "#5cff74");
-    segmentGradient.addColorStop(1, "#128737");
+    segmentGradient.addColorStop(0, "#f4ffb7");
+    segmentGradient.addColorStop(0.28, "#73de53");
+    segmentGradient.addColorStop(1, "#248932");
 
     context.fillStyle = segmentGradient;
     context.beginPath();
@@ -285,15 +357,15 @@ function drawSnakeHead(
 ) {
   const vector = getDirectionVector(direction);
   const sideVector = { x: -vector.y, y: vector.x };
-  const headLength = SNAKE_CELL_SIZE * 0.96;
-  const headWidth = SNAKE_CELL_SIZE * 0.78;
+  const headLength = SNAKE_CELL_SIZE * 0.9;
+  const headWidth = SNAKE_CELL_SIZE * 0.84;
   const headCenterX = head.x + vector.x * SNAKE_CELL_SIZE * 0.1;
   const headCenterY = head.y + vector.y * SNAKE_CELL_SIZE * 0.1;
   const headAngle = Math.atan2(vector.y, vector.x);
 
   context.save();
-  context.shadowBlur = 24;
-  context.shadowColor = "rgba(102, 255, 116, 0.58)";
+  context.shadowBlur = 16;
+  context.shadowColor = "rgba(50, 130, 34, 0.34)";
   const headGradient = context.createRadialGradient(
     headCenterX - sideVector.x * 5 - vector.x * 4,
     headCenterY - sideVector.y * 5 - vector.y * 4,
@@ -302,16 +374,16 @@ function drawSnakeHead(
     headCenterY,
     headLength,
   );
-  headGradient.addColorStop(0, "#ddffaf");
-  headGradient.addColorStop(0.46, "#55ef63");
-  headGradient.addColorStop(1, "#137f32");
+  headGradient.addColorStop(0, "#efffa9");
+  headGradient.addColorStop(0.46, "#65d94b");
+  headGradient.addColorStop(1, "#238537");
   context.fillStyle = headGradient;
   context.beginPath();
   context.ellipse(
     headCenterX,
     headCenterY,
     headLength * 0.52,
-    headWidth * 0.48,
+    headWidth * 0.5,
     headAngle,
     0,
     Math.PI * 2,
@@ -319,9 +391,22 @@ function drawSnakeHead(
   context.fill();
 
   context.shadowBlur = 0;
-  context.strokeStyle = "rgba(220, 255, 196, 0.4)";
-  context.lineWidth = 1.4;
+  context.strokeStyle = "#236c2d";
+  context.lineWidth = 2.5;
   context.stroke();
+
+  context.fillStyle = "rgba(255,255,204,0.52)";
+  context.beginPath();
+  context.ellipse(
+    headCenterX - vector.x * 3 - sideVector.x * 4,
+    headCenterY - vector.y * 3 - sideVector.y * 4,
+    headLength * 0.2,
+    headWidth * 0.11,
+    headAngle,
+    0,
+    Math.PI * 2,
+  );
+  context.fill();
 
   context.fillStyle = "#06101d";
   [-1, 1].forEach((side) => {
@@ -334,8 +419,13 @@ function drawSnakeHead(
       vector.y * headLength * 0.18 +
       sideVector.y * side * headWidth * 0.24;
     context.beginPath();
-    context.ellipse(eyeX, eyeY, 2.3, 3.5, headAngle, 0, Math.PI * 2);
+    context.ellipse(eyeX, eyeY, 3.2, 4.3, headAngle, 0, Math.PI * 2);
     context.fill();
+    context.fillStyle = "#ffffff";
+    context.beginPath();
+    context.arc(eyeX - vector.x * 0.8, eyeY - vector.y * 0.8, 1.1, 0, Math.PI * 2);
+    context.fill();
+    context.fillStyle = "#06101d";
   });
 
   context.restore();
@@ -362,7 +452,7 @@ function drawSnakeScene(
   }
 
   if (state.phase !== "playing") {
-    context.fillStyle = "rgba(3, 7, 18, 0.58)";
+    context.fillStyle = "rgba(49, 110, 43, 0.38)";
     context.fillRect(0, 0, SNAKE_CANVAS_SIZE, SNAKE_CANVAS_SIZE);
 
     const panelGradient = context.createLinearGradient(
@@ -371,8 +461,8 @@ function drawSnakeScene(
       SNAKE_CANVAS_SIZE / 2,
       SNAKE_CANVAS_SIZE / 2 + 76,
     );
-    panelGradient.addColorStop(0, "rgba(16, 31, 52, 0.92)");
-    panelGradient.addColorStop(1, "rgba(8, 17, 31, 0.72)");
+    panelGradient.addColorStop(0, "rgba(255, 255, 236, 0.96)");
+    panelGradient.addColorStop(1, "rgba(255, 239, 183, 0.9)");
 
     context.fillStyle = panelGradient;
     context.beginPath();
@@ -385,11 +475,11 @@ function drawSnakeScene(
     );
     context.fill();
 
-    context.strokeStyle = "rgba(65, 230, 192, 0.35)";
-    context.lineWidth = 1;
+    context.strokeStyle = "#2f8f38";
+    context.lineWidth = 4;
     context.stroke();
 
-    context.fillStyle = "#f8fafc";
+    context.fillStyle = "#225f2d";
     context.textAlign = "center";
     context.font = "700 30px sans-serif";
     context.fillText(
@@ -398,7 +488,7 @@ function drawSnakeScene(
       SNAKE_CANVAS_SIZE / 2 - 12,
     );
     context.font = "500 15px sans-serif";
-    context.fillStyle = "rgba(248, 250, 252, 0.78)";
+    context.fillStyle = "#6f5a1f";
     context.fillText(
       state.phase === "paused"
         ? "Resume when ready"
