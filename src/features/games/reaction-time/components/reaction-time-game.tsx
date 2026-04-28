@@ -271,29 +271,10 @@ export function ReactionTimeGame() {
             {getPhaseCopy(phase)}
           </p>
 
-          <div className="mt-8 grid w-full max-w-2xl grid-cols-3 gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-white/70">
-            <div className="rounded-full border border-white/15 bg-black/20 px-3 py-2">
-              Wait
-            </div>
-            <div
-              className={`rounded-full border px-3 py-2 ${
-                phase === "ready"
-                  ? "border-emerald-200 bg-emerald-300 text-emerald-950"
-                  : "border-white/15 bg-black/20"
-              }`}
-            >
-              Green
-            </div>
-            <div
-              className={`rounded-full border px-3 py-2 ${
-                phase === "too-soon"
-                  ? "border-red-200 bg-red-300 text-red-950"
-                  : "border-white/15 bg-black/20"
-              }`}
-            >
-              Click
-            </div>
-          </div>
+          <p className="mt-8 max-w-2xl text-sm font-medium leading-7 text-white/66">
+            The panel is the signal: amber means wait, green means react, red
+            means you jumped early.
+          </p>
         </div>
       </button>
 

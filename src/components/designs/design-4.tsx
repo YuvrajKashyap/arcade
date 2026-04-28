@@ -384,12 +384,13 @@ export function Design4() {
                   transition={{ duration: 0.35 }}
                 >
                   {/* Thumbnail */}
-                  <div className="relative flex-1 overflow-hidden">
+                  <div className="relative flex-1 overflow-hidden bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.06),rgba(255,255,255,0.015)_55%,rgba(0,0,0,0.18))]">
                     <Image
                       src={game.thumbnail}
                       alt={game.title}
                       fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                      className="object-contain p-3 transition-transform duration-500 group-hover:scale-[1.03]"
+                      sizes="(max-width: 1024px) 50vw, 25vw"
                     />
                     {/* Darken overlay */}
                     <div className="absolute inset-0 bg-black/30 transition-opacity duration-400 group-hover:bg-black/15" />
