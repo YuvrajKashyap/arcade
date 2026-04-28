@@ -125,7 +125,9 @@ export function updateDoodleJump(
     }
   }
 
-  const targetCameraY = Math.min(state.cameraY, player.y - DOODLE_HEIGHT * 0.38);
+  const centerBandY = DOODLE_HEIGHT * 0.52;
+  const targetCameraY =
+    player.y < centerBandY ? state.cameraY + player.y - centerBandY : state.cameraY;
   const cameraDelta = targetCameraY - state.cameraY;
   const score = Math.max(state.score, Math.floor(Math.abs(targetCameraY)));
   let platforms = state.platforms.map((platform) => ({ ...platform, y: platform.y - cameraDelta }));

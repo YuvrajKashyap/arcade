@@ -7,6 +7,8 @@ export type TwentyFortyEightTile = {
   value: number;
   row: number;
   column: number;
+  previousRow?: number;
+  previousColumn?: number;
   isNew?: boolean;
   mergedFrom?: number[];
 };

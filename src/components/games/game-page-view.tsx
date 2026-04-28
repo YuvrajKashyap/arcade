@@ -56,6 +56,7 @@ export function GamePageView({ data }: GamePageViewProps) {
   const [irisOpen, setIrisOpen] = useState(false);
   const [instanceKey, setInstanceKey] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [howToPlayOpen, setHowToPlayOpen] = useState(false);
   const hideTimer = useRef<number | null>(null);
   const cursorTimer = useRef<number | null>(null);
   const theaterRef = useRef<HTMLDivElement>(null);
@@ -116,6 +117,17 @@ export function GamePageView({ data }: GamePageViewProps) {
         return;
       }
 
+      if (howToPlayOpen) {
+        if (event.key === "Escape" || GAME_CONTROL_KEYS.has(event.key.toLowerCase())) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          if (event.key === "Escape") {
+            setHowToPlayOpen(false);
+          }
+        }
+        return;
+      }
+
       if (GAME_CONTROL_KEYS.has(event.key.toLowerCase())) {
         event.preventDefault();
       }
@@ -142,7 +154,7 @@ export function GamePageView({ data }: GamePageViewProps) {
       window.removeEventListener("touchstart", handleActivity);
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
-  }, [clearActivityTimers, showControls]);
+  }, [clearActivityTimers, howToPlayOpen, showControls]);
 
   return (
     <>
@@ -358,6 +370,120 @@ export function GamePageView({ data }: GamePageViewProps) {
           justify-content: flex-end;
           gap: 6px;
         }
+        .theater-help-button {
+          position: fixed;
+          z-index: 34;
+          top: max(22px, env(safe-area-inset-top, 0px));
+          right: 24px;
+          border: 3px solid #0b5da8;
+          border-radius: 9999px;
+          background: linear-gradient(180deg, #89dbff 0%, #2e9cff 100%);
+          color: #05274f;
+          box-shadow: inset 0 3px 0 rgba(255,255,255,0.68), 0 8px 0 #0b5da8, 0 18px 34px rgba(0,0,0,0.28);
+          cursor: pointer;
+          font-family: inherit;
+          font-size: 12px;
+          font-weight: 900;
+          letter-spacing: 0.08em;
+          padding: 10px 14px;
+          text-transform: uppercase;
+          transition: transform 0.16s ease, box-shadow 0.16s ease;
+        }
+        .theater-help-button:hover {
+          transform: translateY(-2px);
+          box-shadow: inset 0 3px 0 rgba(255,255,255,0.72), 0 10px 0 #0b5da8, 0 20px 38px rgba(0,0,0,0.32);
+        }
+        .theater-help-backdrop {
+          position: fixed;
+          inset: 0;
+          z-index: 42;
+          display: grid;
+          place-items: center;
+          padding: 18px;
+          background: rgba(0,0,0,0.42);
+        }
+        .theater-help-card {
+          width: min(440px, calc(100vw - 32px));
+          max-height: min(620px, calc(100dvh - 96px));
+          overflow: auto;
+          border: 4px solid #744616;
+          border-radius: 28px;
+          background: linear-gradient(180deg, #fff6aa 0%, #ffd65b 58%, #ffb13b 100%);
+          color: #4b2b05;
+          box-shadow: inset 0 4px 0 rgba(255,255,255,0.62), 0 12px 0 #9a5f1d, 0 30px 70px rgba(0,0,0,0.42);
+          padding: 20px;
+        }
+        .theater-help-card-header {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 16px;
+        }
+        .theater-help-label {
+          color: #0b72bd;
+          font-size: 11px;
+          font-weight: 900;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+        }
+        .theater-help-title {
+          margin-top: 4px;
+          color: #4b2b05;
+          font-size: 28px;
+          font-weight: 900;
+          letter-spacing: 0;
+        }
+        .theater-help-close {
+          display: grid;
+          width: 36px;
+          height: 36px;
+          flex: 0 0 auto;
+          place-items: center;
+          border: 3px solid #744616;
+          border-radius: 9999px;
+          background: #fff9d9;
+          color: #4b2b05;
+          cursor: pointer;
+          font-size: 18px;
+          font-weight: 900;
+          line-height: 1;
+        }
+        .theater-help-summary {
+          margin-top: 12px;
+          color: #684009;
+          font-size: 14px;
+          font-weight: 800;
+          line-height: 1.55;
+        }
+        .theater-help-list {
+          display: grid;
+          gap: 8px;
+          margin: 16px 0 0;
+          padding: 0;
+          list-style: none;
+        }
+        .theater-help-item {
+          border: 2px solid rgba(116,70,22,0.22);
+          border-radius: 16px;
+          background: rgba(255,255,255,0.48);
+          padding: 10px 12px;
+        }
+        .theater-help-item strong {
+          display: block;
+          color: #0a5f9e;
+          font-size: 11px;
+          font-weight: 900;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+        .theater-help-item span {
+          display: block;
+          margin-top: 4px;
+          color: #4b2b05;
+          font-size: 13px;
+          font-weight: 800;
+          line-height: 1.35;
+        }
         @media (max-width: 720px) {
           .theater-root {
             --theater-bar-height: 60px;
@@ -414,6 +540,21 @@ export function GamePageView({ data }: GamePageViewProps) {
             font-size: 10px;
             letter-spacing: 0.08em;
           }
+          .theater-help-button {
+            top: 58px;
+            right: 12px;
+            max-width: 8.8rem;
+            padding: 8px 10px;
+            font-size: 10px;
+            box-shadow: inset 0 2px 0 rgba(255,255,255,0.68), 0 6px 0 #0b5da8, 0 14px 28px rgba(0,0,0,0.3);
+          }
+          .theater-help-card {
+            max-height: calc(100dvh - 112px);
+            padding: 16px;
+          }
+          .theater-help-title {
+            font-size: 23px;
+          }
         }
         @media (prefers-reduced-motion: reduce) {
           .theater-iris {
@@ -430,6 +571,17 @@ export function GamePageView({ data }: GamePageViewProps) {
         className={`theater-root${cursorHidden ? " theater-root--hide-cursor" : ""}`}
       >
         <div className="theater-vignette" />
+
+        <button
+          type="button"
+          className="theater-help-button"
+          onClick={() => {
+            setHowToPlayOpen(true);
+            showControls();
+          }}
+        >
+          How to Play
+        </button>
 
         <div className="theater-stage">
           <div className={`theater-iris${irisOpen ? " theater-iris--open" : ""}`}>
@@ -507,6 +659,65 @@ export function GamePageView({ data }: GamePageViewProps) {
                   </svg>
                 </button>
               </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {howToPlayOpen ? (
+            <motion.div
+              className="theater-help-backdrop"
+              role="presentation"
+              onPointerDown={() => setHowToPlayOpen(false)}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+            >
+              <motion.section
+                className="theater-help-card"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="theater-help-title"
+                onPointerDown={(event) => event.stopPropagation()}
+                initial={{ y: 18, scale: 0.96 }}
+                animate={{ y: 0, scale: 1 }}
+                exit={{ y: 18, scale: 0.96 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+              >
+                <div className="theater-help-card-header">
+                  <div>
+                    <div className="theater-help-label">How to play</div>
+                    <h2 id="theater-help-title" className="theater-help-title">
+                      {game.title}
+                    </h2>
+                  </div>
+                  <button
+                    type="button"
+                    className="theater-help-close"
+                    aria-label="Close how to play"
+                    onClick={() => setHowToPlayOpen(false)}
+                  >
+                    x
+                  </button>
+                </div>
+                <p className="theater-help-summary">
+                  {game.howToPlay?.summary ?? game.controls.summary}
+                </p>
+                <ul className="theater-help-list">
+                  {(game.howToPlay?.tips ?? []).map((tip) => (
+                    <li key={tip} className="theater-help-item">
+                      <span>{tip}</span>
+                    </li>
+                  ))}
+                  {game.controls.items.map((item) => (
+                    <li key={`${item.label}-${item.action}`} className="theater-help-item">
+                      <strong>{item.label}</strong>
+                      <span>{item.action}</span>
+                    </li>
+                  ))}
+                </ul>
+              </motion.section>
             </motion.div>
           ) : null}
         </AnimatePresence>
