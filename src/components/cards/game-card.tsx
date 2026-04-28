@@ -21,13 +21,13 @@ export function GameCard({ game }: GameCardProps) {
         href={`/games/${game.slug}`}
         className="surface-panel group flex h-full flex-col overflow-hidden rounded-[1.75rem]"
       >
-        <div className="relative aspect-[16/10] overflow-hidden border-b border-line">
+        <div className="relative aspect-[16/10] overflow-hidden border-b border-line bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.06),rgba(255,255,255,0.015)_58%,rgba(0,0,0,0.22))]">
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,5,12,0.2),rgba(6,5,12,0.84)),radial-gradient(circle_at_top_right,rgba(155,107,255,0.26),transparent_32%)]" />
           <Image
             src={game.thumbnail}
             alt={`${game.title} cover art`}
             fill
-            className="object-cover opacity-80 transition duration-200 group-hover:scale-[1.02]"
+            className="object-contain p-3 opacity-90 transition duration-200 group-hover:scale-[1.02]"
             sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
           />
         </div>
