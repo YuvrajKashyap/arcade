@@ -256,25 +256,25 @@ export function ReactionTimeGame() {
       <button
         type="button"
         onClick={handlePrimaryAction}
-        className={`relative min-h-[28rem] overflow-hidden rounded-[1.4rem] border px-6 py-10 text-center text-foreground shadow-[0_28px_80px_rgba(0,0,0,0.3)] transition duration-300 ${getStageClasses(phase)}`}
+        className={`arcade-game-playfield relative min-h-0 flex-1 overflow-hidden rounded-[1.4rem] border px-6 py-8 text-center text-foreground shadow-[0_28px_80px_rgba(0,0,0,0.3)] transition duration-300 ${getStageClasses(phase)}`}
       >
         <span className="pointer-events-none absolute inset-x-12 top-10 h-px bg-gradient-to-r from-transparent via-white/35 to-transparent" />
         <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(255,255,255,0.16),transparent_32%)]" />
-        <div className="relative z-10 flex min-h-[22rem] flex-col items-center justify-center">
+        <div className="relative z-10 flex h-full min-h-0 flex-col items-center justify-center">
           <p className="text-xs font-bold uppercase tracking-[0.32em] text-white/70">
             {getStageEyebrow(phase)}
           </p>
-          <p className="mt-8 text-5xl font-black tracking-tight text-white sm:text-7xl">
+          <p className="mt-6 text-4xl font-black tracking-tight text-white sm:text-6xl">
             {getStageTitle(phase, lastResult)}
           </p>
-          <p className="mx-auto mt-6 max-w-xl text-base leading-8 text-white/78 sm:text-lg">
+          <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-white/78 sm:text-base">
             {getPhaseCopy(phase)}
           </p>
         </div>
       </button>
 
       <div
-        className={`rounded-[1.35rem] border px-5 py-4 ${
+        className={`rounded-[1.35rem] border px-4 py-3 ${
           threeRunAverage
             ? "border-emerald-300/35 bg-emerald-300/10"
             : "border-line bg-surface"
@@ -285,7 +285,7 @@ export function ReactionTimeGame() {
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-foreground-muted">
               3-run average
             </p>
-            <p className="mt-1 text-sm leading-7 text-foreground-soft">
+            <p className="mt-1 text-sm leading-6 text-foreground-soft">
               {threeRunAverage
                 ? "Last three valid runs."
                 : `${runsUntilAverage} more valid ${
@@ -293,7 +293,7 @@ export function ReactionTimeGame() {
                   } to unlock your average.`}
             </p>
           </div>
-          <p className="text-3xl font-black tracking-tight text-foreground">
+          <p className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
             {threeRunAverage ? `${threeRunAverage} ms` : "--"}
           </p>
         </div>
@@ -303,18 +303,18 @@ export function ReactionTimeGame() {
         Click, tap, or press Space/Enter. Press R to reset.
       </GameStatus>
 
-      <div className="flex flex-wrap gap-3">
+      <div className="arcade-reaction-history flex max-h-[4rem] flex-wrap gap-2 overflow-hidden">
         {deferredAttempts.length > 0 ? (
           deferredAttempts.map((attempt, index) => (
             <div
               key={`${attempt}-${index}`}
-              className="surface-subtle rounded-full px-4 py-2 text-sm"
+              className="surface-subtle rounded-full px-3 py-1.5 text-sm"
             >
               Attempt {index + 1}: <span className="font-semibold text-foreground">{attempt} ms</span>
             </div>
           ))
         ) : (
-          <div className="surface-subtle rounded-[1.25rem] px-4 py-5 text-sm leading-7 text-foreground-soft">
+          <div className="surface-subtle rounded-[1.25rem] px-4 py-3 text-sm leading-6 text-foreground-soft">
             Run a few rounds to build a local session history.
           </div>
         )}

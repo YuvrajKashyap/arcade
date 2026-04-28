@@ -24,7 +24,7 @@ type GameButtonProps = {
 
 export function GamePanel({ children }: { children: ReactNode }) {
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-5 text-foreground">
+    <div className="arcade-game-panel mx-auto flex w-full max-w-5xl flex-col gap-5 text-foreground">
       {children}
     </div>
   );
@@ -32,7 +32,7 @@ export function GamePanel({ children }: { children: ReactNode }) {
 
 export function GameHud({ items, actions }: GameHudProps) {
   return (
-    <div className="rounded-[1.35rem] border border-line bg-surface px-4 py-3 shadow-[0_18px_60px_rgba(0,0,0,0.24)]">
+    <div className="arcade-game-hud rounded-[1.35rem] border border-line bg-surface px-4 py-3 shadow-[0_18px_60px_rgba(0,0,0,0.24)]">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-wrap items-center gap-2">
           {items.map((item) => (
@@ -95,7 +95,7 @@ export function GamePlayfield({
 }) {
   return (
     <div
-      className={`overflow-hidden rounded-[1.4rem] border border-line bg-background-strong shadow-[0_28px_80px_rgba(0,0,0,0.3)] ${className}`}
+      className={`arcade-game-playfield overflow-hidden rounded-[1.4rem] border border-line bg-background-strong shadow-[0_28px_80px_rgba(0,0,0,0.3)] ${className}`}
     >
       {children}
     </div>
@@ -104,7 +104,7 @@ export function GamePlayfield({
 
 export function GameStatus({ children }: { children: ReactNode }) {
   return (
-    <p className="text-center text-sm leading-7 text-foreground-soft">
+    <p className="arcade-game-status text-center text-sm leading-7 text-foreground-soft">
       {children}
     </p>
   );
@@ -118,7 +118,7 @@ export function TouchControls({
   className?: string;
 }) {
   return (
-    <div className={`mx-auto w-full md:hidden ${className}`}>
+    <div className={`arcade-touch-controls mx-auto w-full md:hidden ${className}`}>
       {children}
     </div>
   );

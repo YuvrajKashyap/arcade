@@ -424,8 +424,8 @@ export function TicTacToeGame() {
           </>
         }
       />
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        <GamePlayfield className="p-5 sm:p-6">
+      <div className="grid min-h-0 flex-1 gap-4 overflow-hidden lg:grid-cols-[minmax(0,1fr)_16rem]">
+        <GamePlayfield className="min-h-0 p-4 sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs font-medium uppercase tracking-[0.28em] text-foreground-muted">
@@ -452,7 +452,7 @@ export function TicTacToeGame() {
             </div>
           </div>
 
-          <div className="mx-auto mt-6 grid max-w-[30rem] grid-cols-3 gap-3">
+          <div className="mx-auto mt-4 grid max-w-[min(30rem,42dvh)] grid-cols-3 gap-2 sm:gap-3">
             {board.map((cell, index) => {
               const isWinningCell = winningLine?.includes(index) ?? false;
 
@@ -464,7 +464,7 @@ export function TicTacToeGame() {
                   }}
                   type="button"
                   onClick={() => handlePlayerMove(index)}
-                  className={`aspect-square rounded-[1.5rem] border text-5xl font-semibold transition-all duration-200 sm:text-6xl ${
+                  className={`aspect-square rounded-[1.2rem] border text-4xl font-semibold transition-all duration-200 sm:rounded-[1.5rem] sm:text-5xl ${
                     cell === "x"
                       ? "border-violet-400/30 bg-violet-500/10 text-violet-200"
                       : cell === "o"
@@ -484,13 +484,13 @@ export function TicTacToeGame() {
             })}
           </div>
 
-          <p className="mt-5 text-center text-sm leading-7 text-foreground-soft">
+          <p className="mt-4 text-center text-sm leading-6 text-foreground-soft">
             {getStatusCopy(phase, turn, outcome, difficulty)}
           </p>
         </GamePlayfield>
 
-        <aside className="flex flex-col gap-4">
-          <div className="rounded-[1.75rem] border border-line bg-surface px-5 py-5">
+        <aside className="hidden min-h-0 flex-col gap-3 overflow-hidden lg:flex">
+          <div className="rounded-[1.35rem] border border-line bg-surface px-4 py-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.24em] text-foreground-muted">
@@ -501,7 +501,7 @@ export function TicTacToeGame() {
                 </p>
               </div>
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-2">
+            <div className="mt-3 grid grid-cols-2 gap-2">
               {TIC_TAC_TOE_DIFFICULTIES.map((level) => {
                 const isActive = level === difficulty;
 
@@ -522,7 +522,7 @@ export function TicTacToeGame() {
             </div>
           </div>
 
-          <div className="rounded-[1.75rem] border border-line bg-surface px-5 py-5">
+          <div className="rounded-[1.35rem] border border-line bg-surface px-4 py-4">
             <div className="flex items-center justify-between gap-3">
               <p className="text-xs font-medium uppercase tracking-[0.24em] text-foreground-muted">
                 Local record
@@ -531,8 +531,8 @@ export function TicTacToeGame() {
                 {getDifficultyLabel(difficulty)}
               </span>
             </div>
-            <dl className="mt-4 grid grid-cols-3 gap-3 text-center">
-              <div className="rounded-[1.1rem] border border-line bg-background-strong px-3 py-4">
+            <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
+              <div className="rounded-[1rem] border border-line bg-background-strong px-2 py-3">
                 <dt className="text-[10px] uppercase tracking-[0.18em] text-foreground-muted">
                   Wins
                 </dt>
@@ -540,7 +540,7 @@ export function TicTacToeGame() {
                   {activeStats.wins}
                 </dd>
               </div>
-              <div className="rounded-[1.1rem] border border-line bg-background-strong px-3 py-4">
+              <div className="rounded-[1rem] border border-line bg-background-strong px-2 py-3">
                 <dt className="text-[10px] uppercase tracking-[0.18em] text-foreground-muted">
                   Losses
                 </dt>
@@ -548,7 +548,7 @@ export function TicTacToeGame() {
                   {activeStats.losses}
                 </dd>
               </div>
-              <div className="rounded-[1.1rem] border border-line bg-background-strong px-3 py-4">
+              <div className="rounded-[1rem] border border-line bg-background-strong px-2 py-3">
                 <dt className="text-[10px] uppercase tracking-[0.18em] text-foreground-muted">
                   Draws
                 </dt>
@@ -559,18 +559,18 @@ export function TicTacToeGame() {
             </dl>
           </div>
 
-          <div className="rounded-[1.75rem] border border-line bg-surface px-5 py-5">
+          <div className="max-h-[9rem] overflow-hidden rounded-[1.35rem] border border-line bg-surface px-4 py-3">
             <p className="text-xs font-medium uppercase tracking-[0.24em] text-foreground-muted">
               Controls
             </p>
-            <ul className="mt-4 space-y-3 text-sm leading-7 text-foreground-soft">
+            <ul className="mt-3 space-y-2 text-sm leading-5 text-foreground-soft">
               <li>Click or tap any open cell to place X.</li>
               <li>Arrow keys or WASD move focus. Enter or Space commits the move.</li>
               <li>R starts a new round. C clears the current difficulty record.</li>
             </ul>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             <GameButton variant="primary" onClick={resetBoard}>
               New round
             </GameButton>

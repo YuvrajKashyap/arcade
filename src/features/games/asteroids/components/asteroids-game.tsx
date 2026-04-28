@@ -231,7 +231,7 @@ export function AsteroidsGame() {
         }
       />
 
-      <GamePlayfield className="mx-auto aspect-[19/13] w-full">
+      <GamePlayfield className="mx-auto aspect-[19/13] w-full max-w-[76dvh] md:max-w-[91dvh]">
         <canvas ref={canvasRef} className="h-full w-full" aria-label="Asteroids field" />
       </GamePlayfield>
 

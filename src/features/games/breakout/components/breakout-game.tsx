@@ -448,7 +448,7 @@ export function BreakoutGame() {
         }
       />
 
-      <GamePlayfield className="mx-auto aspect-[18/13] w-full">
+      <GamePlayfield className="mx-auto aspect-[18/13] w-full max-w-[72dvh] md:max-w-[86dvh]">
         <canvas
           ref={canvasRef}
           className="h-full w-full touch-none"
