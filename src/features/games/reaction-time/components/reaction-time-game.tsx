@@ -27,38 +27,94 @@ import {
 
 function getPhaseCopy(phase: ReactionPhase) {
   if (phase === "waiting") {
-    return "Wait for the panel to turn ready. Jumping early fails the round.";
+    return "Stay ready. Do not click until the panel turns green.";
   }
 
   if (phase === "ready") {
-    return "React now.";
+    return "Green means go. Click, tap, or press Space now.";
   }
 
   if (phase === "too-soon") {
-    return "Too early. Reset and hold until the ready state appears.";
+    return "Too early. Red means the round did not count.";
   }
 
   if (phase === "result") {
-    return "Round recorded. Run another attempt or reset the session.";
+    return "Round saved. Start the next run when you are ready.";
   }
 
-  return "Press space, enter, click, or tap to begin a reflex check.";
+  return "Start a run, wait for green, then react as fast as you can.";
 }
 
 function getStageClasses(phase: ReactionPhase) {
   if (phase === "ready") {
-    return "border-line-strong bg-[linear-gradient(180deg,rgba(28,20,52,0.96),rgba(60,34,120,0.96))]";
+    return "border-emerald-300/70 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.9),rgba(6,95,70,0.96)_45%,rgba(3,45,36,0.98))] shadow-[0_0_80px_rgba(16,185,129,0.45)]";
   }
 
   if (phase === "too-soon") {
-    return "border-line-strong bg-[linear-gradient(180deg,rgba(41,14,30,0.96),rgba(86,24,56,0.96))]";
+    return "border-red-300/70 bg-[radial-gradient(circle_at_center,rgba(248,113,113,0.95),rgba(127,29,29,0.96)_48%,rgba(45,8,18,0.98))] shadow-[0_0_80px_rgba(248,113,113,0.38)]";
   }
 
   if (phase === "waiting") {
-    return "border-line bg-[linear-gradient(180deg,rgba(18,14,30,0.96),rgba(25,20,43,0.96))]";
+    return "border-amber-200/35 bg-[radial-gradient(circle_at_center,rgba(84,63,20,0.9),rgba(31,26,13,0.98)_52%,rgba(9,9,13,0.98))]";
   }
 
-  return "border-line bg-[linear-gradient(180deg,rgba(15,12,26,0.96),rgba(12,10,22,0.98))]";
+  if (phase === "result") {
+    return "border-cyan-200/45 bg-[radial-gradient(circle_at_center,rgba(14,116,144,0.55),rgba(17,24,39,0.98)_55%,rgba(8,9,18,0.98))]";
+  }
+
+  return "border-line bg-[radial-gradient(circle_at_center,rgba(38,25,75,0.68),rgba(15,12,26,0.98)_55%,rgba(8,8,14,0.98))]";
+}
+
+function getStageEyebrow(phase: ReactionPhase) {
+  if (phase === "waiting") {
+    return "wait";
+  }
+
+  if (phase === "ready") {
+    return "green";
+  }
+
+  if (phase === "too-soon") {
+    return "early";
+  }
+
+  if (phase === "result") {
+    return "recorded";
+  }
+
+  return "reaction test";
+}
+
+function getStageTitle(phase: ReactionPhase, lastResult: number | null) {
+  if (phase === "ready") {
+    return "Click now";
+  }
+
+  if (phase === "waiting") {
+    return "Wait for green";
+  }
+
+  if (phase === "too-soon") {
+    return "Too early";
+  }
+
+  if (phase === "result") {
+    return lastResult ? `${lastResult} ms` : "Saved";
+  }
+
+  return "Ready?";
+}
+
+function getAttemptAverage(attempts: number[], count: number) {
+  if (attempts.length < count) {
+    return null;
+  }
+
+  const attemptsToAverage = attempts.slice(0, count);
+  return Math.round(
+    attemptsToAverage.reduce((sum, attempt) => sum + attempt, 0) /
+      attemptsToAverage.length,
+  );
 }
 
 export function ReactionTimeGame() {
@@ -174,6 +230,8 @@ export function ReactionTimeGame() {
             deferredAttempts.length,
         )
       : null;
+  const threeRunAverage = getAttemptAverage(deferredAttempts, 3);
+  const runsUntilAverage = Math.max(3 - deferredAttempts.length, 0);
 
   return (
     <GamePanel>
@@ -181,7 +239,8 @@ export function ReactionTimeGame() {
         items={[
           { label: "Best", value: bestTime > 0 ? `${bestTime} ms` : "None" },
           { label: "Last", value: lastResult ? `${lastResult} ms` : "Waiting" },
-          { label: "Average", value: averageTime ? `${averageTime} ms` : "None" },
+          { label: "Avg", value: averageTime ? `${averageTime} ms` : "None" },
+          { label: "Runs", value: deferredAttempts.length },
           { label: "Status", value: phase },
         ]}
         actions={
@@ -197,29 +256,75 @@ export function ReactionTimeGame() {
       <button
         type="button"
         onClick={handlePrimaryAction}
-        className={`min-h-[28rem] rounded-[1.4rem] border px-6 py-10 text-center text-foreground shadow-[0_28px_80px_rgba(0,0,0,0.3)] ${getStageClasses(phase)}`}
+        className={`relative min-h-[28rem] overflow-hidden rounded-[1.4rem] border px-6 py-10 text-center text-foreground shadow-[0_28px_80px_rgba(0,0,0,0.3)] transition duration-300 ${getStageClasses(phase)}`}
       >
-        <p className="text-xs font-medium uppercase tracking-[0.28em] text-foreground-muted">
-          Reaction state
-        </p>
-        <p className="mt-8 text-4xl font-semibold tracking-tight sm:text-5xl">
-          {phase === "ready"
-            ? "Click"
-            : phase === "waiting"
-              ? "Hold"
-              : phase === "too-soon"
-                ? "Too soon"
-                : phase === "result"
-                  ? `${lastResult} ms`
-                  : "Ready?"}
-        </p>
-        <p className="mx-auto mt-6 max-w-xl text-sm leading-8 text-foreground-soft sm:text-base">
-          {getPhaseCopy(phase)}
-        </p>
+        <span className="pointer-events-none absolute inset-x-12 top-10 h-px bg-gradient-to-r from-transparent via-white/35 to-transparent" />
+        <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(255,255,255,0.16),transparent_32%)]" />
+        <div className="relative z-10 flex min-h-[22rem] flex-col items-center justify-center">
+          <p className="text-xs font-bold uppercase tracking-[0.32em] text-white/70">
+            {getStageEyebrow(phase)}
+          </p>
+          <p className="mt-8 text-5xl font-black tracking-tight text-white sm:text-7xl">
+            {getStageTitle(phase, lastResult)}
+          </p>
+          <p className="mx-auto mt-6 max-w-xl text-base leading-8 text-white/78 sm:text-lg">
+            {getPhaseCopy(phase)}
+          </p>
+
+          <div className="mt-8 grid w-full max-w-2xl grid-cols-3 gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-white/70">
+            <div className="rounded-full border border-white/15 bg-black/20 px-3 py-2">
+              Wait
+            </div>
+            <div
+              className={`rounded-full border px-3 py-2 ${
+                phase === "ready"
+                  ? "border-emerald-200 bg-emerald-300 text-emerald-950"
+                  : "border-white/15 bg-black/20"
+              }`}
+            >
+              Green
+            </div>
+            <div
+              className={`rounded-full border px-3 py-2 ${
+                phase === "too-soon"
+                  ? "border-red-200 bg-red-300 text-red-950"
+                  : "border-white/15 bg-black/20"
+              }`}
+            >
+              Click
+            </div>
+          </div>
+        </div>
       </button>
 
+      <div
+        className={`rounded-[1.35rem] border px-5 py-4 ${
+          threeRunAverage
+            ? "border-emerald-300/35 bg-emerald-300/10"
+            : "border-line bg-surface"
+        }`}
+      >
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-foreground-muted">
+              3-run average
+            </p>
+            <p className="mt-1 text-sm leading-7 text-foreground-soft">
+              {threeRunAverage
+                ? "Your last three valid runs are averaged here."
+                : `${runsUntilAverage} more valid ${
+                    runsUntilAverage === 1 ? "run" : "runs"
+                  } to unlock your average.`}
+            </p>
+          </div>
+          <p className="text-3xl font-black tracking-tight text-foreground">
+            {threeRunAverage ? `${threeRunAverage} ms` : "--"}
+          </p>
+        </div>
+      </div>
+
       <GameStatus>
-        Space, Enter, click, or tap to start and react. Press R to reset the session.
+        Click or press Space/Enter only when the panel turns green. Press R to reset.
       </GameStatus>
 
       <div className="flex flex-wrap gap-3">
