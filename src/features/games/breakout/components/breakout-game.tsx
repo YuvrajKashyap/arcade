@@ -3,7 +3,9 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import {
   BREAKOUT_BALL_RADIUS,
+  BREAKOUT_BRICK_GAP,
   BREAKOUT_BRICK_HEIGHT,
+  BREAKOUT_BRICK_TOP,
   BREAKOUT_BRICK_WIDTH,
   BREAKOUT_HEIGHT,
   BREAKOUT_PADDLE_HEIGHT,
@@ -53,43 +55,260 @@ function getStatusCopy(phase: BreakoutPhase) {
   return "Start the serve. Move with arrows, A/D, mouse, or touch.";
 }
 
-function drawBreakoutScene(context: CanvasRenderingContext2D, state: BreakoutState) {
-  context.clearRect(0, 0, BREAKOUT_WIDTH, BREAKOUT_HEIGHT);
-  context.fillStyle = "#08111f";
+const BRICK_PALETTE = ["#fb3b42", "#ff8b2b", "#ffd84c", "#4ecf5b", "#36a4ff", "#8b5cff"];
+
+function roundedRect(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+) {
+  const safeRadius = Math.min(radius, width / 2, height / 2);
+  context.beginPath();
+  context.moveTo(x + safeRadius, y);
+  context.lineTo(x + width - safeRadius, y);
+  context.quadraticCurveTo(x + width, y, x + width, y + safeRadius);
+  context.lineTo(x + width, y + height - safeRadius);
+  context.quadraticCurveTo(x + width, y + height, x + width - safeRadius, y + height);
+  context.lineTo(x + safeRadius, y + height);
+  context.quadraticCurveTo(x, y + height, x, y + height - safeRadius);
+  context.lineTo(x, y + safeRadius);
+  context.quadraticCurveTo(x, y, x + safeRadius, y);
+  context.closePath();
+}
+
+function drawBreakoutBackground(context: CanvasRenderingContext2D) {
+  const skyGradient = context.createLinearGradient(0, 0, 0, BREAKOUT_HEIGHT);
+  skyGradient.addColorStop(0, "#fff4a4");
+  skyGradient.addColorStop(0.48, "#ffd65f");
+  skyGradient.addColorStop(1, "#f9a33a");
+  context.fillStyle = skyGradient;
   context.fillRect(0, 0, BREAKOUT_WIDTH, BREAKOUT_HEIGHT);
 
-  for (const brick of state.bricks) {
-    const strengthRatio = brick.strength / brick.maxStrength;
-    context.fillStyle =
-      brick.maxStrength === 3
-        ? `rgba(255, 107, 53, ${0.45 + strengthRatio * 0.45})`
-        : brick.maxStrength === 2
-          ? `rgba(255, 209, 102, ${0.5 + strengthRatio * 0.4})`
-          : "#00a6a6";
-    context.fillRect(brick.x, brick.y, BREAKOUT_BRICK_WIDTH, BREAKOUT_BRICK_HEIGHT);
-  }
-
-  if (state.powerup) {
+  context.save();
+  context.translate(BREAKOUT_WIDTH / 2, 118);
+  context.strokeStyle = "rgba(255, 255, 255, 0.22)";
+  context.lineWidth = 2;
+  for (let angle = -70; angle <= 250; angle += 16) {
+    const radians = (angle * Math.PI) / 180;
     context.beginPath();
-    context.fillStyle = "#cfb5ff";
-    context.arc(state.powerup.x, state.powerup.y, 9, 0, Math.PI * 2);
+    context.moveTo(Math.cos(radians) * 42, Math.sin(radians) * 42);
+    context.lineTo(Math.cos(radians) * 560, Math.sin(radians) * 560);
+    context.stroke();
+  }
+  context.restore();
+
+  const sunGlow = context.createRadialGradient(BREAKOUT_WIDTH / 2, 115, 16, BREAKOUT_WIDTH / 2, 115, 250);
+  sunGlow.addColorStop(0, "rgba(255, 255, 255, 0.5)");
+  sunGlow.addColorStop(1, "rgba(255, 255, 255, 0)");
+  context.fillStyle = sunGlow;
+  context.fillRect(0, 0, BREAKOUT_WIDTH, BREAKOUT_HEIGHT);
+
+  context.fillStyle = "rgba(255, 255, 255, 0.86)";
+  for (const cloud of [
+    { x: 74, y: 72, scale: 1.08 },
+    { x: 595, y: 92, scale: 0.9 },
+    { x: 122, y: 214, scale: 0.66 },
+    { x: 636, y: 236, scale: 0.6 },
+  ]) {
+    context.beginPath();
+    context.ellipse(cloud.x, cloud.y, 34 * cloud.scale, 18 * cloud.scale, 0, 0, Math.PI * 2);
+    context.ellipse(cloud.x + 30 * cloud.scale, cloud.y + 3 * cloud.scale, 38 * cloud.scale, 20 * cloud.scale, 0, 0, Math.PI * 2);
+    context.ellipse(cloud.x - 28 * cloud.scale, cloud.y + 6 * cloud.scale, 24 * cloud.scale, 15 * cloud.scale, 0, 0, Math.PI * 2);
     context.fill();
   }
 
-  context.fillStyle = state.wideTimer > 0 ? "#cfb5ff" : "#f8fafc";
-  context.fillRect(state.paddleX, BREAKOUT_PADDLE_Y, state.paddleWidth, BREAKOUT_PADDLE_HEIGHT);
-
+  context.fillStyle = "#37b85c";
   context.beginPath();
-  context.fillStyle = "#ff6b35";
-  context.arc(state.ball.x, state.ball.y, BREAKOUT_BALL_RADIUS, 0, Math.PI * 2);
+  context.moveTo(0, BREAKOUT_HEIGHT);
+  context.quadraticCurveTo(84, BREAKOUT_HEIGHT - 62, 176, BREAKOUT_HEIGHT);
+  context.closePath();
   context.fill();
 
+  context.fillStyle = "#239e4b";
+  context.beginPath();
+  context.moveTo(BREAKOUT_WIDTH, BREAKOUT_HEIGHT);
+  context.quadraticCurveTo(BREAKOUT_WIDTH - 92, BREAKOUT_HEIGHT - 74, BREAKOUT_WIDTH - 214, BREAKOUT_HEIGHT);
+  context.closePath();
+  context.fill();
+
+  context.strokeStyle = "rgba(91, 48, 15, 0.26)";
+  context.lineWidth = 8;
+  roundedRect(context, 10, 10, BREAKOUT_WIDTH - 20, BREAKOUT_HEIGHT - 20, 26);
+  context.stroke();
+}
+
+function drawBrick(context: CanvasRenderingContext2D, brick: BreakoutState["bricks"][number]) {
+  const row = Math.max(0, Math.round((brick.y - BREAKOUT_BRICK_TOP) / (BREAKOUT_BRICK_HEIGHT + BREAKOUT_BRICK_GAP)));
+  const baseColor = BRICK_PALETTE[row % BRICK_PALETTE.length];
+  const damageAlpha = 0.42 + (brick.strength / brick.maxStrength) * 0.58;
+  const x = brick.x;
+  const y = brick.y;
+
+  context.save();
+  context.globalAlpha = damageAlpha;
+  context.shadowColor = "rgba(73, 39, 11, 0.3)";
+  context.shadowBlur = 8;
+  context.shadowOffsetY = 4;
+  roundedRect(context, x, y, BREAKOUT_BRICK_WIDTH, BREAKOUT_BRICK_HEIGHT, 7);
+  context.fillStyle = baseColor;
+  context.fill();
+  context.shadowColor = "transparent";
+
+  const shine = context.createLinearGradient(x, y, x, y + BREAKOUT_BRICK_HEIGHT);
+  shine.addColorStop(0, "rgba(255, 255, 255, 0.58)");
+  shine.addColorStop(0.38, "rgba(255, 255, 255, 0.1)");
+  shine.addColorStop(1, "rgba(0, 0, 0, 0.12)");
+  context.fillStyle = shine;
+  context.fill();
+
+  context.lineWidth = 3;
+  context.strokeStyle = "rgba(58, 33, 18, 0.75)";
+  context.stroke();
+
+  context.lineWidth = 1.5;
+  context.strokeStyle = "rgba(255, 255, 255, 0.68)";
+  roundedRect(context, x + 5, y + 4, BREAKOUT_BRICK_WIDTH - 10, 6, 4);
+  context.stroke();
+  context.restore();
+
+  if (brick.maxStrength > 1) {
+    context.save();
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillStyle = "rgba(43, 25, 12, 0.65)";
+    context.font = "800 12px sans-serif";
+    context.fillText(String(brick.strength), x + BREAKOUT_BRICK_WIDTH / 2, y + BREAKOUT_BRICK_HEIGHT / 2 + 1);
+    context.restore();
+  }
+}
+
+function drawPowerup(context: CanvasRenderingContext2D, state: BreakoutState) {
+  if (!state.powerup) {
+    return;
+  }
+
+  const { x, y } = state.powerup;
+  context.save();
+  context.translate(x, y);
+  context.rotate(Math.sin(performance.now() / 160) * 0.16);
+  context.shadowColor = "rgba(244, 63, 94, 0.35)";
+  context.shadowBlur = 12;
+  roundedRect(context, -19, -8, 38, 16, 8);
+  context.fillStyle = "#ff3d71";
+  context.fill();
+  context.lineWidth = 3;
+  context.strokeStyle = "rgba(92, 28, 35, 0.7)";
+  context.stroke();
+  context.fillStyle = "#fff7ad";
+  context.fillRect(-4, -8, 8, 16);
+  context.restore();
+}
+
+function drawPaddle(context: CanvasRenderingContext2D, state: BreakoutState) {
+  const x = state.paddleX;
+  const y = BREAKOUT_PADDLE_Y;
+  const width = state.paddleWidth;
+  const height = BREAKOUT_PADDLE_HEIGHT;
+
+  context.save();
+  context.shadowColor = state.wideTimer > 0 ? "rgba(39, 125, 255, 0.42)" : "rgba(89, 32, 16, 0.32)";
+  context.shadowBlur = 14;
+  context.shadowOffsetY = 5;
+  roundedRect(context, x, y, width, height, height / 2);
+  context.fillStyle = "#f8f2e4";
+  context.fill();
+  context.shadowColor = "transparent";
+
+  roundedRect(context, x, y, width * 0.28, height, height / 2);
+  context.fillStyle = "#e7353f";
+  context.fill();
+  roundedRect(context, x + width * 0.72, y, width * 0.28, height, height / 2);
+  context.fillStyle = "#e7353f";
+  context.fill();
+
+  const highlight = context.createLinearGradient(0, y, 0, y + height);
+  highlight.addColorStop(0, "rgba(255, 255, 255, 0.7)");
+  highlight.addColorStop(1, "rgba(0, 0, 0, 0.16)");
+  roundedRect(context, x + 3, y + 2, width - 6, height - 4, height / 2);
+  context.fillStyle = highlight;
+  context.fill();
+
+  context.lineWidth = 3;
+  context.strokeStyle = "rgba(73, 34, 21, 0.82)";
+  roundedRect(context, x, y, width, height, height / 2);
+  context.stroke();
+  context.restore();
+}
+
+function drawBall(context: CanvasRenderingContext2D, state: BreakoutState) {
+  const { ball } = state;
+  const speed = Math.hypot(ball.vx, ball.vy) || 1;
+  const trailLength = 34;
+  const trailX = ball.x - (ball.vx / speed) * trailLength;
+  const trailY = ball.y - (ball.vy / speed) * trailLength;
+  const trail = context.createLinearGradient(trailX, trailY, ball.x, ball.y);
+  trail.addColorStop(0, "rgba(33, 126, 255, 0)");
+  trail.addColorStop(1, "rgba(20, 102, 255, 0.58)");
+  context.save();
+  context.lineCap = "round";
+  context.lineWidth = BREAKOUT_BALL_RADIUS * 1.65;
+  context.strokeStyle = trail;
+  context.beginPath();
+  context.moveTo(trailX, trailY);
+  context.lineTo(ball.x, ball.y);
+  context.stroke();
+
+  context.shadowColor = "rgba(20, 102, 255, 0.58)";
+  context.shadowBlur = 16;
+  const orb = context.createRadialGradient(
+    ball.x - 4,
+    ball.y - 5,
+    2,
+    ball.x,
+    ball.y,
+    BREAKOUT_BALL_RADIUS + 5,
+  );
+  orb.addColorStop(0, "#ffffff");
+  orb.addColorStop(0.18, "#9fe8ff");
+  orb.addColorStop(0.72, "#1677ff");
+  orb.addColorStop(1, "#0b3fa7");
+  context.fillStyle = orb;
+  context.beginPath();
+  context.arc(ball.x, ball.y, BREAKOUT_BALL_RADIUS, 0, Math.PI * 2);
+  context.fill();
+  context.lineWidth = 2;
+  context.strokeStyle = "rgba(7, 42, 112, 0.74)";
+  context.stroke();
+  context.restore();
+}
+
+function drawBreakoutScene(context: CanvasRenderingContext2D, state: BreakoutState) {
+  context.clearRect(0, 0, BREAKOUT_WIDTH, BREAKOUT_HEIGHT);
+  drawBreakoutBackground(context);
+
+  for (const brick of state.bricks) {
+    drawBrick(context, brick);
+  }
+
+  drawPowerup(context, state);
+  drawPaddle(context, state);
+  drawBall(context, state);
+
   if (state.phase !== "playing") {
-    context.fillStyle = "rgba(8, 17, 31, 0.58)";
+    context.fillStyle = "rgba(72, 36, 9, 0.42)";
     context.fillRect(0, 0, BREAKOUT_WIDTH, BREAKOUT_HEIGHT);
     context.textAlign = "center";
-    context.fillStyle = "#f8fafc";
-    context.font = "600 32px sans-serif";
+    roundedRect(context, BREAKOUT_WIDTH / 2 - 150, BREAKOUT_HEIGHT / 2 - 64, 300, 118, 24);
+    context.fillStyle = "rgba(255, 248, 220, 0.92)";
+    context.fill();
+    context.lineWidth = 4;
+    context.strokeStyle = "rgba(91, 48, 15, 0.48)";
+    context.stroke();
+    context.fillStyle = "#4c280e";
+    context.font = "800 34px sans-serif";
     context.fillText(
       state.phase === "cleared"
         ? "Wall cleared"
@@ -101,8 +320,8 @@ function drawBreakoutScene(context: CanvasRenderingContext2D, state: BreakoutSta
       BREAKOUT_WIDTH / 2,
       BREAKOUT_HEIGHT / 2 - 10,
     );
-    context.font = "500 15px sans-serif";
-    context.fillStyle = "rgba(248,250,252,0.76)";
+    context.font = "700 15px sans-serif";
+    context.fillStyle = "rgba(76, 40, 14, 0.72)";
     context.fillText("Press Space or Start", BREAKOUT_WIDTH / 2, BREAKOUT_HEIGHT / 2 + 22);
   }
 }

@@ -8,7 +8,7 @@ export const gameCatalog = [
       "A smooth animated snake run with arcade lighting, expressive motion, and instant score-chase flow.",
     description:
       "Guide a living neon snake through a polished arcade arena, chain glowing food pickups, and protect your tail as the run accelerates. Snake keeps the classic collision rules underneath while using interpolated Canvas animation, character styling, and pickup effects to feel like a real game.",
-    thumbnail: "/games/snake/thumbnail.png",
+    thumbnail: "/games/snake/thumbnail.png?v=20260428",
     genre: "Arcade",
     tags: ["Canvas", "Animation", "High Score", "Keyboard"],
     controls: {
@@ -42,7 +42,7 @@ export const gameCatalog = [
       "A neon paddle duel with glowing impacts, smooth ball trails, responsive control, and an AI opponent.",
     description:
       "Pong turns the classic paddle duel into a premium neon arena with glowing paddles, luminous ball trails, impact sparks, score bursts, and three tuned AI difficulties. The match still proves the platform's continuous Canvas loop, collision response, score handling, and instant restart flow.",
-    thumbnail: "/games/pong/thumbnail.png",
+    thumbnail: "/games/pong/thumbnail.png?v=20260428",
     genre: "Arcade",
     tags: ["Canvas", "Neon", "AI", "Score Loop"],
     controls: {
@@ -78,7 +78,7 @@ export const gameCatalog = [
       "A color-driven reflex test: wait for green, click fast, and track your 3-run average.",
     description:
       "Reaction Time Test is a polished reflex drill built around clear visual states: wait through the amber hold, click when the panel turns green, and get a red fail state if you jump early. It tracks recent attempts, personal best, and a highlighted 3-run average locally in the browser.",
-    thumbnail: "/games/reaction-time/thumbnail.png",
+    thumbnail: "/games/reaction-time/thumbnail.png?v=20260428",
     genre: "Reaction",
     tags: ["DOM", "Timing", "Color Cue", "Session Stats"],
     controls: {
@@ -110,7 +110,7 @@ export const gameCatalog = [
       "A clean three-by-three duel against an unbeatable CPU with keyboard, mouse, and touch support.",
     description:
       "Tic Tac Toe adds a turn-based strategy loop to the arcade. Claim the center, fight for corners, and pressure the board before the CPU blocks every fork. It is fast to read, easy to control, and useful for validating the platform's non-canvas interaction patterns.",
-    thumbnail: "/games/tic-tac-toe/thumbnail.png",
+    thumbnail: "/games/tic-tac-toe/thumbnail.png?v=20260428",
     genre: "Puzzle",
     tags: ["Strategy", "Board", "AI", "Keyboard", "Touch"],
     controls: {
@@ -145,7 +145,7 @@ export const gameCatalog = [
       "The open-source Flutter Pinball table embedded as a full arcade cabinet experience.",
     description:
       "Pinball now runs the open-source Flutter Pinball game as a local static web embed, bringing a polished table, character selection, responsive controls, audio, scoring, and mobile support into the arcade without relying on external services.",
-    thumbnail: "/games/pinball/thumbnail.png",
+    thumbnail: "/games/pinball/thumbnail.png?v=20260428",
     genre: "Arcade",
     tags: ["Canvas", "Physics", "Score Loop", "Keyboard", "Touch"],
     controls: {
@@ -180,7 +180,7 @@ export const gameCatalog = [
       "A three-level brick breaker with paddle angles, lives, best score, and a wide-paddle powerup.",
     description:
       "Breakout extends the paddle-and-ball foundation with level progression, durable bricks, score routing, lives, pointer movement, touch controls, and a catchable wide-paddle capsule. It is quick to learn but rewards sharper rebound control.",
-    thumbnail: "/games/breakout/thumbnail.png",
+    thumbnail: "/games/breakout/thumbnail.png?v=20260428",
     genre: "Arcade",
     tags: ["Canvas", "Collision", "Powerups", "Score Loop"],
     controls: {
@@ -215,7 +215,7 @@ export const gameCatalog = [
       "Ship inertia, screen wrap, shooting, splitting rocks, waves, lives, and local high-score chasing.",
     description:
       "Asteroids adds momentum-based flight and projectile combat to the arcade. Rotate through drifting rock fields, break large asteroids into smaller threats, survive escalating waves, and protect your remaining ships.",
-    thumbnail: "/games/asteroids/thumbnail.png",
+    thumbnail: "/games/asteroids/thumbnail.png?v=20260428",
     genre: "Arcade",
     tags: ["Canvas", "Inertia", "Shooting", "Waves", "Keyboard"],
     controls: {
@@ -250,7 +250,7 @@ export const gameCatalog = [
       "A clean minefield puzzle with three board sizes, protected first reveal, flags, timer, and best times.",
     description:
       "Minesweeper gives the arcade a slower tactical puzzle. Choose a board size, reveal safe regions, flag suspected mines, and race your local best time without leaving the same instant-play game shell.",
-    thumbnail: "/games/minesweeper/thumbnail.png",
+    thumbnail: "/games/minesweeper/thumbnail.png?v=20260428",
     genre: "Puzzle",
     tags: ["Puzzle", "Grid", "Timing", "Mouse", "Touch"],
     controls: {
