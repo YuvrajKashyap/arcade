@@ -212,12 +212,12 @@ export const gameCatalog = [
     slug: "asteroids",
     title: "Asteroids",
     shortDescription:
-      "Ship inertia, screen wrap, shooting, splitting rocks, waves, lives, and local high-score chasing.",
+      "A cartoon space shooter with a real ship, laser fire, chunky asteroids, waves, and local high scores.",
     description:
-      "Asteroids adds momentum-based flight and projectile combat to the arcade. Rotate through drifting rock fields, break large asteroids into smaller threats, survive escalating waves, and protect your remaining ships.",
+      "Asteroids turns momentum-based flight into a colorful cartoon space run. Pilot a hand-drawn ship through layered stars, fire glowing lasers, crack chunky asteroids into smaller threats, survive escalating waves, and protect your remaining ships.",
     thumbnail: "/games/asteroids/thumbnail.png?v=20260428",
     genre: "Arcade",
-    tags: ["Canvas", "Inertia", "Shooting", "Waves", "Keyboard"],
+    tags: ["Canvas", "Cartoon", "Shooting", "Waves", "Keyboard"],
     controls: {
       summary:
         "A/D or arrows rotate, W or Arrow Up thrusts, Space fires, and P pauses.",
