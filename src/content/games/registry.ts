@@ -75,14 +75,14 @@ export const gameCatalog = [
     slug: "reaction-time",
     title: "Reaction Time Test",
     shortDescription:
-      "A timing-focused reflex test with keyboard, mouse, and touch support plus session tracking.",
+      "A color-driven reflex test: wait for green, click fast, and track your 3-run average.",
     description:
-      "Reaction Time Test gives the platform a lighter game shape that does not need a continuous Canvas loop. Wait for the signal, react without jumping early, and track your recent attempts and personal best locally in the browser.",
+      "Reaction Time Test is a polished reflex drill built around clear visual states: wait through the amber hold, click when the panel turns green, and get a red fail state if you jump early. It tracks recent attempts, personal best, and a highlighted 3-run average locally in the browser.",
     thumbnail: "/games/reaction-time/thumbnail.png",
     genre: "Reaction",
-    tags: ["DOM", "Timing", "Input", "Session Stats"],
+    tags: ["DOM", "Timing", "Color Cue", "Session Stats"],
     controls: {
-      summary: "Press space, enter, click, or tap when the card flashes ready.",
+      summary: "Wait for green, then press space, enter, click, or tap.",
       items: [
         { label: "Start", action: "Space, Enter, click, or tap" },
         { label: "React", action: "Space, Enter, click, or tap once ready" },
