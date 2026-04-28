@@ -626,7 +626,7 @@ export function SnakeGame() {
         }
       />
 
-      <GamePlayfield className="mx-auto aspect-square w-full max-w-[34rem]">
+      <GamePlayfield className="mx-auto aspect-square w-full max-w-[min(34rem,52dvh)] md:max-w-[min(34rem,62dvh)]">
         <canvas
           ref={canvasRef}
           className="h-full w-full"

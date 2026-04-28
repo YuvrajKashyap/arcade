@@ -130,7 +130,7 @@ export function PinballGame() {
         </div>
       </div>
 
-      <GamePlayfield className="relative mx-auto aspect-[10/16] min-h-[38rem] w-full max-w-[28rem] md:aspect-[16/10] md:max-h-[78vh] md:max-w-6xl">
+      <GamePlayfield className="relative mx-auto aspect-[10/16] w-full max-w-[min(28rem,33dvh)] md:aspect-[16/10] md:max-w-[99dvh]">
         {!isLoaded ? (
           <div className="pointer-events-none absolute inset-0 z-10 grid place-items-center bg-background-strong text-center">
             <div>

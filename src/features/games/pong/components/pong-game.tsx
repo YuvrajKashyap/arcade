@@ -699,7 +699,7 @@ export function PongGame() {
         </div>
       </div>
 
-      <GamePlayfield className="mx-auto aspect-[12/7] w-full">
+      <GamePlayfield className="mx-auto aspect-[12/7] w-full max-w-[89dvh] md:max-w-[106dvh]">
         <canvas ref={canvasRef} className="h-full w-full" aria-label="Pong match" />
       </GamePlayfield>
 

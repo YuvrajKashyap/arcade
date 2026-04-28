@@ -10,6 +10,41 @@ type GamePageViewProps = {
   data: GamePageData;
 };
 
+const GAME_CONTROL_KEYS = new Set([
+  " ",
+  "arrowdown",
+  "arrowleft",
+  "arrowright",
+  "arrowup",
+  "c",
+  "enter",
+  "f",
+  "p",
+  "r",
+  "s",
+  "w",
+  "a",
+  "d",
+]);
+
+function shouldAllowBrowserKeyHandling(event: KeyboardEvent) {
+  if (event.altKey || event.ctrlKey || event.metaKey) {
+    return true;
+  }
+
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  return (
+    target.isContentEditable ||
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement
+  );
+}
+
 function createGuideLine(data: GamePageData) {
   return data.game.controls.summary;
 }
@@ -76,6 +111,15 @@ export function GamePageView({ data }: GamePageViewProps) {
     const handleActivity = () => {
       showControls();
     };
+    const captureGameKeyboard = (event: KeyboardEvent) => {
+      if (shouldAllowBrowserKeyHandling(event)) {
+        return;
+      }
+
+      if (GAME_CONTROL_KEYS.has(event.key.toLowerCase())) {
+        event.preventDefault();
+      }
+    };
     const handleFullscreenChange = () => {
       setIsFullscreen(Boolean(document.fullscreenElement));
     };
@@ -84,6 +128,7 @@ export function GamePageView({ data }: GamePageViewProps) {
     window.addEventListener("mousemove", handleActivity);
     window.addEventListener("pointerdown", handleActivity);
     window.addEventListener("keydown", handleActivity);
+    window.addEventListener("keydown", captureGameKeyboard, true);
     window.addEventListener("touchstart", handleActivity, { passive: true });
     document.addEventListener("fullscreenchange", handleFullscreenChange);
 
@@ -93,6 +138,7 @@ export function GamePageView({ data }: GamePageViewProps) {
       window.removeEventListener("mousemove", handleActivity);
       window.removeEventListener("pointerdown", handleActivity);
       window.removeEventListener("keydown", handleActivity);
+      window.removeEventListener("keydown", captureGameKeyboard, true);
       window.removeEventListener("touchstart", handleActivity);
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
@@ -105,13 +151,20 @@ export function GamePageView({ data }: GamePageViewProps) {
           background: #000 !important;
           overflow: hidden !important;
         }
+        html {
+          overflow: hidden !important;
+        }
         .theater-root {
+          --theater-bar-height: 64px;
+          --theater-edge-gap: 24px;
           position: fixed;
           inset: 0;
           display: flex;
           align-items: center;
           justify-content: center;
           background: #000;
+          height: 100dvh;
+          overflow: hidden;
         }
         .theater-root--hide-cursor {
           cursor: none;
@@ -135,13 +188,18 @@ export function GamePageView({ data }: GamePageViewProps) {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: min(1120px, calc(100vw - 48px));
-          height: min(820px, calc(100vh - 96px));
+          width: min(1120px, calc(100vw - 32px));
+          height: min(
+            820px,
+            calc(100dvh - var(--theater-bar-height) - var(--theater-edge-gap) - env(safe-area-inset-bottom, 0px))
+          );
+          margin-bottom: calc(var(--theater-bar-height) + env(safe-area-inset-bottom, 0px));
+          min-height: 0;
         }
         .theater-iris {
           width: 100%;
           height: 100%;
-          overflow: auto;
+          overflow: hidden;
           clip-path: circle(0% at 50% 50%);
           transition: clip-path 1s cubic-bezier(0.16, 1, 0.3, 1);
           scrollbar-width: none;
@@ -154,15 +212,49 @@ export function GamePageView({ data }: GamePageViewProps) {
         }
         .theater-content {
           box-sizing: border-box;
-          min-height: 100%;
+          height: 100%;
+          min-height: 0;
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 16px 16px 88px;
+          overflow: hidden;
+          padding: 10px;
         }
         .theater-content > * {
           width: 100%;
+          height: 100%;
           max-width: 72rem;
+        }
+        .theater-content .arcade-game-panel {
+          height: 100%;
+          max-height: 100%;
+          min-height: 0;
+          gap: clamp(0.45rem, 1.1dvh, 1rem);
+        }
+        .theater-content .arcade-game-hud {
+          flex: 0 0 auto;
+          padding: clamp(0.45rem, 1.2dvh, 0.75rem) clamp(0.65rem, 1.4vw, 1rem);
+        }
+        .theater-content .arcade-game-hud [class*="tracking-\\[0\\.16em\\]"] {
+          padding-block: clamp(0.22rem, 0.7dvh, 0.375rem);
+        }
+        .theater-content .arcade-game-playfield {
+          flex: 1 1 auto;
+          min-height: 0;
+          max-height: min(100%, 62dvh);
+        }
+        .theater-content .arcade-game-status {
+          flex: 0 0 auto;
+          margin: 0;
+          font-size: clamp(0.72rem, 1.4dvh, 0.875rem);
+          line-height: 1.45;
+        }
+        .theater-content .arcade-touch-controls {
+          flex: 0 0 auto;
+        }
+        .theater-content canvas,
+        .theater-content iframe {
+          display: block;
         }
         .theater-bar {
           position: fixed;
@@ -175,7 +267,7 @@ export function GamePageView({ data }: GamePageViewProps) {
           align-items: center;
           gap: 16px;
           height: 64px;
-          padding: 0 24px;
+          padding: 0 24px env(safe-area-inset-bottom, 0px);
           background: linear-gradient(
             to top,
             rgba(0, 0, 0, 0.82) 0%,
@@ -267,12 +359,43 @@ export function GamePageView({ data }: GamePageViewProps) {
           gap: 6px;
         }
         @media (max-width: 720px) {
+          .theater-root {
+            --theater-bar-height: 60px;
+            --theater-edge-gap: 12px;
+          }
           .theater-stage {
             width: calc(100vw - 24px);
-            height: calc(100vh - 84px);
+            height: calc(100dvh - var(--theater-bar-height) - var(--theater-edge-gap) - env(safe-area-inset-bottom, 0px));
+            margin-bottom: calc(var(--theater-bar-height) + env(safe-area-inset-bottom, 0px));
           }
           .theater-content {
-            padding: 12px 12px 80px;
+            padding: 6px;
+          }
+          .theater-content .arcade-game-panel {
+            gap: 0.45rem;
+          }
+          .theater-content .arcade-game-hud {
+            border-radius: 1rem;
+          }
+          .theater-content .arcade-game-hud > div {
+            gap: 0.45rem;
+          }
+          .theater-content .arcade-game-hud [class*="tracking-\\[0\\.16em\\]"] {
+            font-size: 0.62rem;
+            letter-spacing: 0.1em;
+            padding: 0.25rem 0.45rem;
+          }
+          .theater-content .arcade-game-playfield {
+            border-radius: 1rem;
+            max-height: 52dvh;
+          }
+          .theater-content .arcade-game-status {
+            font-size: 0.72rem;
+            line-height: 1.3;
+          }
+          .theater-content .arcade-touch-controls button {
+            min-height: 2.5rem;
+            padding-block: 0.45rem;
           }
           .theater-bar {
             gap: 10px;

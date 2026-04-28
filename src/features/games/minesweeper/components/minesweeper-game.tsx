@@ -176,6 +176,13 @@ export function MinesweeperGame() {
     };
   }, []);
 
+  const boardCellSize =
+    state.columns >= 30
+      ? "clamp(0.8rem, min(2.65vw, 4dvh), 1.35rem)"
+      : state.columns >= 16
+        ? "clamp(1rem, min(4.8vw, 4.8dvh), 1.75rem)"
+        : "clamp(1.45rem, min(8vw, 6dvh), 2.15rem)";
+
   return (
     <GamePanel>
       <GameHud
@@ -209,11 +216,11 @@ export function MinesweeperGame() {
         ))}
       </div>
 
-      <GamePlayfield className="mx-auto w-full p-3">
+      <GamePlayfield className="mx-auto min-h-0 w-full p-2 sm:p-3">
         <div
-          className="mx-auto grid max-w-full gap-1 overflow-auto"
+          className="mx-auto grid max-h-full max-w-full gap-1 overflow-auto"
           style={{
-            gridTemplateColumns: `repeat(${state.columns}, minmax(1.75rem, 2.15rem))`,
+            gridTemplateColumns: `repeat(${state.columns}, ${boardCellSize})`,
           }}
         >
           {state.cells.map((cell, index) => {
@@ -247,7 +254,7 @@ export function MinesweeperGame() {
                     longPressTimerRef.current = null;
                   }
                 }}
-                className={`aspect-square rounded-md border text-sm font-semibold ${
+                className={`aspect-square rounded-md border text-xs font-semibold sm:text-sm ${
                   cell.revealed
                     ? danger
                       ? "border-red-400/40 bg-red-500/25 text-red-100"
