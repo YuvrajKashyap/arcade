@@ -45,7 +45,6 @@ type PickupEffect = {
   age: number;
 };
 
-const ARENA_PADDING = 14;
 const PICKUP_EFFECT_SECONDS = 0.55;
 
 function getStatusCopy(phase: SnakePhase) {
@@ -118,7 +117,7 @@ function getDirectionVector(direction: SnakeDirection) {
   return { x: 1, y: 0 };
 }
 
-function drawArena(context: CanvasRenderingContext2D, elapsedSeconds: number) {
+function drawArena(context: CanvasRenderingContext2D) {
   const backgroundGradient = context.createRadialGradient(
     SNAKE_CANVAS_SIZE * 0.5,
     SNAKE_CANVAS_SIZE * 0.42,
@@ -133,44 +132,6 @@ function drawArena(context: CanvasRenderingContext2D, elapsedSeconds: number) {
 
   context.fillStyle = backgroundGradient;
   context.fillRect(0, 0, SNAKE_CANVAS_SIZE, SNAKE_CANVAS_SIZE);
-
-  context.save();
-  context.globalAlpha = 0.16;
-  context.strokeStyle = "#41e6c0";
-  context.lineWidth = 1;
-  for (
-    let offset = -SNAKE_CANVAS_SIZE;
-    offset < SNAKE_CANVAS_SIZE * 2;
-    offset += 38
-  ) {
-    context.beginPath();
-    context.moveTo(offset + Math.sin(elapsedSeconds * 0.4) * 8, 0);
-    context.lineTo(offset + SNAKE_CANVAS_SIZE, SNAKE_CANVAS_SIZE);
-    context.stroke();
-  }
-  context.restore();
-
-  context.save();
-  context.shadowBlur = 26;
-  context.shadowColor = "rgba(65, 230, 192, 0.45)";
-  context.strokeStyle = "rgba(65, 230, 192, 0.52)";
-  context.lineWidth = 4;
-  context.strokeRect(
-    ARENA_PADDING,
-    ARENA_PADDING,
-    SNAKE_CANVAS_SIZE - ARENA_PADDING * 2,
-    SNAKE_CANVAS_SIZE - ARENA_PADDING * 2,
-  );
-  context.restore();
-
-  context.strokeStyle = "rgba(255,255,255,0.08)";
-  context.lineWidth = 1;
-  context.strokeRect(
-    ARENA_PADDING + 8,
-    ARENA_PADDING + 8,
-    SNAKE_CANVAS_SIZE - (ARENA_PADDING + 8) * 2,
-    SNAKE_CANVAS_SIZE - (ARENA_PADDING + 8) * 2,
-  );
 }
 
 function drawFood(
@@ -388,7 +349,7 @@ function drawSnakeScene(
   elapsedSeconds: number,
 ) {
   context.clearRect(0, 0, SNAKE_CANVAS_SIZE, SNAKE_CANVAS_SIZE);
-  drawArena(context, elapsedSeconds);
+  drawArena(context);
   drawFood(context, state.food, elapsedSeconds);
   drawPickupEffects(context, effects);
 
