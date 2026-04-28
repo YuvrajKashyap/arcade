@@ -81,18 +81,18 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function getDifficultyDescription(difficulty: TicTacToeDifficulty) {
   if (difficulty === "easy") {
-    return "Mostly loose play with occasional obvious finishes.";
+    return "A friendly CPU that leaves plenty of room to win.";
   }
 
   if (difficulty === "medium") {
-    return "Blocks basic threats, values the center, but misses deeper traps.";
+    return "Blocks simple lines, but still misses playful traps.";
   }
 
   if (difficulty === "hard") {
-    return "Usually finds the best line, but still leaves a few openings.";
+    return "Sharp enough to punish lazy moves, still beatable.";
   }
 
-  return "Full minimax. If a draw is possible, it will never hand you the win.";
+  return "Full minimax. The boss round for perfect play.";
 }
 
 function readStoredStats() {
@@ -160,25 +160,25 @@ function getStatusCopy(
 
   if (phase === "finished") {
     if (outcome === "player") {
-      return `${difficultyLabel} cleared. Restart for another round and tighten the next opening.`;
+      return `${difficultyLabel} cleared. Nice line. Start another round.`;
     }
 
     if (outcome === "cpu") {
-      return `${difficultyLabel} CPU closed the board. Pressure the center sooner and cut off the fork.`;
+      return `${difficultyLabel} CPU got this one. Try the center or a corner first.`;
     }
 
-    return `${difficultyLabel} ended in a draw. Reset and try a sharper corner sequence.`;
+    return `${difficultyLabel} ended in a draw. One more round.`;
   }
 
   if (phase === "idle") {
-    return `${difficultyLabel} selected. You play X and move first.`;
+    return `${difficultyLabel} selected. You are blue X and move first.`;
   }
 
   if (turn === "cpu") {
-    return `${difficultyLabel} CPU thinking. Watch the center, corners, and any two-in-a-row threats.`;
+    return `${difficultyLabel} CPU is thinking...`;
   }
 
-  return "Your move. Arrow keys or WASD shift focus, Enter or Space places X.";
+  return "Your move. Pick a bright square and make a line.";
 }
 
 function getCellCopy(value: TicTacToeBoard[number]) {
@@ -191,6 +191,51 @@ function getCellCopy(value: TicTacToeBoard[number]) {
   }
 
   return "";
+}
+
+function getRoundStatusLabel(
+  phase: TicTacToePhase,
+  turn: TicTacToeTurn,
+  outcome: TicTacToeOutcome,
+) {
+  if (phase === "finished") {
+    if (outcome === "player") {
+      return "You win";
+    }
+
+    if (outcome === "cpu") {
+      return "CPU wins";
+    }
+
+    return "Draw";
+  }
+
+  return turn === "cpu" ? "CPU turn" : "Your turn";
+}
+
+function getCellClass(
+  value: TicTacToeBoard[number],
+  isWinningCell: boolean,
+  isActive: boolean,
+) {
+  const baseClass =
+    "group relative grid aspect-square place-items-center overflow-hidden rounded-[1.15rem] border-2 text-4xl font-black transition duration-200 sm:rounded-[1.45rem] sm:text-5xl";
+  const activeClass = isActive
+    ? " outline-none ring-4 ring-[#ff7a1a]/35 ring-offset-2 ring-offset-[#fff7d6]"
+    : "";
+  const winningClass = isWinningCell
+    ? " scale-[1.03] border-[#ff7a1a] shadow-[0_0_0_5px_rgba(255,255,255,0.82),0_18px_38px_rgba(255,122,26,0.28)]"
+    : "";
+
+  if (value === "x") {
+    return `${baseClass} border-[#19a9ff] bg-[linear-gradient(145deg,#f3fbff,#a9e7ff_52%,#1aa9ff)] text-[#006bd6] shadow-[inset_0_3px_0_rgba(255,255,255,0.86),0_13px_0_#0575bd,0_20px_26px_rgba(0,117,189,0.22)] ${winningClass}${activeClass}`;
+  }
+
+  if (value === "o") {
+    return `${baseClass} border-[#76d927] bg-[linear-gradient(145deg,#fbfff1,#c9ff63_48%,#61c91c)] text-[#2f8f00] shadow-[inset_0_3px_0_rgba(255,255,255,0.88),0_13px_0_#379411,0_20px_26px_rgba(55,148,17,0.2)] ${winningClass}${activeClass}`;
+  }
+
+  return `${baseClass} border-[#ffd46b] bg-[linear-gradient(145deg,#fffef4,#fff0af_58%,#ffd060)] text-[#ffb02e]/28 shadow-[inset_0_3px_0_rgba(255,255,255,0.9),0_11px_0_#f2a82e,0_18px_24px_rgba(190,112,12,0.18)] hover:-translate-y-1 hover:border-[#ff9f1a] hover:bg-[linear-gradient(145deg,#ffffff,#fff4b8_55%,#ffd76f)] hover:text-[#ffb02e]/50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ff7a1a]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#fff7d6] ${activeClass}`;
 }
 
 export function TicTacToeGame() {
@@ -209,6 +254,7 @@ export function TicTacToeGame() {
   const cpuMoveTimerRef = useRef<number | null>(null);
   const cellRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const activeStats = stats[difficulty];
+  const roundStatusLabel = getRoundStatusLabel(phase, turn, outcome);
 
   function clearCpuMoveTimer() {
     if (cpuMoveTimerRef.current !== null) {
@@ -410,7 +456,7 @@ export function TicTacToeGame() {
       <GameHud
         items={[
           { label: "Difficulty", value: getDifficultyLabel(difficulty) },
-          { label: "Turn", value: phase === "finished" ? outcome ?? "draw" : turn },
+          { label: "Turn", value: roundStatusLabel },
           { label: "Wins", value: activeStats.wins },
           { label: "Losses", value: activeStats.losses },
           { label: "Draws", value: activeStats.draws },
@@ -424,164 +470,140 @@ export function TicTacToeGame() {
           </>
         }
       />
-      <div className="grid min-h-0 flex-1 gap-4 overflow-hidden lg:grid-cols-[minmax(0,1fr)_16rem]">
-        <GamePlayfield className="min-h-0 p-4 sm:p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-[0.28em] text-foreground-muted">
-                Solo board
-              </p>
-              <p className="mt-2 text-sm leading-7 text-foreground-soft">
-                Beat the CPU by building a line before it blocks every fork.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-foreground-soft">
+
+      <div className="grid min-h-0 flex-1 gap-3 overflow-hidden lg:grid-cols-[minmax(0,1fr)_15rem]">
+        <GamePlayfield className="relative isolate min-h-0 border-0 bg-[linear-gradient(135deg,#fff8d9,#ffecd1_42%,#e4f8ff)] p-3 text-[#3a2304] shadow-[0_28px_80px_rgba(20,10,0,0.24)] sm:p-4">
+          <div className="pointer-events-none absolute -left-8 top-8 h-24 w-24 rounded-full bg-[#72d700]/35 blur-xl" />
+          <div className="pointer-events-none absolute -right-8 top-8 h-28 w-28 rounded-full bg-[#00b8ff]/28 blur-xl" />
+          <div className="relative z-10 flex h-full min-h-0 flex-col items-center justify-center">
+            <div className="mb-2 flex flex-wrap items-center justify-center gap-2 rounded-full border border-white/80 bg-white/62 px-3 py-1.5 text-xs font-black text-[#724500]">
+              <span>{roundStatusLabel}</span>
+              <span className="text-[#d56c00]">/</span>
               <span>{getDifficultyLabel(difficulty)}</span>
-              <span className="text-white/18">/</span>
-              <span>
-                {phase === "finished"
-                  ? outcome === "player"
-                    ? "You win"
-                    : outcome === "cpu"
-                      ? "CPU wins"
-                      : "Draw"
-                  : turn === "cpu"
-                    ? "CPU turn"
-                    : "Your turn"}
-              </span>
             </div>
+
+            <div className="relative w-full max-w-[min(19rem,34dvh)] sm:max-w-[min(24rem,44dvh)]">
+              {phase === "finished" && outcome === "player" ? (
+                <div className="pointer-events-none absolute -inset-7 z-20">
+                  {[...Array(12)].map((_, index) => (
+                    <span
+                      key={index}
+                      className="absolute h-2 w-2 rounded-full shadow-sm"
+                      style={{
+                        left: `${(index * 23) % 100}%`,
+                        top: `${(index * 41) % 100}%`,
+                        backgroundColor: ["#13b8ff", "#86e01c", "#ffb703", "#ff4fb8"][index % 4],
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : null}
+
+              <div className="relative rounded-[1.65rem] border-[5px] border-[#077cff] bg-[#ffb703] p-2.5 shadow-[inset_0_4px_0_rgba(255,255,255,0.52),0_10px_0_#c96b00,0_20px_28px_rgba(113,61,0,0.22)]">
+                <div className="grid grid-cols-3 gap-2.5">
+                  {board.map((cell, index) => {
+                    const isWinningCell = winningLine?.includes(index) ?? false;
+                    const isActive = index === activeCellIndex;
+
+                    return (
+                      <button
+                        key={index}
+                        ref={(node) => {
+                          cellRefs.current[index] = node;
+                        }}
+                        type="button"
+                        onClick={() => handlePlayerMove(index)}
+                        className={getCellClass(cell, isWinningCell, isActive)}
+                        disabled={cell !== null || turn !== "player" || phase === "finished"}
+                        aria-label={
+                          cell
+                            ? `Cell ${index + 1}, ${getCellCopy(cell)}`
+                            : `Cell ${index + 1}, empty`
+                        }
+                      >
+                        <span className="relative z-10 drop-shadow-[0_3px_0_rgba(255,255,255,0.45)]">
+                          {getCellCopy(cell)}
+                        </span>
+                        {!cell ? (
+                          <span className="absolute inset-x-4 top-3 h-2 rounded-full bg-white/55 opacity-80" />
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <p className="mt-4 max-w-xl text-center text-sm font-bold leading-6 text-[#6b3c00]">
+              {getStatusCopy(phase, turn, outcome, difficulty)}
+            </p>
           </div>
-
-          <div className="mx-auto mt-4 grid max-w-[min(30rem,42dvh)] grid-cols-3 gap-2 sm:gap-3">
-            {board.map((cell, index) => {
-              const isWinningCell = winningLine?.includes(index) ?? false;
-
-              return (
-                <button
-                  key={index}
-                  ref={(node) => {
-                    cellRefs.current[index] = node;
-                  }}
-                  type="button"
-                  onClick={() => handlePlayerMove(index)}
-                  className={`aspect-square rounded-[1.2rem] border text-4xl font-semibold transition-all duration-200 sm:rounded-[1.5rem] sm:text-5xl ${
-                    cell === "x"
-                      ? "border-violet-400/30 bg-violet-500/10 text-violet-200"
-                      : cell === "o"
-                        ? "border-cyan-400/30 bg-cyan-500/10 text-cyan-100"
-                        : "border-line bg-background-strong text-white/18 hover:border-line-strong hover:bg-surface"
-                  } ${isWinningCell ? "ring-2 ring-violet-300/50 ring-offset-0" : ""} ${index === activeCellIndex ? "outline-none ring-1 ring-white/18" : ""}`}
-                  disabled={cell !== null || turn !== "player" || phase === "finished"}
-                  aria-label={
-                    cell
-                      ? `Cell ${index + 1}, ${getCellCopy(cell)}`
-                      : `Cell ${index + 1}, empty`
-                  }
-                >
-                  {getCellCopy(cell)}
-                </button>
-              );
-            })}
-          </div>
-
-          <p className="mt-4 text-center text-sm leading-6 text-foreground-soft">
-            {getStatusCopy(phase, turn, outcome, difficulty)}
-          </p>
         </GamePlayfield>
 
         <aside className="hidden min-h-0 flex-col gap-3 overflow-hidden lg:flex">
-          <div className="rounded-[1.35rem] border border-line bg-surface px-4 py-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-[0.24em] text-foreground-muted">
-                  Difficulty
-                </p>
-                <p className="mt-2 text-sm leading-7 text-foreground-soft">
-                  {getDifficultyDescription(difficulty)}
-                </p>
-              </div>
+          <div className="rounded-[1.35rem] border-2 border-white/75 bg-white/72 p-3 shadow-[0_14px_26px_rgba(130,74,0,0.12)]">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[0.68rem] font-black uppercase tracking-[0.16em] text-[#d56c00]">
+                Difficulty
+              </p>
+              <span className="rounded-full bg-[#dff8ff] px-2 py-1 text-[0.62rem] font-black uppercase tracking-[0.08em] text-[#006bd6]">
+                {getDifficultyLabel(difficulty)}
+              </span>
             </div>
+            <p className="mt-2 text-xs font-bold leading-5 text-[#724500]">
+              {getDifficultyDescription(difficulty)}
+            </p>
             <div className="mt-3 grid grid-cols-2 gap-2">
               {TIC_TAC_TOE_DIFFICULTIES.map((level) => {
                 const isActive = level === difficulty;
 
                 return (
-                  <GameButton
+                  <button
                     key={level}
+                    type="button"
                     onClick={() => handleDifficultyChange(level)}
-                    className={`rounded-[1.1rem] px-3 py-3 transition-all ${
+                    aria-pressed={isActive}
+                    className={`rounded-[1rem] border-2 px-2 py-2 text-xs font-black transition ${
                       isActive
-                        ? "border-violet-300/40 bg-violet-500/12 text-violet-100 shadow-[0_10px_30px_rgba(124,58,237,0.12)]"
-                        : "border-line bg-background-strong text-foreground-soft hover:-translate-y-0.5 hover:border-line-strong hover:bg-background"
+                        ? "border-[#ff8a00] bg-[#ffcf35] text-[#3a2304] shadow-[0_5px_0_#d56c00,0_10px_16px_rgba(213,108,0,0.16)]"
+                        : "border-[#bae8ff] bg-[#ecfbff] text-[#0072c8] hover:-translate-y-0.5 hover:border-[#13b8ff]"
                     }`}
                   >
                     {getDifficultyLabel(level)}
-                  </GameButton>
+                  </button>
                 );
               })}
             </div>
           </div>
 
-          <div className="rounded-[1.35rem] border border-line bg-surface px-4 py-4">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs font-medium uppercase tracking-[0.24em] text-foreground-muted">
-                Local record
-              </p>
-              <span className="rounded-full border border-line bg-background-strong px-3 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-foreground-muted">
-                {getDifficultyLabel(difficulty)}
-              </span>
-            </div>
-            <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
-              <div className="rounded-[1rem] border border-line bg-background-strong px-2 py-3">
-                <dt className="text-[10px] uppercase tracking-[0.18em] text-foreground-muted">
-                  Wins
-                </dt>
-                <dd className="mt-2 text-2xl font-semibold text-foreground">
-                  {activeStats.wins}
-                </dd>
-              </div>
-              <div className="rounded-[1rem] border border-line bg-background-strong px-2 py-3">
-                <dt className="text-[10px] uppercase tracking-[0.18em] text-foreground-muted">
-                  Losses
-                </dt>
-                <dd className="mt-2 text-2xl font-semibold text-foreground">
-                  {activeStats.losses}
-                </dd>
-              </div>
-              <div className="rounded-[1rem] border border-line bg-background-strong px-2 py-3">
-                <dt className="text-[10px] uppercase tracking-[0.18em] text-foreground-muted">
-                  Draws
-                </dt>
-                <dd className="mt-2 text-2xl font-semibold text-foreground">
-                  {activeStats.draws}
-                </dd>
-              </div>
-            </dl>
-          </div>
-
-          <div className="max-h-[9rem] overflow-hidden rounded-[1.35rem] border border-line bg-surface px-4 py-3">
-            <p className="text-xs font-medium uppercase tracking-[0.24em] text-foreground-muted">
-              Controls
+          <div className="rounded-[1.35rem] border-2 border-white/75 bg-white/72 p-3 shadow-[0_14px_26px_rgba(130,74,0,0.12)]">
+            <p className="text-[0.68rem] font-black uppercase tracking-[0.16em] text-[#d56c00]">
+              Local record
             </p>
-            <ul className="mt-3 space-y-2 text-sm leading-5 text-foreground-soft">
-              <li>Click or tap any open cell to place X.</li>
-              <li>Arrow keys or WASD move focus. Enter or Space commits the move.</li>
-              <li>R starts a new round. C clears the current difficulty record.</li>
-            </ul>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <GameButton variant="primary" onClick={resetBoard}>
-              New round
-            </GameButton>
-            <GameButton onClick={clearStats}>
-              Clear record
-            </GameButton>
+            <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
+              {([
+                ["Wins", activeStats.wins, "#86e01c"],
+                ["Draws", activeStats.draws, "#13b8ff"],
+                ["Losses", activeStats.losses, "#ff4fb8"],
+              ] satisfies Array<[string, number, string]>).map(([label, value, color]) => (
+                <div
+                  key={label}
+                  className="rounded-[0.9rem] border border-white bg-[#fff8d9] px-2 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)]"
+                >
+                  <dt className="text-[0.58rem] font-black uppercase tracking-[0.12em] text-[#8a4b00]">
+                    {label}
+                  </dt>
+                  <dd className="mt-1 text-2xl font-black" style={{ color }}>
+                    {value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
           </div>
         </aside>
       </div>
       <GameStatus>
-        Arrow keys or WASD move focus. Enter or Space places X. R starts a new round.
+        Click, tap, or use the keyboard to make a line before the CPU does.
       </GameStatus>
     </GamePanel>
   );
