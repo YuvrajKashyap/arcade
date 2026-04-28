@@ -27,22 +27,22 @@ import {
 
 function getPhaseCopy(phase: ReactionPhase) {
   if (phase === "waiting") {
-    return "Stay ready. Do not click until the panel turns green.";
+    return "Wait for green.";
   }
 
   if (phase === "ready") {
-    return "Green means go. Click, tap, or press Space now.";
+    return "Click now.";
   }
 
   if (phase === "too-soon") {
-    return "Too early. Red means the round did not count.";
+    return "Too early.";
   }
 
   if (phase === "result") {
-    return "Round saved. Start the next run when you are ready.";
+    return "Saved.";
   }
 
-  return "Start a run, wait for green, then react as fast as you can.";
+  return "Start a run.";
 }
 
 function getStageClasses(phase: ReactionPhase) {
@@ -270,11 +270,6 @@ export function ReactionTimeGame() {
           <p className="mx-auto mt-6 max-w-xl text-base leading-8 text-white/78 sm:text-lg">
             {getPhaseCopy(phase)}
           </p>
-
-          <p className="mt-8 max-w-2xl text-sm font-medium leading-7 text-white/66">
-            The panel is the signal: amber means wait, green means react, red
-            means you jumped early.
-          </p>
         </div>
       </button>
 
@@ -292,7 +287,7 @@ export function ReactionTimeGame() {
             </p>
             <p className="mt-1 text-sm leading-7 text-foreground-soft">
               {threeRunAverage
-                ? "Your last three valid runs are averaged here."
+                ? "Last three valid runs."
                 : `${runsUntilAverage} more valid ${
                     runsUntilAverage === 1 ? "run" : "runs"
                   } to unlock your average.`}
@@ -305,7 +300,7 @@ export function ReactionTimeGame() {
       </div>
 
       <GameStatus>
-        Click or press Space/Enter only when the panel turns green. Press R to reset.
+        Click, tap, or press Space/Enter. Press R to reset.
       </GameStatus>
 
       <div className="flex flex-wrap gap-3">
