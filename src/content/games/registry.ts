@@ -107,9 +107,9 @@ export const gameCatalog = [
     slug: "tic-tac-toe",
     title: "Tic Tac Toe",
     shortDescription:
-      "A clean three-by-three duel against an unbeatable CPU with keyboard, mouse, and touch support.",
+      "A bright toy-board duel with blue Xs, green Os, CPU difficulties, and fast local records.",
     description:
-      "Tic Tac Toe adds a turn-based strategy loop to the arcade. Claim the center, fight for corners, and pressure the board before the CPU blocks every fork. It is fast to read, easy to control, and useful for validating the platform's non-canvas interaction patterns.",
+      "Tic Tac Toe turns the classic three-by-three duel into a playful board game with glossy marks, colorful feedback, keyboard focus, touch controls, and four CPU difficulty levels. Claim the center, fight for corners, and build a line before the CPU blocks the board.",
     thumbnail: "/games/tic-tac-toe/thumbnail.png?v=20260428",
     genre: "Puzzle",
     tags: ["Strategy", "Board", "AI", "Keyboard", "Touch"],
