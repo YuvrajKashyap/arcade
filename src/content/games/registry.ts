@@ -274,6 +274,15 @@ export const gameCatalog = [
     version: "1.0.0",
     developerNotes:
       "Minesweeper stays DOM-based to support keyboard focus, right-click flagging, long-press flagging, and responsive board layouts.",
+    howToPlay: {
+      summary:
+        "Reveal safe spaces and flag the mines. The first click is protected, so start anywhere.",
+      tips: [
+        "Numbers tell you how many mines touch that square.",
+        "Use flags when you are pretty sure a covered square is a mine.",
+        "Win by revealing every safe square, not by clicking the mines.",
+      ],
+    },
     libraryOrder: 8,
     relatedSlugs: ["tic-tac-toe", "reaction-time"],
   },

@@ -39,6 +39,10 @@ export type GameMetadata = {
   mobileSupport: MobileSupport;
   version?: string;
   developerNotes?: string;
+  howToPlay?: {
+    summary: string;
+    tips: string[];
+  };
 };
 
 export type GameCatalogEntry = GameMetadata & {

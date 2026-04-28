@@ -32,6 +32,8 @@ function addRandomTile(state: TwentyFortyEightState): TwentyFortyEightState {
     value: Math.random() < 0.9 ? 2 : 4,
     row: cell.row,
     column: cell.column,
+    previousRow: cell.row,
+    previousColumn: cell.column,
     isNew: true,
   };
 
@@ -97,6 +99,8 @@ export function moveTwentyFortyEight(
 
   const sourceTiles: TwentyFortyEightTile[] = state.tiles.map((tile) => ({
     ...tile,
+    previousRow: tile.row,
+    previousColumn: tile.column,
     isNew: false,
     mergedFrom: undefined,
   }));
@@ -129,6 +133,8 @@ export function moveTwentyFortyEight(
           value,
           row: targetCell.row,
           column: targetCell.column,
+          previousRow: nextTile.row,
+          previousColumn: nextTile.column,
           mergedFrom: [tile.id, nextTile.id],
         });
         nextTileId += 1;
@@ -145,6 +151,8 @@ export function moveTwentyFortyEight(
           ...tile,
           row: targetCell.row,
           column: targetCell.column,
+          previousRow: tile.row,
+          previousColumn: tile.column,
         });
         moved = moved || tile.row !== targetCell.row || tile.column !== targetCell.column;
       }

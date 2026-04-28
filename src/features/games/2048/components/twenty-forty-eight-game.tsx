@@ -48,6 +48,17 @@ const tileColors = new Map<number, string>([
   [2048, "bg-[#9b7cff] text-white shadow-[0_7px_0_#6044c7]"],
 ]);
 
+const TILE_GAP = 10;
+
+function getTilePositionStyle(row: number, column: number) {
+  return {
+    width: `calc(25% - ${(TILE_GAP * 3) / 4}px)`,
+    height: `calc(25% - ${(TILE_GAP * 3) / 4}px)`,
+    left: `calc(${column * 25}% + ${(column * TILE_GAP) / 4}px)`,
+    top: `calc(${row * 25}% + ${(row * TILE_GAP) / 4}px)`,
+  };
+}
+
 function getStatusCopy(phase: TwentyFortyEightPhase) {
   if (phase === "won") {
     return "2048 reached. Start a fresh board and chase a cleaner score.";
@@ -167,16 +178,15 @@ export function TwentyFortyEightGame() {
             ))}
           </div>
 
-          <div className="absolute inset-2.5 grid grid-cols-4 gap-2.5">
+          <div className="pointer-events-none absolute inset-2.5">
             {state.tiles.map((tile) => (
               <div
                 key={tile.id}
-                className={`grid aspect-square place-items-center rounded-[1rem] border-2 border-white/40 text-2xl font-black transition duration-150 sm:text-4xl ${
-                  tile.isNew || tile.mergedFrom ? "scale-[1.03]" : ""
+                className={`absolute grid place-items-center rounded-[1rem] border-2 border-white/40 text-2xl font-black transition-all duration-200 ease-out sm:text-4xl ${
+                  tile.isNew || tile.mergedFrom ? "z-10 scale-[1.03]" : ""
                 } ${getTileClass(tile.value)}`}
                 style={{
-                  gridColumnStart: tile.column + 1,
-                  gridRowStart: tile.row + 1,
+                  ...getTilePositionStyle(tile.row, tile.column),
                 }}
               >
                 {tile.value}
