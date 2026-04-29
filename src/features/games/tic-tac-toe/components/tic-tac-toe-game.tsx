@@ -252,6 +252,7 @@ export function TicTacToeGame() {
     readStoredStats(),
   );
   const cpuMoveTimerRef = useRef<number | null>(null);
+  const skipNextCellClickRef = useRef<number | null>(null);
   const cellRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const activeStats = stats[difficulty];
   const roundStatusLabel = getRoundStatusLabel(phase, turn, outcome);
@@ -360,6 +361,15 @@ export function TicTacToeGame() {
     setBoard(nextBoard);
     setPhase("playing");
     setTurn("cpu");
+  }
+
+  function handleCellClick(index: number) {
+    if (skipNextCellClickRef.current === index) {
+      skipNextCellClickRef.current = null;
+      return;
+    }
+
+    handlePlayerMove(index);
   }
 
   const handleKeyboardInput = useEffectEvent((event: KeyboardEvent) => {
@@ -512,7 +522,16 @@ export function TicTacToeGame() {
                           cellRefs.current[index] = node;
                         }}
                         type="button"
-                        onClick={() => handlePlayerMove(index)}
+                        onClick={() => handleCellClick(index)}
+                        onPointerUp={(event) => {
+                          if (event.pointerType !== "touch" || !event.isPrimary) {
+                            return;
+                          }
+
+                          event.preventDefault();
+                          skipNextCellClickRef.current = index;
+                          handlePlayerMove(index);
+                        }}
                         className={getCellClass(cell, isWinningCell, isActive)}
                         disabled={cell !== null || turn !== "player" || phase === "finished"}
                         aria-label={

@@ -458,7 +458,7 @@ export function BreakoutGame() {
         }
       />
 
-      <GamePlayfield className="mx-auto aspect-[18/13] w-full max-w-[72dvh] md:max-w-[86dvh]">
+      <GamePlayfield className="mx-auto aspect-[4/3] w-full max-w-[69.3333dvh] md:max-w-[82.6667dvh]">
         <canvas
           ref={canvasRef}
           className="h-full w-full touch-none"
@@ -483,7 +483,6 @@ export function BreakoutGame() {
               return;
             }
 
-            event.preventDefault();
             updatePointerTarget(touch.clientX);
           }}
           onTouchEnd={() => {
