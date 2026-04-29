@@ -478,6 +478,7 @@ export function AsteroidsGame() {
   const nextBurstIdRef = useRef(1);
   const renderInputRef = useRef<AsteroidsRenderInput>({ thrust: false, turn: 0 });
   const touchInputRef = useRef({ turn: 0, thrust: false, shoot: false });
+  const joystickRef = useRef<HTMLDivElement>(null);
   const pressedKeysRef = useKeyboardState({
     preventDefaultKeys: ["a", "d", "w", "arrowleft", "arrowright", "arrowup", " "],
   });
@@ -527,6 +528,29 @@ export function AsteroidsGame() {
       syncState({ ...current, phase: "playing" });
     }
     renderCurrentState();
+  }
+
+  function updateJoystickInput(clientX: number, clientY: number) {
+    const joystick = joystickRef.current;
+    if (!joystick) {
+      return;
+    }
+
+    const bounds = joystick.getBoundingClientRect();
+    const centerX = bounds.left + bounds.width / 2;
+    const centerY = bounds.top + bounds.height / 2;
+    const dx = clientX - centerX;
+    const dy = clientY - centerY;
+    const deadZone = bounds.width * 0.12;
+
+    touchInputRef.current.turn =
+      Math.abs(dx) < deadZone ? 0 : dx < 0 ? -1 : 1;
+    touchInputRef.current.thrust = dy < -deadZone;
+  }
+
+  function clearJoystickInput() {
+    touchInputRef.current.turn = 0;
+    touchInputRef.current.thrust = false;
   }
 
   const handleKeyboardInput = useEffectEvent((event: KeyboardEvent) => {
@@ -617,67 +641,65 @@ export function AsteroidsGame() {
       />
 
       <GamePlayfield className="mx-auto aspect-[19/13] w-full max-w-[76dvh] md:max-w-[91dvh]">
-        <canvas ref={canvasRef} className="h-full w-full" aria-label="Asteroids field" />
+        <canvas
+          ref={canvasRef}
+          className="h-full w-full"
+          style={{ touchAction: "none" }}
+          aria-label="Asteroids field"
+          onTouchStart={(event) => {
+            if (stateRef.current.phase !== "playing") {
+              beginRun();
+            }
+            event.preventDefault();
+          }}
+        />
       </GamePlayfield>
 
       <GameStatus>{getStatusCopy(hudState.phase)}</GameStatus>
 
-      <TouchControls className="max-w-[24rem]">
-        <div className="grid grid-cols-4 gap-2">
-          <GameButton
-            variant="touch"
-            className="rounded-2xl"
-            onPointerDown={() => {
-              touchInputRef.current.turn = -1;
+      <TouchControls className="fixed inset-x-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] z-40 max-w-none">
+        <div className="flex items-end justify-between gap-6">
+          <div
+            ref={joystickRef}
+            className="relative h-28 w-28 touch-none rounded-full border border-line bg-surface-muted shadow-[inset_0_0_0_2px_rgba(255,255,255,0.08),0_18px_42px_rgba(0,0,0,0.28)]"
+            aria-label="Asteroids joystick"
+            role="application"
+            onPointerDown={(event) => {
+              event.currentTarget.setPointerCapture(event.pointerId);
+              if (stateRef.current.phase !== "playing") {
+                beginRun();
+              }
+              updateJoystickInput(event.clientX, event.clientY);
             }}
-            onPointerUp={() => {
-              touchInputRef.current.turn = 0;
+            onPointerMove={(event) => {
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                updateJoystickInput(event.clientX, event.clientY);
+              }
             }}
-            onPointerLeave={() => {
-              touchInputRef.current.turn = 0;
+            onPointerUp={(event) => {
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                event.currentTarget.releasePointerCapture(event.pointerId);
+              }
+              clearJoystickInput();
             }}
+            onPointerCancel={clearJoystickInput}
           >
-            Left
-          </GameButton>
+            <div className="absolute left-1/2 top-3 h-8 w-1 -translate-x-1/2 rounded-full bg-foreground-soft/55" />
+            <div className="absolute left-3 top-1/2 h-1 w-8 -translate-y-1/2 rounded-full bg-foreground-soft/55" />
+            <div className="absolute right-3 top-1/2 h-1 w-8 -translate-y-1/2 rounded-full bg-foreground-soft/55" />
+            <div className="absolute left-1/2 top-1/2 h-11 w-11 -translate-x-1/2 -translate-y-1/2 rounded-full border border-line-strong bg-accent-soft" />
+          </div>
           <GameButton
             variant="touch"
-            className="rounded-2xl"
+            className="h-24 w-24 rounded-full text-base"
             onPointerDown={() => {
-              touchInputRef.current.thrust = true;
-            }}
-            onPointerUp={() => {
-              touchInputRef.current.thrust = false;
-            }}
-            onPointerLeave={() => {
-              touchInputRef.current.thrust = false;
-            }}
-          >
-            Thrust
-          </GameButton>
-          <GameButton
-            variant="touch"
-            className="rounded-2xl"
-            onClick={() => {
               touchInputRef.current.shoot = true;
-              beginRun();
+              if (stateRef.current.phase !== "playing") {
+                beginRun();
+              }
             }}
           >
             Fire
-          </GameButton>
-          <GameButton
-            variant="touch"
-            className="rounded-2xl"
-            onPointerDown={() => {
-              touchInputRef.current.turn = 1;
-            }}
-            onPointerUp={() => {
-              touchInputRef.current.turn = 0;
-            }}
-            onPointerLeave={() => {
-              touchInputRef.current.turn = 0;
-            }}
-          >
-            Right
           </GameButton>
         </div>
       </TouchControls>

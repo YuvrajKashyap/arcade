@@ -133,6 +133,7 @@ export function MinesweeperGame() {
   const [activeCellIndex, setActiveCellIndex] = useState(0);
   const cellRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const longPressTimerRef = useRef<number | null>(null);
+  const suppressNextClickRef = useRef(false);
   const bestTime = bestTimes[state.difficulty] ?? null;
 
   function commitState(nextState: MinesweeperState) {
@@ -297,7 +298,14 @@ export function MinesweeperGame() {
                   cellRefs.current[index] = node;
                 }}
                 type="button"
-                onClick={() => handleCellPrimary(index)}
+                onClick={() => {
+                  if (suppressNextClickRef.current) {
+                    suppressNextClickRef.current = false;
+                    return;
+                  }
+
+                  handleCellPrimary(index);
+                }}
                 onContextMenu={(event) => {
                   event.preventDefault();
                   handleCellFlag(index);
@@ -307,6 +315,7 @@ export function MinesweeperGame() {
                     window.clearTimeout(longPressTimerRef.current);
                   }
                   longPressTimerRef.current = window.setTimeout(() => {
+                    suppressNextClickRef.current = true;
                     handleCellFlag(index);
                     longPressTimerRef.current = null;
                   }, 420);
@@ -317,6 +326,13 @@ export function MinesweeperGame() {
                     longPressTimerRef.current = null;
                   }
                 }}
+                onPointerCancel={() => {
+                  if (longPressTimerRef.current !== null) {
+                    window.clearTimeout(longPressTimerRef.current);
+                    longPressTimerRef.current = null;
+                  }
+                }}
+                style={{ touchAction: "manipulation" }}
                 className={getCellClass({
                   revealed: cell.revealed,
                   flagged: cell.flagged,
