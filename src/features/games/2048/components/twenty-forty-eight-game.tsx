@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
-import type { CSSProperties } from "react";
 import { TWENTY_FORTY_EIGHT_SIZE, TWENTY_FORTY_EIGHT_STORAGE_KEY } from "@/features/games/2048/config/constants";
 import {
   createTwentyFortyEightState,
@@ -61,9 +60,7 @@ type RenderTile = {
   value: number;
   row: number;
   column: number;
-  slideRowDelta?: number;
-  slideColumnDelta?: number;
-  phase?: "slide" | "pop" | "spawn";
+  phase?: "sliding" | "pop" | "spawn";
 };
 
 function getTilePositionStyle(row: number, column: number) {
@@ -73,18 +70,6 @@ function getTilePositionStyle(row: number, column: number) {
     left: `calc(${column * 25}% + ${(column * TILE_GAP) / 4}px)`,
     top: `calc(${row * 25}% + ${(row * TILE_GAP) / 4}px)`,
   };
-}
-
-function getSlideTransform(rowDelta = 0, columnDelta = 0) {
-  const xSign = columnDelta < 0 ? "-1" : "1";
-  const ySign = rowDelta < 0 ? "-1" : "1";
-  const xMagnitude = Math.abs(columnDelta);
-  const yMagnitude = Math.abs(rowDelta);
-
-  return {
-    "--slide-x": `calc(${xSign} * ${xMagnitude} * (100% + ${TILE_GAP}px))`,
-    "--slide-y": `calc(${ySign} * ${yMagnitude} * (100% + ${TILE_GAP}px))`,
-  } as CSSProperties;
 }
 
 function getStatusCopy(phase: TwentyFortyEightPhase) {
@@ -101,6 +86,30 @@ function getStatusCopy(phase: TwentyFortyEightPhase) {
 
 function getTileClass(value: number) {
   return tileColors.get(value) ?? "bg-[#5337a8] text-white shadow-[0_7px_0_#2f246b]";
+}
+
+function createInitialGameState() {
+  const bestScore = readStoredNumber(TWENTY_FORTY_EIGHT_STORAGE_KEY);
+  if (
+    process.env.NODE_ENV !== "production" &&
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("debugBoard") === "merge"
+  ) {
+    return {
+      tiles: [
+        { id: 1, value: 2, row: 0, column: 0 },
+        { id: 2, value: 2, row: 0, column: 1 },
+        { id: 3, value: 2, row: 0, column: 2 },
+        { id: 4, value: 2, row: 0, column: 3 },
+      ],
+      score: 0,
+      bestScore,
+      phase: "playing",
+      nextTileId: 5,
+    } satisfies TwentyFortyEightState;
+  }
+
+  return createTwentyFortyEightState(bestScore);
 }
 
 function createFinalRenderTiles(tiles: TwentyFortyEightTile[]): RenderTile[] {
@@ -128,6 +137,7 @@ function createMoveRenderTiles(
   sourceTiles: TwentyFortyEightTile[],
   targetTiles: TwentyFortyEightTile[],
   animationId: number,
+  useTargetPositions: boolean,
 ): RenderTile[] {
   const targetBySourceId = new Map<number, TwentyFortyEightTile>();
 
@@ -151,23 +161,22 @@ function createMoveRenderTiles(
         renderKey: `move-${animationId}-${source.id}`,
         id: source.id,
         value: source.value,
-        row: source.row,
-        column: source.column,
-        slideRowDelta: target.row - source.row,
-        slideColumnDelta: target.column - source.column,
-        phase: "slide",
+        row: useTargetPositions ? target.row : source.row,
+        column: useTargetPositions ? target.column : source.column,
+        phase: "sliding",
       });
       return tiles;
     }, []);
 }
 
 export function TwentyFortyEightGame() {
-  const initialState = createTwentyFortyEightState(readStoredNumber(TWENTY_FORTY_EIGHT_STORAGE_KEY));
+  const initialState = createInitialGameState();
   const [state, setState] = useState<TwentyFortyEightState>(initialState);
   const [renderTiles, setRenderTiles] = useState<RenderTile[]>(() => createFinalRenderTiles(initialState.tiles));
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const isAnimatingRef = useRef(false);
   const animationIdRef = useRef(0);
+  const slideFrameRef = useRef<number | null>(null);
   const slideTimerRef = useRef<number | null>(null);
   const settleTimerRef = useRef<number | null>(null);
   const spawnTimerRef = useRef<number | null>(null);
@@ -181,6 +190,11 @@ export function TwentyFortyEightGame() {
   );
 
   function clearAnimationTimers() {
+    if (slideFrameRef.current !== null) {
+      window.cancelAnimationFrame(slideFrameRef.current);
+      slideFrameRef.current = null;
+    }
+
     if (slideTimerRef.current !== null) {
       window.clearTimeout(slideTimerRef.current);
       slideTimerRef.current = null;
@@ -222,8 +236,16 @@ export function TwentyFortyEightGame() {
     clearAnimationTimers();
     isAnimatingRef.current = true;
     animationIdRef.current += 1;
+    const animationId = animationIdRef.current;
 
-    setRenderTiles(createMoveRenderTiles(state.tiles, nextState.tiles, animationIdRef.current));
+    setRenderTiles(createMoveRenderTiles(state.tiles, nextState.tiles, animationId, false));
+
+    slideFrameRef.current = window.requestAnimationFrame(() => {
+      slideFrameRef.current = window.requestAnimationFrame(() => {
+        setRenderTiles(createMoveRenderTiles(state.tiles, nextState.tiles, animationId, true));
+        slideFrameRef.current = null;
+      });
+    });
 
     const mergedTiles = nextState.tiles.filter((tile) => !tile.isNew);
     const allTiles = nextState.tiles;
@@ -326,8 +348,8 @@ export function TwentyFortyEightGame() {
             {renderTiles.map((tile) => (
               <div
                 key={tile.renderKey}
-                className={`absolute grid place-items-center rounded-[1rem] border-2 border-white/40 text-2xl font-black transition-all ease-[cubic-bezier(0.2,0.78,0.24,1)] sm:text-4xl ${
-                  tile.phase === "slide" ? "animate-[tileSlide_215ms_cubic-bezier(0.22,0.72,0.16,1)_forwards]" : "duration-[155ms]"
+                className={`absolute grid place-items-center rounded-[1rem] border-2 border-white/40 text-2xl font-black sm:text-4xl ${
+                  tile.phase === "sliding" ? "z-10 transition-[left,top] duration-[215ms] ease-[cubic-bezier(0.18,0.84,0.2,1)]" : ""
                 } ${
                   tile.phase === "spawn"
                     ? "z-20 animate-[tileSpawn_145ms_cubic-bezier(0.2,0.9,0.25,1.2)]"
@@ -337,7 +359,6 @@ export function TwentyFortyEightGame() {
                 } ${getTileClass(tile.value)}`}
                 style={{
                   ...getTilePositionStyle(tile.row, tile.column),
-                  ...(tile.phase === "slide" ? getSlideTransform(tile.slideRowDelta, tile.slideColumnDelta) : {}),
                 }}
               >
                 {tile.value}
@@ -360,15 +381,6 @@ export function TwentyFortyEightGame() {
           }
           100% {
             transform: scale(1);
-          }
-        }
-
-        @keyframes tileSlide {
-          0% {
-            transform: translate3d(0, 0, 0);
-          }
-          100% {
-            transform: translate3d(var(--slide-x), var(--slide-y), 0);
           }
         }
 
