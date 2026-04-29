@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { TWENTY_FORTY_EIGHT_SIZE, TWENTY_FORTY_EIGHT_STORAGE_KEY } from "@/features/games/2048/config/constants";
 import {
   createTwentyFortyEightState,
@@ -60,6 +61,8 @@ type RenderTile = {
   value: number;
   row: number;
   column: number;
+  slideRowDelta?: number;
+  slideColumnDelta?: number;
   phase?: "slide" | "pop" | "spawn";
 };
 
@@ -70,6 +73,18 @@ function getTilePositionStyle(row: number, column: number) {
     left: `calc(${column * 25}% + ${(column * TILE_GAP) / 4}px)`,
     top: `calc(${row * 25}% + ${(row * TILE_GAP) / 4}px)`,
   };
+}
+
+function getSlideTransform(rowDelta = 0, columnDelta = 0) {
+  const xSign = columnDelta < 0 ? "-1" : "1";
+  const ySign = rowDelta < 0 ? "-1" : "1";
+  const xMagnitude = Math.abs(columnDelta);
+  const yMagnitude = Math.abs(rowDelta);
+
+  return {
+    "--slide-x": `calc(${xSign} * ${xMagnitude} * (100% + ${TILE_GAP}px))`,
+    "--slide-y": `calc(${ySign} * ${yMagnitude} * (100% + ${TILE_GAP}px))`,
+  } as CSSProperties;
 }
 
 function getStatusCopy(phase: TwentyFortyEightPhase) {
@@ -112,7 +127,7 @@ function createSettledRenderTiles(tiles: TwentyFortyEightTile[]): RenderTile[] {
 function createMoveRenderTiles(
   sourceTiles: TwentyFortyEightTile[],
   targetTiles: TwentyFortyEightTile[],
-  useTargetPosition: boolean,
+  animationId: number,
 ): RenderTile[] {
   const targetBySourceId = new Map<number, TwentyFortyEightTile>();
 
@@ -133,11 +148,13 @@ function createMoveRenderTiles(
       }
 
       tiles.push({
-        renderKey: `move-${source.id}`,
+        renderKey: `move-${animationId}-${source.id}`,
         id: source.id,
         value: source.value,
-        row: useTargetPosition ? target.row : source.row,
-        column: useTargetPosition ? target.column : source.column,
+        row: source.row,
+        column: source.column,
+        slideRowDelta: target.row - source.row,
+        slideColumnDelta: target.column - source.column,
         phase: "slide",
       });
       return tiles;
@@ -150,6 +167,7 @@ export function TwentyFortyEightGame() {
   const [renderTiles, setRenderTiles] = useState<RenderTile[]>(() => createFinalRenderTiles(initialState.tiles));
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const isAnimatingRef = useRef(false);
+  const animationIdRef = useRef(0);
   const slideTimerRef = useRef<number | null>(null);
   const settleTimerRef = useRef<number | null>(null);
   const spawnTimerRef = useRef<number | null>(null);
@@ -203,11 +221,9 @@ export function TwentyFortyEightGame() {
 
     clearAnimationTimers();
     isAnimatingRef.current = true;
+    animationIdRef.current += 1;
 
-    setRenderTiles(createMoveRenderTiles(state.tiles, nextState.tiles, false));
-    window.requestAnimationFrame(() => {
-      setRenderTiles(createMoveRenderTiles(state.tiles, nextState.tiles, true));
-    });
+    setRenderTiles(createMoveRenderTiles(state.tiles, nextState.tiles, animationIdRef.current));
 
     const mergedTiles = nextState.tiles.filter((tile) => !tile.isNew);
     const allTiles = nextState.tiles;
@@ -311,7 +327,7 @@ export function TwentyFortyEightGame() {
               <div
                 key={tile.renderKey}
                 className={`absolute grid place-items-center rounded-[1rem] border-2 border-white/40 text-2xl font-black transition-all ease-[cubic-bezier(0.2,0.78,0.24,1)] sm:text-4xl ${
-                  tile.phase === "slide" ? "duration-[215ms]" : "duration-[155ms]"
+                  tile.phase === "slide" ? "animate-[tileSlide_215ms_cubic-bezier(0.22,0.72,0.16,1)_forwards]" : "duration-[155ms]"
                 } ${
                   tile.phase === "spawn"
                     ? "z-20 animate-[tileSpawn_145ms_cubic-bezier(0.2,0.9,0.25,1.2)]"
@@ -321,6 +337,7 @@ export function TwentyFortyEightGame() {
                 } ${getTileClass(tile.value)}`}
                 style={{
                   ...getTilePositionStyle(tile.row, tile.column),
+                  ...(tile.phase === "slide" ? getSlideTransform(tile.slideRowDelta, tile.slideColumnDelta) : {}),
                 }}
               >
                 {tile.value}
@@ -343,6 +360,15 @@ export function TwentyFortyEightGame() {
           }
           100% {
             transform: scale(1);
+          }
+        }
+
+        @keyframes tileSlide {
+          0% {
+            transform: translate3d(0, 0, 0);
+          }
+          100% {
+            transform: translate3d(var(--slide-x), var(--slide-y), 0);
           }
         }
 

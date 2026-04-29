@@ -135,8 +135,8 @@ function drawPipe(context: CanvasRenderingContext2D, pipe: FlappyPipe) {
 
 function drawBird(context: CanvasRenderingContext2D, state: FlappyBirdState, elapsedSeconds: number) {
   const flapFrame = Math.floor(elapsedSeconds * 16) % 3;
-  const wingTipY = flapFrame === 0 ? -20 : flapFrame === 1 ? -2 : 17;
-  const wingRootY = flapFrame === 0 ? 1 : flapFrame === 1 ? 4 : 7;
+  const wingAngle = flapFrame === 0 ? -0.72 : flapFrame === 1 ? -0.08 : 0.62;
+  const wingOffsetY = flapFrame === 0 ? -8 : flapFrame === 1 ? 0 : 8;
 
   context.save();
   context.translate(FLAPPY_BIRD_X, state.bird.y);
@@ -156,27 +156,31 @@ function drawBird(context: CanvasRenderingContext2D, state: FlappyBirdState, ela
   context.fill();
   context.stroke();
 
-  context.fillStyle = "#fff06b";
+  context.fillStyle = "#ffe35a";
   context.beginPath();
   context.ellipse(-9, -5, 12, 9, -0.25, 0, Math.PI * 2);
   context.fill();
 
   context.save();
-  context.fillStyle = "#ffffff";
+  context.translate(-15, 4);
+  context.rotate(wingAngle);
+  context.fillStyle = "#f08b2b";
   context.strokeStyle = "#4b321c";
   context.lineWidth = 4;
   context.beginPath();
-  context.moveTo(-9, wingRootY - 8);
-  context.quadraticCurveTo(-31, wingTipY, -34, wingRootY + 3);
-  context.quadraticCurveTo(-26, wingRootY + 18, -6, wingRootY + 10);
-  context.quadraticCurveTo(1, wingRootY + 1, -9, wingRootY - 8);
+  context.moveTo(2, -10 + wingOffsetY * 0.25);
+  context.quadraticCurveTo(-20, -12 + wingOffsetY, -28, 0 + wingOffsetY);
+  context.quadraticCurveTo(-18, 16 + wingOffsetY * 0.35, 6, 10);
+  context.quadraticCurveTo(12, 0, 2, -10 + wingOffsetY * 0.25);
   context.closePath();
   context.fill();
   context.stroke();
-  context.fillStyle = "#f0782b";
+  context.strokeStyle = "#ffe29a";
+  context.lineWidth = 3;
   context.beginPath();
-  context.ellipse(-20, wingRootY + 5, 9, 5.5, -0.15, 0, Math.PI * 2);
-  context.fill();
+  context.moveTo(-5, -4 + wingOffsetY * 0.45);
+  context.quadraticCurveTo(-14, 1 + wingOffsetY * 0.55, -21, 5 + wingOffsetY * 0.65);
+  context.stroke();
   context.restore();
 
   context.fillStyle = "#fff9ef";
