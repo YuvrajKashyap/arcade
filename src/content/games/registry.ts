@@ -647,16 +647,17 @@ export const gameCatalog = [
     slug: "sorry",
     title: "Sorry!",
     shortDescription:
-      "A cartoony card-and-pawn race with start spaces, home goals, bumps, draw cards, and quick restarts.",
+      "A cartoony card-and-pawn board game with starts, homes, safety lanes, slides, bumps, and CPU rivals.",
     description:
-      "Sorry! is an original card-race board game inspired by classic pawn racers. Draw movement cards, bring blue pawns out of start, bump rival pawns back, and get all four home before the red rivals.",
+      "Sorry! is a self-coded card-and-pawn board game with four colors, draw cards, selectable pawn moves, start and home spaces, safety lanes, slides, bumps, Sorry-style takeovers, CPU turns, and exact-count home rules.",
     thumbnail: "/games/sorry/thumbnail.png?v=20260428",
     genre: "Strategy",
     tags: ["Board", "Cards", "Strategy", "Keyboard", "Touch"],
     controls: {
-      summary: "Press Space, Enter, or Draw to draw a movement card. R restarts.",
+      summary: "Press Space, Enter, or Draw to draw and confirm. A/D cycle legal moves. R restarts.",
       items: [
-        { label: "Draw card", action: "Space, Enter, or Draw button" },
+        { label: "Draw/confirm", action: "Space, Enter, or Draw/Play button" },
+        { label: "Choose move", action: "A/D, move buttons, or pawn click" },
         { label: "Restart", action: "R or Restart" },
         { label: "Bump", action: "Landing on a rival sends it back to start" },
         { label: "Goal", action: "Get all four blue pawns home" },
@@ -672,12 +673,14 @@ export const gameCatalog = [
     mobileSupport: "full",
     version: "1.0.0",
     developerNotes:
-      "Sorry! uses original board art and a simplified self-coded card movement loop without copying protected board artwork.",
+      "Sorry! uses original board art with a self-coded four-color track, safety lanes, slides, legal-move generation, CPU turns, and local best-score persistence.",
     howToPlay: {
       summary: "Draw cards to move pawns from start to home.",
       tips: [
         "A 1 or 2 can bring a pawn out of start.",
         "Landing on a rival bumps it back.",
+        "Slides send pawns forward and bump anything in the slide path.",
+        "Safety lanes protect pawns, and Home needs exact count.",
         "First side with all four pawns home wins.",
       ],
     },
