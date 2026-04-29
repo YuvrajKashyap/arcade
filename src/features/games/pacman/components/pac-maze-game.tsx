@@ -110,6 +110,8 @@ const KEY_TO_DIR: Record<string, Direction> = {
 const FINAL_LEVEL = 3;
 const LEVEL_CLEAR_BONUS = 500;
 const MIN_SWIPE_DISTANCE = 16;
+const MAX_SIMULATION_STEP = 0.012;
+const MAX_FRAME_DELTA = 0.05;
 
 const GHOSTS: Ghost[] = [
   {
@@ -666,27 +668,6 @@ export function PacMazeGame() {
     sync({ ...current, pac: { ...current.pac, nextDirection: direction } }, true);
   }
 
-  function steerFromTouch(direction: Direction) {
-    const current = stateRef.current.phase === "idle" ? { ...stateRef.current, phase: "playing" as Phase } : stateRef.current;
-    if (current.phase !== "playing") return;
-
-    const pac = current.pac;
-    const centered = atTileCenter(pac);
-    const column = Math.round(pac.x);
-    const row = Math.round(pac.y);
-    const reversing =
-      pac.direction.name !== "none" &&
-      direction.x === -pac.direction.x &&
-      direction.y === -pac.direction.y;
-    const canTurnNow = centered && canOccupy(column + direction.x, row + direction.y, "pac");
-    const nextPac =
-      reversing || canTurnNow
-        ? { ...pac, direction, nextDirection: direction }
-        : { ...pac, nextDirection: direction };
-
-    sync({ ...current, pac: nextPac }, true);
-  }
-
   function touchStartOrRestart() {
     const current = stateRef.current;
     if (current.phase === "idle") {
@@ -720,7 +701,7 @@ export function PacMazeGame() {
 
     touchMovedRef.current = true;
     touchStartRef.current = { x: touch.clientX, y: touch.clientY };
-    steerFromTouch(absX > absY ? (dx > 0 ? DIRS.right : DIRS.left) : dy > 0 ? DIRS.down : DIRS.up);
+    steer(absX > absY ? (dx > 0 ? DIRS.right : DIRS.left) : dy > 0 ? DIRS.down : DIRS.up);
   }
 
   function onTouchEnd(event: TouchEvent) {
@@ -745,9 +726,9 @@ export function PacMazeGame() {
     if (touchMovedRef.current && Math.max(absX, absY) < MIN_SWIPE_DISTANCE) return;
 
     if (absX > absY) {
-      steerFromTouch(dx > 0 ? DIRS.right : DIRS.left);
+      steer(dx > 0 ? DIRS.right : DIRS.left);
     } else {
-      steerFromTouch(dy > 0 ? DIRS.down : DIRS.up);
+      steer(dy > 0 ? DIRS.down : DIRS.up);
     }
   }
 
@@ -787,7 +768,15 @@ export function PacMazeGame() {
 
   useAnimationFrameLoop((delta, elapsed) => {
     elapsedRef.current = elapsed;
-    const nextState = updateState(stateRef.current, Math.min(delta, 0.035), elapsed);
+    let remaining = Math.min(delta, MAX_FRAME_DELTA);
+    let nextState = stateRef.current;
+
+    while (remaining > 0) {
+      const step = Math.min(remaining, MAX_SIMULATION_STEP);
+      nextState = updateState(nextState, step, elapsed - remaining + step);
+      remaining -= step;
+    }
+
     if (nextState !== stateRef.current) sync(nextState);
     if (contextRef.current) drawScene(contextRef.current, stateRef.current, elapsed);
   });
