@@ -5,7 +5,8 @@ export type DoodlePlatform = {
   x: number;
   y: number;
   width: number;
-  kind: "green" | "blue" | "pink";
+  kind: "green" | "blue" | "pink" | "breakable";
+  brokenAt?: number;
 };
 
 export type DoodlePlayer = {

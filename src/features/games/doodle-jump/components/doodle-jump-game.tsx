@@ -77,8 +77,22 @@ function drawPaperBackground(context: CanvasRenderingContext2D, elapsedSeconds: 
 }
 
 function drawPlatform(context: CanvasRenderingContext2D, platform: DoodlePlatform) {
-  const color = platform.kind === "pink" ? "#ff79b0" : platform.kind === "blue" ? "#62d6ff" : "#74d85c";
-  const dark = platform.kind === "pink" ? "#b93c75" : platform.kind === "blue" ? "#2785ae" : "#3b912c";
+  const color =
+    platform.kind === "breakable"
+      ? "#c77b39"
+      : platform.kind === "pink"
+        ? "#ff79b0"
+        : platform.kind === "blue"
+          ? "#62d6ff"
+          : "#74d85c";
+  const dark =
+    platform.kind === "breakable"
+      ? "#79431e"
+      : platform.kind === "pink"
+        ? "#b93c75"
+        : platform.kind === "blue"
+          ? "#2785ae"
+          : "#3b912c";
 
   context.save();
   context.shadowColor = "rgba(54, 45, 28, 0.22)";
@@ -97,6 +111,42 @@ function drawPlatform(context: CanvasRenderingContext2D, platform: DoodlePlatfor
   context.moveTo(platform.x + 12, platform.y + 4);
   context.lineTo(platform.x + platform.width - 14, platform.y + 4);
   context.stroke();
+
+  if (platform.kind === "breakable") {
+    context.strokeStyle = "#5d3017";
+    context.lineWidth = 2.5;
+    context.beginPath();
+    context.moveTo(platform.x + platform.width * 0.3, platform.y + 2);
+    context.lineTo(platform.x + platform.width * 0.42, platform.y + 9);
+    context.lineTo(platform.x + platform.width * 0.36, platform.y + 15);
+    context.moveTo(platform.x + platform.width * 0.62, platform.y + 1);
+    context.lineTo(platform.x + platform.width * 0.54, platform.y + 8);
+    context.lineTo(platform.x + platform.width * 0.7, platform.y + 15);
+    context.stroke();
+  }
+  context.restore();
+}
+
+function drawScoreLabel(context: CanvasRenderingContext2D, score: number) {
+  context.save();
+  context.translate(70, 42);
+  context.rotate(-0.025);
+  context.shadowColor = "rgba(55, 42, 18, 0.18)";
+  context.shadowBlur = 8;
+  context.shadowOffsetY = 4;
+  context.fillStyle = "#fff1a8";
+  context.strokeStyle = "#26356f";
+  context.lineWidth = 4;
+  context.beginPath();
+  context.roundRect(-52, -22, 104, 44, 14);
+  context.fill();
+  context.stroke();
+  context.textAlign = "center";
+  context.fillStyle = "#26356f";
+  context.font = "900 13px sans-serif";
+  context.fillText("SCORE", 0, -3);
+  context.font = "900 20px sans-serif";
+  context.fillText(String(score), 0, 18);
   context.restore();
 }
 
@@ -187,6 +237,7 @@ function drawScene(context: CanvasRenderingContext2D, state: DoodleJumpState, el
   drawPaperBackground(context, elapsedSeconds);
   state.platforms.forEach((platform) => drawPlatform(context, platform));
   drawPlayer(context, state, elapsedSeconds);
+  drawScoreLabel(context, state.score);
   drawOverlay(context, state.phase);
 }
 

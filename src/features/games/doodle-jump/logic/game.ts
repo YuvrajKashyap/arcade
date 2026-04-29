@@ -69,7 +69,7 @@ function createPlatform(id: number, y: number, score: number): DoodlePlatform {
     x: 18 + Math.random() * (DOODLE_WIDTH - width - 36),
     y,
     width,
-    kind: id % 7 === 0 ? "pink" : id % 4 === 0 ? "blue" : "green",
+    kind: score > 260 && id % 6 === 0 ? "breakable" : id % 7 === 0 ? "pink" : id % 4 === 0 ? "blue" : "green",
   };
 }
 
@@ -116,7 +116,14 @@ export function updateDoodleJump(
         playerCenterX <= platform.x + platform.width + 8,
     );
 
-    if (landedPlatform) {
+    if (landedPlatform?.kind === "breakable") {
+      state = {
+        ...state,
+        platforms: state.platforms.map((platform) =>
+          platform.id === landedPlatform.id ? { ...platform, brokenAt: state.cameraY } : platform,
+        ),
+      };
+    } else if (landedPlatform) {
       player = {
         ...player,
         y: landedPlatform.y - DOODLE_PLAYER_HEIGHT,
@@ -130,7 +137,10 @@ export function updateDoodleJump(
     player.y < centerBandY ? state.cameraY + player.y - centerBandY : state.cameraY;
   const cameraDelta = targetCameraY - state.cameraY;
   const score = Math.max(state.score, Math.floor(Math.abs(targetCameraY)));
-  let platforms = state.platforms.map((platform) => ({ ...platform, y: platform.y - cameraDelta }));
+  let platforms = state.platforms.map((platform) => ({
+    ...platform,
+    y: platform.y - cameraDelta + (platform.brokenAt === undefined ? 0 : Math.abs(state.cameraY - platform.brokenAt) * 0.16),
+  }));
   player = { ...player, y: player.y - cameraDelta };
 
   let nextPlatformId = state.nextPlatformId;

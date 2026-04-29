@@ -10,6 +10,7 @@ import type {
   TwentyFortyEightDirection,
   TwentyFortyEightPhase,
   TwentyFortyEightState,
+  TwentyFortyEightTile,
 } from "@/features/games/2048/types";
 import {
   GameButton,
@@ -49,6 +50,17 @@ const tileColors = new Map<number, string>([
 ]);
 
 const TILE_GAP = 10;
+const SLIDE_DURATION_MS = 155;
+const POP_DURATION_MS = 145;
+
+type RenderTile = {
+  renderKey: string;
+  id: number;
+  value: number;
+  row: number;
+  column: number;
+  phase?: "slide" | "pop" | "spawn";
+};
 
 function getTilePositionStyle(row: number, column: number) {
   return {
@@ -75,10 +87,70 @@ function getTileClass(value: number) {
   return tileColors.get(value) ?? "bg-[#5337a8] text-white shadow-[0_7px_0_#2f246b]";
 }
 
+function createFinalRenderTiles(tiles: TwentyFortyEightTile[]): RenderTile[] {
+  return tiles.map((tile) => ({
+    renderKey: `final-${tile.id}`,
+    id: tile.id,
+    value: tile.value,
+    row: tile.row,
+    column: tile.column,
+    phase: tile.isNew ? "spawn" : tile.mergedFrom ? "pop" : undefined,
+  }));
+}
+
+function createSettledRenderTiles(tiles: TwentyFortyEightTile[]): RenderTile[] {
+  return tiles.map((tile) => ({
+    renderKey: `settled-${tile.id}`,
+    id: tile.id,
+    value: tile.value,
+    row: tile.row,
+    column: tile.column,
+  }));
+}
+
+function createMoveRenderTiles(
+  sourceTiles: TwentyFortyEightTile[],
+  targetTiles: TwentyFortyEightTile[],
+  useTargetPosition: boolean,
+): RenderTile[] {
+  const targetBySourceId = new Map<number, TwentyFortyEightTile>();
+
+  for (const target of targetTiles) {
+    if (target.mergedFrom) {
+      for (const sourceId of target.mergedFrom) {
+        targetBySourceId.set(sourceId, target);
+      }
+    } else {
+      targetBySourceId.set(target.id, target);
+    }
+  }
+
+  return sourceTiles.reduce<RenderTile[]>((tiles, source) => {
+      const target = targetBySourceId.get(source.id);
+      if (!target) {
+        return tiles;
+      }
+
+      tiles.push({
+        renderKey: `move-${source.id}`,
+        id: source.id,
+        value: source.value,
+        row: useTargetPosition ? target.row : source.row,
+        column: useTargetPosition ? target.column : source.column,
+        phase: "slide",
+      });
+      return tiles;
+    }, []);
+}
+
 export function TwentyFortyEightGame() {
   const initialState = createTwentyFortyEightState(readStoredNumber(TWENTY_FORTY_EIGHT_STORAGE_KEY));
   const [state, setState] = useState<TwentyFortyEightState>(initialState);
+  const [renderTiles, setRenderTiles] = useState<RenderTile[]>(() => createFinalRenderTiles(initialState.tiles));
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const isAnimatingRef = useRef(false);
+  const slideTimerRef = useRef<number | null>(null);
+  const settleTimerRef = useRef<number | null>(null);
   const cells = useMemo(
     () =>
       Array.from({ length: TWENTY_FORTY_EIGHT_SIZE * TWENTY_FORTY_EIGHT_SIZE }, (_, index) => ({
@@ -88,17 +160,56 @@ export function TwentyFortyEightGame() {
     [],
   );
 
-  function syncState(nextState: TwentyFortyEightState) {
+  function clearAnimationTimers() {
+    if (slideTimerRef.current !== null) {
+      window.clearTimeout(slideTimerRef.current);
+      slideTimerRef.current = null;
+    }
+
+    if (settleTimerRef.current !== null) {
+      window.clearTimeout(settleTimerRef.current);
+      settleTimerRef.current = null;
+    }
+  }
+
+  function syncState(nextState: TwentyFortyEightState, shouldAnimateFinal = false) {
     setState(nextState);
+    setRenderTiles(shouldAnimateFinal ? createFinalRenderTiles(nextState.tiles) : createSettledRenderTiles(nextState.tiles));
     writeStoredNumber(TWENTY_FORTY_EIGHT_STORAGE_KEY, nextState.bestScore);
   }
 
   function resetGame() {
-    syncState(createTwentyFortyEightState(state.bestScore));
+    clearAnimationTimers();
+    isAnimatingRef.current = false;
+    syncState(createTwentyFortyEightState(state.bestScore), true);
   }
 
   function move(direction: TwentyFortyEightDirection) {
-    syncState(moveTwentyFortyEight(state, direction));
+    if (isAnimatingRef.current) {
+      return;
+    }
+
+    const nextState = moveTwentyFortyEight(state, direction);
+    if (nextState === state) {
+      return;
+    }
+
+    clearAnimationTimers();
+    isAnimatingRef.current = true;
+
+    setRenderTiles(createMoveRenderTiles(state.tiles, nextState.tiles, false));
+    window.requestAnimationFrame(() => {
+      setRenderTiles(createMoveRenderTiles(state.tiles, nextState.tiles, true));
+    });
+
+    slideTimerRef.current = window.setTimeout(() => {
+      syncState(nextState, true);
+
+      settleTimerRef.current = window.setTimeout(() => {
+        setRenderTiles(createSettledRenderTiles(nextState.tiles));
+        isAnimatingRef.current = false;
+      }, POP_DURATION_MS);
+    }, SLIDE_DURATION_MS);
   }
 
   const handleKeyboardInput = useEffectEvent((event: KeyboardEvent) => {
@@ -122,7 +233,10 @@ export function TwentyFortyEightGame() {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => handleKeyboardInput(event);
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      clearAnimationTimers();
+    };
   }, []);
 
   const handleTouchEnd = (x: number, y: number) => {
@@ -179,11 +293,17 @@ export function TwentyFortyEightGame() {
           </div>
 
           <div className="pointer-events-none absolute inset-2.5">
-            {state.tiles.map((tile) => (
+            {renderTiles.map((tile) => (
               <div
-                key={tile.id}
-                className={`absolute grid place-items-center rounded-[1rem] border-2 border-white/40 text-2xl font-black transition-all duration-200 ease-out sm:text-4xl ${
-                  tile.isNew || tile.mergedFrom ? "z-10 scale-[1.03]" : ""
+                key={tile.renderKey}
+                className={`absolute grid place-items-center rounded-[1rem] border-2 border-white/40 text-2xl font-black transition-all ease-[cubic-bezier(0.2,0.78,0.24,1)] sm:text-4xl ${
+                  tile.phase === "slide" ? "duration-[155ms]" : "duration-[145ms]"
+                } ${
+                  tile.phase === "spawn"
+                    ? "z-20 animate-[tileSpawn_145ms_cubic-bezier(0.2,0.9,0.25,1.2)]"
+                    : tile.phase === "pop"
+                      ? "z-20 animate-[tilePop_145ms_cubic-bezier(0.2,0.9,0.25,1.2)]"
+                      : ""
                 } ${getTileClass(tile.value)}`}
                 style={{
                   ...getTilePositionStyle(tile.row, tile.column),
@@ -197,6 +317,33 @@ export function TwentyFortyEightGame() {
       </GamePlayfield>
 
       <GameStatus>{getStatusCopy(state.phase)} Arrow keys or WASD move. R restarts.</GameStatus>
+      <style jsx global>{`
+        @keyframes tileSpawn {
+          0% {
+            transform: scale(0.2);
+            opacity: 0.25;
+          }
+          72% {
+            transform: scale(1.12);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(1);
+          }
+        }
+
+        @keyframes tilePop {
+          0% {
+            transform: scale(1);
+          }
+          58% {
+            transform: scale(1.16);
+          }
+          100% {
+            transform: scale(1);
+          }
+        }
+      `}</style>
     </GamePanel>
   );
 }

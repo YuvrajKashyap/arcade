@@ -323,9 +323,9 @@ export const gameCatalog = [
     slug: "doodle-jump",
     title: "Doodle Jump",
     shortDescription:
-      "A paper-doodle platform climber with bouncing movement, hand-drawn platforms, and local high scores.",
+      "A paper-doodle platform climber with visible score, cracked platforms, bouncy motion, and local high scores.",
     description:
-      "Doodle Jump adds a vertical platformer loop to the arcade: steer a cute jumper across a paper-like playfield, wrap around the sides, bounce from platform to platform, climb for score, and restart instantly when you fall.",
+      "Doodle Jump adds a vertical platformer loop to the arcade: steer a cute jumper across a paper-like playfield, wrap around the sides, bounce from platform to platform, dodge cracked breakable platforms, climb for score, and restart instantly when you fall.",
     thumbnail: "/games/doodle-jump/thumbnail.png?v=20260428",
     genre: "Platformer",
     tags: ["Canvas", "Platformer", "Cartoon", "High Score", "Touch"],
@@ -352,6 +352,90 @@ export const gameCatalog = [
       "Doodle Jump is a self-coded canvas platformer inspired by the genre, with keyboard and touch controls instead of mobile tilt.",
     libraryOrder: 10,
     relatedSlugs: ["snake", "asteroids"],
+  },
+  {
+    slug: "flappy-bird",
+    title: "Flappy Bird",
+    shortDescription:
+      "A bright cartoon pipe dodger with tap-to-flap physics, chunky pipes, in-canvas score, and best-score chase.",
+    description:
+      "Flappy Bird brings a quick reflex loop into the arcade with self-coded gravity and flap physics, scrolling green pipes, a bright cartoon sky, tap/click/keyboard controls, collision, score on pipe pass, pause, restart, and local best-score persistence.",
+    thumbnail: "/games/flappy-bird/thumbnail.png?v=20260428",
+    genre: "Arcade",
+    tags: ["Canvas", "Cartoon", "Physics", "Tap", "High Score"],
+    controls: {
+      summary:
+        "Press Space, Arrow Up, W, click, or tap to flap. P pauses and R restarts.",
+      items: [
+        { label: "Flap", action: "Space, Arrow Up, W, click, or tap" },
+        { label: "Pause", action: "P" },
+        { label: "Restart", action: "R or Start" },
+        { label: "Goal", action: "Fly through pipe gaps and score on each pass" },
+      ],
+    },
+    difficulty: "medium",
+    sessionLength: "1-4 min",
+    releaseDate: "2026-04-29",
+    status: "live",
+    featured: false,
+    published: true,
+    supports: ["keyboard", "mouse", "touch"],
+    mobileSupport: "full",
+    version: "1.0.0",
+    developerNotes:
+      "Flappy Bird is a self-coded Canvas arcade loop inspired by the genre, with original cartoon drawing code and local score persistence.",
+    howToPlay: {
+      summary: "Keep the bird in the air and slip through each pipe gap.",
+      tips: [
+        "Short taps give cleaner control than holding the flap key.",
+        "You score after the bird fully passes a pipe pair.",
+        "Touching a pipe, the ceiling, or the ground ends the run.",
+      ],
+    },
+    libraryOrder: 11,
+    relatedSlugs: ["doodle-jump", "crossy-roads"],
+  },
+  {
+    slug: "crossy-roads",
+    title: "Crossy Roads",
+    shortDescription:
+      "A colorful hop-and-dodge road game with chunky traffic, swipe controls, camera advance, and local best score.",
+    description:
+      "Crossy Roads turns one-tile hops into a fast cartoon traffic challenge. Move lane by lane, dodge cars and trucks, advance the camera upward, score by your highest lane, and restart instantly after a collision.",
+    thumbnail: "/games/crossy-roads/thumbnail.png?v=20260428",
+    genre: "Arcade",
+    tags: ["Canvas", "Cartoon", "Grid", "Traffic", "Touch"],
+    controls: {
+      summary:
+        "Use Arrow keys, WASD, or touch swipes to hop. P pauses and R restarts.",
+      items: [
+        { label: "Hop", action: "Arrow keys, WASD, or touch swipe" },
+        { label: "Pause", action: "P" },
+        { label: "Restart", action: "R or Start" },
+        { label: "Goal", action: "Reach higher lanes without getting hit" },
+      ],
+    },
+    difficulty: "medium",
+    sessionLength: "2-6 min",
+    releaseDate: "2026-04-29",
+    status: "live",
+    featured: false,
+    published: true,
+    supports: ["keyboard", "touch"],
+    mobileSupport: "full",
+    version: "1.0.0",
+    developerNotes:
+      "Crossy Roads is a self-coded Canvas lane game with deterministic lane generation, moving traffic, hop animation, camera advancement, and local best-score persistence.",
+    howToPlay: {
+      summary: "Hop across lanes, time traffic gaps, and keep moving upward.",
+      tips: [
+        "Grass lanes are safe; road lanes have moving vehicles.",
+        "Your score is the highest lane you reach in the run.",
+        "A vehicle collision ends the run immediately.",
+      ],
+    },
+    libraryOrder: 12,
+    relatedSlugs: ["flappy-bird", "doodle-jump"],
   },
 ] satisfies readonly GameCatalogEntry[];
 
