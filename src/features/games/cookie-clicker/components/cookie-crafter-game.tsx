@@ -49,6 +49,7 @@ type FloatText = {
   x: number;
   y: number;
   createdAt: number;
+  kind: "cookie" | "golden";
 };
 
 type State = {
@@ -231,7 +232,7 @@ function totalBuildings(state: State) {
 }
 
 function costFor(building: Building, count: number) {
-  return Math.ceil(building.baseCost * 1.15 ** count);
+  return Math.floor(building.baseCost * 1.15 ** count);
 }
 
 function hasUpgrade(state: State, id: string) {
@@ -318,12 +319,12 @@ export function CookieCrafterGame() {
   const [floatTexts, setFloatTexts] = useState<FloatText[]>([]);
   const [notice, setNotice] = useState("A fresh bakery. Click the cookie to begin.");
 
-  function sync(nextState: State) {
+  function sync(nextState: State, persist = false) {
     const normalized = unlockAchievements(nextState);
     stateRef.current = normalized;
     setState(normalized);
     const now = performance.now();
-    if (now - lastPersistRef.current > 1000) {
+    if (persist || now - lastPersistRef.current > 1000) {
       lastPersistRef.current = now;
       writeState(normalized);
     }
@@ -333,7 +334,7 @@ export function CookieCrafterGame() {
     const createdAt = performance.now();
     const id = floatIdRef.current;
     floatIdRef.current += 1;
-    setFloatTexts((items) => [...items.slice(-12), { id, text, x, y, createdAt }]);
+    setFloatTexts((items) => [...items.slice(-12), { id, text, x, y, createdAt, kind: "cookie" }]);
   }
 
   function scheduleGoldenCookie(currentState = stateRef.current) {
@@ -369,7 +370,7 @@ export function CookieCrafterGame() {
       ...current,
       cookies: current.cookies - cost,
       buildings: { ...current.buildings, [key]: count + 1 },
-    });
+    }, true);
     setNotice(`${building.name} purchased.`);
   }
 
@@ -381,7 +382,7 @@ export function CookieCrafterGame() {
       ...current,
       cookies: current.cookies - upgrade.cost,
       upgrades: [...current.upgrades, id],
-    });
+    }, true);
     setNotice(`${upgrade.name} unlocked.`);
   }
 
@@ -403,7 +404,10 @@ export function CookieCrafterGame() {
       const lucky = Math.max(13, Math.min(current.cookies * 0.15, cpsFor(current, buffs) * 900 + 13));
       nextState = awardCookies(nextState, lucky, false);
       text = `Lucky! +${formatNumber(lucky)} cookies.`;
-      addFloat(`+${formatNumber(lucky)}`, goldenCookie?.x, goldenCookie?.y);
+      const createdAt = performance.now();
+      const id = floatIdRef.current;
+      floatIdRef.current += 1;
+      setFloatTexts((items) => [...items.slice(-12), { id, text: `+${formatNumber(lucky)}`, x: goldenCookie?.x ?? 50, y: goldenCookie?.y ?? 50, createdAt, kind: "golden" }]);
     }
 
     sync(unlockAchievements(nextState));
@@ -413,7 +417,7 @@ export function CookieCrafterGame() {
   }
 
   function resetRun() {
-    sync(createState());
+    sync(createState(), true);
     setBuffs([]);
     setGoldenCookie(null);
     setNotice("Bakery reset.");
@@ -426,7 +430,7 @@ export function CookieCrafterGame() {
     const next = createState();
     next.prestige = chips;
     next.ascensions = stateRef.current.ascensions + 1;
-    sync(next);
+    sync(next, true);
     setBuffs([]);
     setGoldenCookie(null);
     setNotice(`Ascended. Prestige level ${chips} now boosts production.`);
@@ -545,7 +549,7 @@ export function CookieCrafterGame() {
               {floatTexts.map((item) => (
                 <span
                   key={item.id}
-                  className="pointer-events-none absolute z-20 text-sm font-black text-white drop-shadow-[0_2px_1px_rgba(74,38,10,0.9)]"
+                  className="pointer-events-none absolute z-20 inline-flex items-center gap-1 text-sm font-black text-white drop-shadow-[0_2px_1px_rgba(74,38,10,0.9)]"
                   style={{
                     left: `${item.x}%`,
                     top: `${item.y}%`,
@@ -553,6 +557,17 @@ export function CookieCrafterGame() {
                     opacity: Math.max(0, 1 - (performance.now() - item.createdAt) / 1100),
                   }}
                 >
+                  <svg
+                    viewBox="0 0 32 32"
+                    className="h-6 w-6 drop-shadow-[0_2px_0_rgba(52,25,9,0.55)]"
+                    aria-hidden="true"
+                  >
+                    <circle cx="16" cy="16" r="13" fill={item.kind === "golden" ? "#ffd84a" : "#c77b34"} stroke={item.kind === "golden" ? "#fff7a8" : "#5b3218"} strokeWidth="3" />
+                    <circle cx="11" cy="11" r="2.6" fill={item.kind === "golden" ? "#fff7a8" : "#4a2614"} />
+                    <circle cx="19" cy="10" r="2.2" fill={item.kind === "golden" ? "#fff7a8" : "#4a2614"} />
+                    <circle cx="21" cy="20" r="3" fill={item.kind === "golden" ? "#fff7a8" : "#4a2614"} />
+                    <circle cx="12" cy="21" r="1.9" fill={item.kind === "golden" ? "#fff7a8" : "#4a2614"} />
+                  </svg>
                   {item.text}
                 </span>
               ))}
@@ -693,7 +708,11 @@ export function CookieCrafterGame() {
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-black text-[#4a2d16]">{index < 9 ? `${index + 1}. ` : index === 9 ? "0. " : ""}{building.name}</span>
-                      <span className="block truncate text-[0.7rem] font-bold text-[#8a592d]">{formatNumber(cost)} cookies | +{formatNumber(building.baseCps * upgradeMultiplier(state, "building", building.key))} cps</span>
+                      <span className="block truncate text-[0.7rem] font-bold text-[#8a592d]">
+                        {formatNumber(cost)} cookies
+                        {!canBuy ? ` (${formatNumber(Math.max(0, cost - state.cookies))} short)` : " (ready)"}
+                      </span>
+                      <span className="block truncate text-[0.7rem] font-bold text-[#8a592d]">+{formatNumber(building.baseCps * upgradeMultiplier(state, "building", building.key))} cps</span>
                     </span>
                     <span className="text-lg font-black text-[#6e421e]">{count}</span>
                   </button>
