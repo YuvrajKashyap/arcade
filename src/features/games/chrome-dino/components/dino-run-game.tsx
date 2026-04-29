@@ -63,20 +63,17 @@ type Obstacle = {
   count: number;
   passed: boolean;
 };
-type Cloud = { id: number; x: number; y: number; speed: number };
 type State = {
   phase: Phase;
   trexY: number;
   velocityY: number;
   ducking: boolean;
   obstacles: Obstacle[];
-  clouds: Cloud[];
   score: number;
   bestScore: number;
   speed: number;
   nextId: number;
   spawnTimer: number;
-  cloudTimer: number;
   horizonOffset: number;
 };
 
@@ -89,17 +86,11 @@ function createState(bestScore = 0): State {
     velocityY: 0,
     ducking: false,
     obstacles: [],
-    clouds: [
-      { id: 1, x: 86, y: 32, speed: 18 },
-      { id: 2, x: 330, y: 48, speed: 14 },
-      { id: 3, x: 512, y: 34, speed: 12 },
-    ],
     score: 0,
     bestScore,
     speed: 360,
     nextId: 4,
     spawnTimer: 0.85,
-    cloudTimer: 1.2,
     horizonOffset: 0,
   };
 }
@@ -127,8 +118,8 @@ function drawSprite(
     source.y,
     source.w,
     source.h,
-    Math.round(toCanvasX(x)),
-    Math.round(toCanvasY(y)),
+    toCanvasX(x),
+    toCanvasY(y),
     Math.round(width * SCALE),
     Math.round(height * SCALE),
   );
@@ -149,8 +140,8 @@ function drawTrexSprite(
     SPRITE.TREX.y,
     width * 2,
     TREX_HEIGHT * 2,
-    Math.round(toCanvasX(x)),
-    Math.round(toCanvasY(y)),
+    toCanvasX(x),
+    toCanvasY(y),
     Math.round(width * SCALE),
     Math.round(height * SCALE),
   );
@@ -258,7 +249,6 @@ function updateState(state: State, delta: number, holdingDown: boolean): State {
   const trexY = Math.min(GROUND_Y - TREX_HEIGHT, state.trexY + velocityY * delta);
   const speed = Math.min(720, state.speed + delta * 8.5);
   let spawnTimer = state.spawnTimer - delta;
-  let cloudTimer = state.cloudTimer - delta;
   let nextId = state.nextId;
   const score = state.score + delta * 65;
   let obstacles = state.obstacles
@@ -268,28 +258,11 @@ function updateState(state: State, delta: number, holdingDown: boolean): State {
       passed: obstacle.passed || obstacle.x + obstacle.width < TREX_X,
     }))
     .filter((obstacle) => obstacle.x + obstacle.width > -30);
-  let clouds = state.clouds
-    .map((cloud) => ({ ...cloud, x: cloud.x - cloud.speed * delta }))
-    .filter((cloud) => cloud.x > -60);
 
   if (spawnTimer <= 0) {
     obstacles = [...obstacles, createObstacle(nextId, score)];
     nextId += 1;
     spawnTimer = Math.max(0.58, 1.05 - speed / 1500) + Math.random() * 0.28;
-  }
-
-  if (cloudTimer <= 0) {
-    clouds = [
-      ...clouds,
-      {
-        id: nextId,
-        x: GAME_WIDTH + 20,
-        y: 28 + (nextId % 4) * 12,
-        speed: 10 + (nextId % 3) * 4,
-      },
-    ];
-    nextId += 1;
-    cloudTimer = 1.8 + Math.random() * 1.2;
   }
 
   const nextState = {
@@ -298,12 +271,10 @@ function updateState(state: State, delta: number, holdingDown: boolean): State {
     velocityY,
     ducking: holdingDown && grounded,
     obstacles,
-    clouds,
     score,
     speed,
     nextId,
     spawnTimer,
-    cloudTimer,
     horizonOffset: state.horizonOffset + speed * delta,
   };
   const playerRect = trexRect(nextState);
@@ -346,6 +317,44 @@ function drawPixelSun(context: CanvasRenderingContext2D) {
   context.fillRect(x0 - cell * 2, y0 - cell * 2, cell * 4, cell * 4);
 }
 
+function seededUnit(seed: number) {
+  const value = Math.sin(seed * 12.9898) * 43758.5453;
+  return value - Math.floor(value);
+}
+
+function drawRepeatingClouds(context: CanvasRenderingContext2D, image: HTMLImageElement, distance: number) {
+  const spacing = 155;
+  const parallaxDistance = distance * 0.055;
+  const start = Math.floor(parallaxDistance / spacing) - 1;
+
+  for (let index = start; index < start + 8; index += 1) {
+    const jitter = seededUnit(index + 31) * 54;
+    const y = 30 + seededUnit(index + 91) * 34;
+    const width = seededUnit(index + 17) > 0.7 ? 36 : SPRITE.CLOUD.dw;
+    const height = width === SPRITE.CLOUD.dw ? SPRITE.CLOUD.dh : 11;
+    const x = index * spacing - parallaxDistance + jitter;
+    drawSprite(context, image, SPRITE.CLOUD, x, y, width, height);
+  }
+}
+
+function drawRepeatingMesas(context: CanvasRenderingContext2D, distance: number) {
+  const spacing = 128;
+  const parallaxDistance = distance * 0.14;
+  const start = Math.floor(parallaxDistance / spacing) - 2;
+  context.fillStyle = "rgba(160, 98, 55, 0.24)";
+  for (let index = start; index < start + 9; index += 1) {
+    const width = 32 + seededUnit(index + 4) * 40;
+    const height = 10 + seededUnit(index + 9) * 19;
+    const top = seededUnit(index + 13) > 0.45;
+    const x = index * spacing - parallaxDistance + seededUnit(index + 23) * 35;
+    const canvasX = toCanvasX(x);
+    context.fillRect(canvasX, toCanvasY(GROUND_Y - height), width * SCALE, height * SCALE);
+    if (top) {
+      context.fillRect(canvasX + width * 0.25 * SCALE, toCanvasY(GROUND_Y - height - 11), width * 0.42 * SCALE, 11 * SCALE);
+    }
+  }
+}
+
 function drawBackground(context: CanvasRenderingContext2D, image: HTMLImageElement, state: State) {
   const sky = context.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
   sky.addColorStop(0, "#fff0b0");
@@ -355,21 +364,12 @@ function drawBackground(context: CanvasRenderingContext2D, image: HTMLImageEleme
   context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
   drawPixelSun(context);
-  state.clouds.forEach((cloud) => drawSprite(context, image, SPRITE.CLOUD, cloud.x, cloud.y));
-
-  context.fillStyle = "rgba(160, 98, 55, 0.28)";
-  const mesaOffset = ((state.horizonOffset * 0.16) % 230) * SCALE;
-  for (let x = -mesaOffset - 60; x < GAME_WIDTH + 120; x += 230) {
-    const canvasX = GAME_X + Math.round(x);
-    context.fillRect(canvasX, toCanvasY(GROUND_Y - 26), 45 * SCALE, 26 * SCALE);
-    context.fillRect(canvasX + 10 * SCALE, toCanvasY(GROUND_Y - 39), 24 * SCALE, 13 * SCALE);
-    context.fillRect(canvasX + 140 * SCALE, toCanvasY(GROUND_Y - 18), 55 * SCALE, 18 * SCALE);
-    context.fillRect(canvasX + 154 * SCALE, toCanvasY(GROUND_Y - 29), 22 * SCALE, 11 * SCALE);
-  }
+  drawRepeatingClouds(context, image, state.horizonOffset);
+  drawRepeatingMesas(context, state.horizonOffset);
 
   const horizonWidth = Math.round(GAME_WIDTH * SCALE);
-  const horizonOffset = Math.round((state.horizonOffset * SCALE) % horizonWidth);
-  for (let index = -1; index <= 1; index += 1) {
+  const horizonOffset = (state.horizonOffset * SCALE) % horizonWidth;
+  for (let index = -1; index <= 2; index += 1) {
     context.drawImage(
       image,
       SPRITE.HORIZON.x,
@@ -377,7 +377,7 @@ function drawBackground(context: CanvasRenderingContext2D, image: HTMLImageEleme
       SPRITE.HORIZON.w,
       SPRITE.HORIZON.h,
       GAME_X - horizonOffset + index * horizonWidth,
-      Math.round(toCanvasY(GROUND_Y)),
+      toCanvasY(GROUND_Y),
       horizonWidth,
       Math.round(SPRITE.HORIZON.dh * SCALE),
     );
@@ -399,8 +399,8 @@ function drawObstacle(context: CanvasRenderingContext2D, image: HTMLImageElement
       SPRITE.PTERODACTYL.y,
       SPRITE.PTERODACTYL.w,
       SPRITE.PTERODACTYL.h,
-      Math.round(toCanvasX(obstacle.x)),
-      Math.round(toCanvasY(obstacle.y)),
+      toCanvasX(obstacle.x),
+      toCanvasY(obstacle.y),
       Math.round(SPRITE.PTERODACTYL.dw * SCALE),
       Math.round(SPRITE.PTERODACTYL.dh * SCALE),
     );
@@ -414,8 +414,8 @@ function drawObstacle(context: CanvasRenderingContext2D, image: HTMLImageElement
     sprite.y,
     sprite.w * obstacle.count,
     sprite.h,
-    Math.round(toCanvasX(obstacle.x)),
-    Math.round(toCanvasY(GROUND_Y - sprite.dh)),
+    toCanvasX(obstacle.x),
+    toCanvasY(GROUND_Y - sprite.dh),
     Math.round(sprite.dw * obstacle.count * SCALE),
     Math.round(sprite.dh * SCALE),
   );
@@ -542,11 +542,15 @@ export function DinoRunGame() {
   function sync(nextState: State, forceHud = false) {
     const previousHud = hudRef.current;
     stateRef.current = nextState;
+    const nextScoreBucket = Math.floor(nextState.score / 10);
+    const previousScoreBucket = Math.floor(previousHud.score / 10);
+    const nextBestBucket = Math.floor(nextState.bestScore / 10);
+    const previousBestBucket = Math.floor(previousHud.bestScore / 10);
     if (
       forceHud ||
       nextState.phase !== previousHud.phase ||
-      Math.floor(nextState.score) !== Math.floor(previousHud.score) ||
-      Math.floor(nextState.bestScore) !== Math.floor(previousHud.bestScore)
+      nextScoreBucket !== previousScoreBucket ||
+      nextBestBucket !== previousBestBucket
     ) {
       const nextHud = {
         score: nextState.score,
@@ -556,7 +560,7 @@ export function DinoRunGame() {
       hudRef.current = nextHud;
       setHud(nextHud);
     }
-    if (Math.floor(nextState.bestScore) !== Math.floor(previousHud.bestScore)) {
+    if (nextBestBucket !== previousBestBucket || nextState.phase === "game-over") {
       writeStoredNumber(STORAGE_KEY, nextState.bestScore);
     }
   }
