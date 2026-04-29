@@ -47,7 +47,11 @@ function getStatusCopy(phase: DoodleJumpPhase) {
 }
 
 function drawPaperBackground(context: CanvasRenderingContext2D, elapsedSeconds: number) {
-  context.fillStyle = "#fff9dd";
+  const gradient = context.createLinearGradient(0, 0, 0, DOODLE_HEIGHT);
+  gradient.addColorStop(0, "#fffdf0");
+  gradient.addColorStop(0.56, "#fff7d6");
+  gradient.addColorStop(1, "#fff0bd");
+  context.fillStyle = gradient;
   context.fillRect(0, 0, DOODLE_WIDTH, DOODLE_HEIGHT);
 
   context.strokeStyle = "rgba(81, 143, 216, 0.18)";
@@ -74,9 +78,37 @@ function drawPaperBackground(context: CanvasRenderingContext2D, elapsedSeconds: 
   context.beginPath();
   context.arc(96, 134 + Math.cos(elapsedSeconds * 0.8) * 4, 24, 0, Math.PI * 2);
   context.fill();
+
+  context.save();
+  context.strokeStyle = "rgba(38, 53, 111, 0.22)";
+  context.lineWidth = 3;
+  context.lineCap = "round";
+  for (let index = 0; index < 7; index += 1) {
+    const x = 76 + ((index * 61 + elapsedSeconds * 9) % 318);
+    const y = 68 + ((index * 83 + Math.sin(elapsedSeconds + index) * 8) % 420);
+    const size = 4 + (index % 3);
+    context.beginPath();
+    context.moveTo(x - size, y);
+    context.lineTo(x + size, y);
+    context.moveTo(x, y - size);
+    context.lineTo(x, y + size);
+    context.stroke();
+  }
+
+  context.strokeStyle = "rgba(255, 112, 77, 0.28)";
+  context.beginPath();
+  context.arc(348, 426 + Math.sin(elapsedSeconds * 0.9) * 7, 18, 0, Math.PI * 2);
+  context.moveTo(330, 426);
+  context.lineTo(366, 426);
+  context.moveTo(348, 408);
+  context.lineTo(348, 444);
+  context.stroke();
+  context.restore();
 }
 
-function drawPlatform(context: CanvasRenderingContext2D, platform: DoodlePlatform) {
+function drawPlatform(context: CanvasRenderingContext2D, platform: DoodlePlatform, elapsedSeconds: number) {
+  const isBreaking = platform.brokenAt !== undefined;
+  const shake = isBreaking ? Math.sin(elapsedSeconds * 34 + platform.id) * 3 : 0;
   const color =
     platform.kind === "breakable"
       ? "#c77b39"
@@ -95,6 +127,7 @@ function drawPlatform(context: CanvasRenderingContext2D, platform: DoodlePlatfor
           : "#3b912c";
 
   context.save();
+  context.translate(shake, 0);
   context.shadowColor = "rgba(54, 45, 28, 0.22)";
   context.shadowBlur = 8;
   context.shadowOffsetY = 4;
@@ -114,14 +147,34 @@ function drawPlatform(context: CanvasRenderingContext2D, platform: DoodlePlatfor
 
   if (platform.kind === "breakable") {
     context.strokeStyle = "#5d3017";
-    context.lineWidth = 2.5;
+    context.lineWidth = isBreaking ? 3.5 : 2.5;
     context.beginPath();
     context.moveTo(platform.x + platform.width * 0.3, platform.y + 2);
-    context.lineTo(platform.x + platform.width * 0.42, platform.y + 9);
+    context.lineTo(platform.x + platform.width * 0.42 + (isBreaking ? 5 : 0), platform.y + 9);
     context.lineTo(platform.x + platform.width * 0.36, platform.y + 15);
     context.moveTo(platform.x + platform.width * 0.62, platform.y + 1);
-    context.lineTo(platform.x + platform.width * 0.54, platform.y + 8);
+    context.lineTo(platform.x + platform.width * 0.54 - (isBreaking ? 5 : 0), platform.y + 8);
     context.lineTo(platform.x + platform.width * 0.7, platform.y + 15);
+    context.stroke();
+
+    if (isBreaking) {
+      context.fillStyle = "#8c5128";
+      context.beginPath();
+      context.arc(platform.x + platform.width * 0.28, platform.y + 22, 3.5, 0, Math.PI * 2);
+      context.arc(platform.x + platform.width * 0.64, platform.y + 24, 2.8, 0, Math.PI * 2);
+      context.fill();
+    }
+  } else if (platform.kind === "blue") {
+    context.fillStyle = "rgba(255,255,255,0.62)";
+    context.beginPath();
+    context.arc(platform.x + platform.width - 12, platform.y + 7, 4, 0, Math.PI * 2);
+    context.fill();
+  } else if (platform.kind === "pink") {
+    context.strokeStyle = "rgba(255,255,255,0.7)";
+    context.lineWidth = 2;
+    context.beginPath();
+    context.moveTo(platform.x + 16, platform.y + 11);
+    context.quadraticCurveTo(platform.x + platform.width / 2, platform.y - 3, platform.x + platform.width - 16, platform.y + 11);
     context.stroke();
   }
   context.restore();
@@ -155,6 +208,25 @@ function drawPlayer(context: CanvasRenderingContext2D, state: DoodleJumpState, e
   const cx = player.x + DOODLE_PLAYER_WIDTH / 2;
   const cy = player.y + DOODLE_PLAYER_HEIGHT / 2;
   const squash = player.vy < -200 ? 1.05 : player.vy > 300 ? 0.94 : 1;
+
+  if (player.vy < -280) {
+    context.save();
+    context.fillStyle = "rgba(107, 199, 255, 0.2)";
+    for (let index = 0; index < 3; index += 1) {
+      context.beginPath();
+      context.ellipse(
+        cx - 18 + index * 18,
+        player.y + DOODLE_PLAYER_HEIGHT + 8 + Math.sin(elapsedSeconds * 8 + index) * 2,
+        9 - index,
+        4,
+        0,
+        0,
+        Math.PI * 2,
+      );
+      context.fill();
+    }
+    context.restore();
+  }
 
   context.save();
   context.translate(cx, cy);
@@ -235,7 +307,7 @@ function drawOverlay(context: CanvasRenderingContext2D, phase: DoodleJumpPhase) 
 function drawScene(context: CanvasRenderingContext2D, state: DoodleJumpState, elapsedSeconds: number) {
   context.clearRect(0, 0, DOODLE_WIDTH, DOODLE_HEIGHT);
   drawPaperBackground(context, elapsedSeconds);
-  state.platforms.forEach((platform) => drawPlatform(context, platform));
+  state.platforms.forEach((platform) => drawPlatform(context, platform, elapsedSeconds));
   drawPlayer(context, state, elapsedSeconds);
   drawScoreLabel(context, state.score);
   drawOverlay(context, state.phase);

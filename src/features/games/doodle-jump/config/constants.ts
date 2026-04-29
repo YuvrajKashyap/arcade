@@ -5,6 +5,6 @@ export const DOODLE_PLAYER_WIDTH = 40;
 export const DOODLE_PLAYER_HEIGHT = 48;
 export const DOODLE_GRAVITY = 980;
 export const DOODLE_JUMP_VELOCITY = -590;
-export const DOODLE_MOVE_SPEED = 260;
+export const DOODLE_MOVE_SPEED = 340;
 export const DOODLE_PLATFORM_WIDTH = 78;
 export const DOODLE_PLATFORM_HEIGHT = 16;
