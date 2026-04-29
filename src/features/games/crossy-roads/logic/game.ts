@@ -33,15 +33,20 @@ function seeded(row: number, salt: number) {
 }
 
 function laneTypeForRow(row: number): CrossyLaneType {
-  if (row <= 1 || row % 7 === 0) {
+  if (row <= 2) {
     return "grass";
   }
 
-  if (row % 11 === 6) {
+  const cycle = row % 12;
+  if (cycle === 0 || cycle === 4 || cycle === 7 || cycle === 11) {
+    return "grass";
+  }
+
+  if (cycle === 9) {
     return "rail";
   }
 
-  if (row % 9 === 4 || row % 9 === 5) {
+  if (cycle === 5 || cycle === 6) {
     return "river";
   }
 
@@ -53,11 +58,14 @@ function createVehicle(id: number, row: number, index: number, direction: -1 | 1
   const kind = isTrain ? "train" : row % 6 === 0 ? "bus" : row % 4 === 0 ? "truck" : "car";
   const baseWidth = kind === "train" ? 260 : kind === "bus" ? 122 : kind === "truck" ? 108 : 78;
   const width = baseWidth + Math.round(seeded(row, index) * 18);
-  const speedBase = kind === "train" ? 430 : kind === "bus" ? 124 : kind === "truck" ? 142 : 166;
-  const speed = (speedBase + row * 4 + seeded(row, index + 4) * 44) * direction;
+  const earlyLane = row < 8;
+  const speedBase = kind === "train" ? 430 : kind === "bus" ? 104 : kind === "truck" ? 118 : 136;
+  const speed = (speedBase + row * 3.2 + seeded(row, index + 4) * 32 + (earlyLane ? -18 : 0)) * direction;
   const palette = vehicleColors[(row + index) % vehicleColors.length] ?? vehicleColors[0];
-  const laneSpan = CROSSY_WIDTH + width + 260;
-  const seededX = ((index * 212 + row * 83) % laneSpan) - width - 130;
+  const count = laneTypeForRow(row) === "rail" ? 1 : row % 6 === 0 ? 2 : 3;
+  const laneSpan = CROSSY_WIDTH + 360;
+  const spacing = laneSpan / count;
+  const seededX = ((index * spacing + seeded(row, index + 12) * 56 + row * 37) % laneSpan) - width - 150;
 
   return {
     id,
@@ -71,16 +79,20 @@ function createVehicle(id: number, row: number, index: number, direction: -1 | 1
 }
 
 function createLog(id: number, row: number, index: number, direction: -1 | 1): CrossyLog {
-  const width = 112 + Math.round(seeded(row, index + 2) * 68);
-  const speed = (78 + row * 3 + seeded(row, index + 6) * 32) * direction;
-  const laneSpan = CROSSY_WIDTH + width + 180;
-  const seededX = ((index * 190 + row * 59) % laneSpan) - width - 90;
+  const isLily = row % 9 === 5 && index % 3 === 1;
+  const count = row % 2 === 0 ? 4 : 5;
+  const width = isLily ? 72 : count === 5 ? 118 + Math.round(seeded(row, index + 2) * 30) : 142 + Math.round(seeded(row, index + 2) * 46);
+  const speed = (58 + row * 2.2 + seeded(row, index + 6) * 22) * direction;
+  const laneSpan = CROSSY_WIDTH + 260;
+  const spacing = laneSpan / count;
+  const seededX = ((index * spacing + seeded(row, index + 18) * 34 + row * 23) % laneSpan) - width - 110;
 
   return {
     id,
     x: direction > 0 ? seededX : CROSSY_WIDTH - seededX - width,
     width,
     speed,
+    kind: isLily ? "lily" : "log",
   };
 }
 
@@ -88,7 +100,7 @@ function createScenery(id: number, row: number): { scenery: CrossyScenery[]; nex
   const scenery: CrossyScenery[] = [];
   let nextSceneryId = id;
 
-  if (row < 0 || row % 7 !== 0) {
+  if (row <= 2 || laneTypeForRow(row) !== "grass") {
     return { scenery, nextSceneryId };
   }
 
@@ -127,7 +139,7 @@ function createLane(row: number, nextVehicleId: number, nextSceneryId: number) {
   }
 
   if (type === "river") {
-    const count = row % 2 === 0 ? 3 : 4;
+    const count = row % 2 === 0 ? 4 : 5;
     for (let index = 0; index < count; index += 1) {
       logs.push(createLog(vehicleId, row, index, direction));
       vehicleId += 1;
@@ -279,13 +291,14 @@ export function moveCrossy(state: CrossyState, direction: CrossyDirection): Cros
 }
 
 function vehicleOverlapsPlayer(vehicle: CrossyVehicle, playerX: number) {
-  const playerLeft = playerX + CROSSY_TILE * 0.18;
-  const playerRight = playerX + CROSSY_TILE * 0.82;
-  return playerRight > vehicle.x + 8 && playerLeft < vehicle.x + vehicle.width - 8;
+  const playerLeft = playerX + CROSSY_TILE * 0.24;
+  const playerRight = playerX + CROSSY_TILE * 0.76;
+  return playerRight > vehicle.x + 14 && playerLeft < vehicle.x + vehicle.width - 14;
 }
 
 function logUnderPlayer(log: CrossyLog, playerCenterX: number) {
-  return playerCenterX > log.x + 12 && playerCenterX < log.x + log.width - 12;
+  const inset = log.kind === "lily" ? 5 : 14;
+  return playerCenterX > log.x + inset && playerCenterX < log.x + log.width - inset;
 }
 
 function wrapMovingBody<T extends { x: number; width: number; speed: number }>(body: T): T {
@@ -343,11 +356,13 @@ export function updateCrossy(state: CrossyState, deltaSeconds: number): CrossySt
   let phase: CrossyPhase = state.phase;
   let nextPlayer = player;
 
-  if (currentLane?.type === "road" || currentLane?.type === "rail") {
+  const landedEnough = player.hopProgress >= 0.58;
+
+  if ((currentLane?.type === "road" || currentLane?.type === "rail") && landedEnough) {
     if (currentLane.vehicles.some((vehicle) => vehicleOverlapsPlayer(vehicle, playerX))) {
       phase = "game-over";
     }
-  } else if (currentLane?.type === "river") {
+  } else if (currentLane?.type === "river" && landedEnough) {
     const supportingLog = currentLane.logs.find((log) => logUnderPlayer(log, playerCenterX));
     if (!supportingLog) {
       phase = "game-over";

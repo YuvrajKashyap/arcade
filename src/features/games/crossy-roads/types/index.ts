@@ -23,6 +23,7 @@ export type CrossyLog = {
   x: number;
   width: number;
   speed: number;
+  kind: "log" | "lily";
 };
 
 export type CrossyLane = {
