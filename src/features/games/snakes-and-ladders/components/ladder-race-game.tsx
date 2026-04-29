@@ -5,6 +5,7 @@ import {
   GameButton,
   GamePanel,
   GameStatus,
+  TouchControls,
 } from "@/features/games/shared/components/game-ui";
 import {
   readStoredNumber,
@@ -511,6 +512,11 @@ export function LadderRaceGame() {
       <GameStatus>
         {state.message} Press Space or Enter to roll. Ladders climb upward, snake heads slide downward, and you must land exactly on 100.
       </GameStatus>
+      <TouchControls className="max-w-[22rem]">
+        <GameButton variant="touch" className="w-full" onClick={() => rollFor("you")} disabled={!canRoll}>
+          {state.phase === "ready" ? "Start Roll" : state.turn === "you" ? "Roll Dice" : "CPU Turn"}
+        </GameButton>
+      </TouchControls>
     </GamePanel>
   );
 }
