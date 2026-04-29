@@ -78,7 +78,6 @@ type State = {
   spawnTimer: number;
   cloudTimer: number;
   horizonOffset: number;
-  shakeTimer: number;
 };
 
 type RectLike = { x: number; y: number; width: number; height: number };
@@ -102,7 +101,6 @@ function createState(bestScore = 0): State {
     spawnTimer: 0.85,
     cloudTimer: 1.2,
     horizonOffset: 0,
-    shakeTimer: 0,
   };
 }
 
@@ -306,8 +304,7 @@ function updateState(state: State, delta: number, holdingDown: boolean): State {
     nextId,
     spawnTimer,
     cloudTimer,
-    horizonOffset: (state.horizonOffset + speed * delta) % GAME_WIDTH,
-    shakeTimer: Math.max(0, state.shakeTimer - delta),
+    horizonOffset: state.horizonOffset + speed * delta,
   };
   const playerRect = trexRect(nextState);
   const hit = obstacles.some((obstacle) => obstacleRects(obstacle).some((rect) => intersects(playerRect, rect)));
@@ -316,27 +313,37 @@ function updateState(state: State, delta: number, holdingDown: boolean): State {
     ...nextState,
     phase: hit ? "game-over" : "playing",
     bestScore: Math.max(nextState.bestScore, nextState.score),
-    shakeTimer: hit ? 0.16 : nextState.shakeTimer,
   };
 }
 
 function drawPixelSun(context: CanvasRenderingContext2D) {
-  const cx = 642;
-  const cy = 46;
-  context.fillStyle = "rgba(255, 171, 29, 0.22)";
-  context.fillRect(toCanvasX(cx - 37), toCanvasY(cy - 37), 74 * SCALE, 74 * SCALE);
-  context.fillStyle = "#f8ad22";
+  const cx = 552;
+  const cy = 28;
+  const cell = Math.round(5.5 * SCALE);
+  const x0 = Math.round(toCanvasX(cx));
+  const y0 = Math.round(toCanvasY(cy));
+
+  context.fillStyle = "rgba(255, 184, 35, 0.2)";
+  context.fillRect(x0 - cell * 7, y0 - cell * 7, cell * 14, cell * 14);
+
+  context.fillStyle = "#f59f1b";
   [
-    [cx - 15, cy - 15, 30, 30],
-    [cx - 5, cy - 48, 10, 17],
-    [cx - 5, cy + 31, 10, 17],
-    [cx - 50, cy - 5, 17, 10],
-    [cx + 33, cy - 5, 17, 10],
-    [cx - 35, cy - 33, 10, 10],
-    [cx + 25, cy + 24, 10, 10],
+    [-1, -7, 2, 3],
+    [-1, 4, 2, 3],
+    [-7, -1, 3, 2],
+    [4, -1, 3, 2],
+    [-5, -5, 2, 2],
+    [3, -5, 2, 2],
+    [-5, 3, 2, 2],
+    [3, 3, 2, 2],
   ].forEach(([x, y, width, height]) => {
-    context.fillRect(toCanvasX(x), toCanvasY(y), width * SCALE, height * SCALE);
+    context.fillRect(x0 + x * cell, y0 + y * cell, width * cell, height * cell);
   });
+
+  context.fillStyle = "#ffc63b";
+  context.fillRect(x0 - cell * 3, y0 - cell * 3, cell * 6, cell * 6);
+  context.fillStyle = "#ffda66";
+  context.fillRect(x0 - cell * 2, y0 - cell * 2, cell * 4, cell * 4);
 }
 
 function drawBackground(context: CanvasRenderingContext2D, image: HTMLImageElement, state: State) {
@@ -351,17 +358,30 @@ function drawBackground(context: CanvasRenderingContext2D, image: HTMLImageEleme
   state.clouds.forEach((cloud) => drawSprite(context, image, SPRITE.CLOUD, cloud.x, cloud.y));
 
   context.fillStyle = "rgba(160, 98, 55, 0.28)";
-  const mesaOffset = (state.horizonOffset * 0.16) % 230;
+  const mesaOffset = ((state.horizonOffset * 0.16) % 230) * SCALE;
   for (let x = -mesaOffset - 60; x < GAME_WIDTH + 120; x += 230) {
-    context.fillRect(toCanvasX(x), toCanvasY(GROUND_Y - 26), 45 * SCALE, 26 * SCALE);
-    context.fillRect(toCanvasX(x + 10), toCanvasY(GROUND_Y - 39), 24 * SCALE, 13 * SCALE);
-    context.fillRect(toCanvasX(x + 140), toCanvasY(GROUND_Y - 18), 55 * SCALE, 18 * SCALE);
-    context.fillRect(toCanvasX(x + 154), toCanvasY(GROUND_Y - 29), 22 * SCALE, 11 * SCALE);
+    const canvasX = GAME_X + Math.round(x);
+    context.fillRect(canvasX, toCanvasY(GROUND_Y - 26), 45 * SCALE, 26 * SCALE);
+    context.fillRect(canvasX + 10 * SCALE, toCanvasY(GROUND_Y - 39), 24 * SCALE, 13 * SCALE);
+    context.fillRect(canvasX + 140 * SCALE, toCanvasY(GROUND_Y - 18), 55 * SCALE, 18 * SCALE);
+    context.fillRect(canvasX + 154 * SCALE, toCanvasY(GROUND_Y - 29), 22 * SCALE, 11 * SCALE);
   }
 
-  const firstHorizonX = -(state.horizonOffset % GAME_WIDTH);
-  drawSprite(context, image, SPRITE.HORIZON, firstHorizonX, GROUND_Y);
-  drawSprite(context, image, SPRITE.HORIZON, firstHorizonX + GAME_WIDTH, GROUND_Y);
+  const horizonWidth = Math.round(GAME_WIDTH * SCALE);
+  const horizonOffset = Math.round((state.horizonOffset * SCALE) % horizonWidth);
+  for (let index = -1; index <= 1; index += 1) {
+    context.drawImage(
+      image,
+      SPRITE.HORIZON.x,
+      SPRITE.HORIZON.y,
+      SPRITE.HORIZON.w,
+      SPRITE.HORIZON.h,
+      GAME_X - horizonOffset + index * horizonWidth,
+      Math.round(toCanvasY(GROUND_Y)),
+      horizonWidth,
+      Math.round(SPRITE.HORIZON.dh * SCALE),
+    );
+  }
 
   const ground = context.createLinearGradient(0, toCanvasY(GROUND_Y + 10), 0, CANVAS_HEIGHT);
   ground.addColorStop(0, "rgba(232, 174, 102, 0.62)");
@@ -432,7 +452,7 @@ function drawScore(context: CanvasRenderingContext2D, state: State) {
   context.textBaseline = "top";
   context.fillText(
     `HI ${String(Math.floor(state.bestScore)).padStart(5, "0")}  ${String(Math.floor(state.score)).padStart(5, "0")}`,
-    toCanvasX(GAME_WIDTH - 12),
+    toCanvasX(GAME_WIDTH - 120),
     toCanvasY(13),
   );
 }
@@ -496,9 +516,7 @@ function drawScene(context: CanvasRenderingContext2D, image: HTMLImageElement | 
     return;
   }
 
-  const shake = state.shakeTimer > 0 ? Math.sin(elapsed * 90) * 3 : 0;
   context.save();
-  context.translate(shake, 0);
   drawBackground(context, image, state);
   state.obstacles.forEach((obstacle) => drawObstacle(context, image, obstacle, elapsed));
   drawTrex(context, image, state, elapsed);
