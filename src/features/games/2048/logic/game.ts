@@ -39,7 +39,7 @@ function addRandomTile(state: TwentyFortyEightState): TwentyFortyEightState {
 
   return {
     ...state,
-    tiles: [...state.tiles.map((candidate) => ({ ...candidate, isNew: false, mergedFrom: undefined })), tile],
+    tiles: [...state.tiles.map((candidate) => ({ ...candidate, isNew: false })), tile],
     nextTileId: state.nextTileId + 1,
   };
 }
