@@ -232,7 +232,7 @@ function totalBuildings(state: State) {
 }
 
 function costFor(building: Building, count: number) {
-  return Math.floor(building.baseCost * 1.15 ** count);
+  return Math.floor(building.baseCost * 1.15 ** count + 0.000001);
 }
 
 function hasUpgrade(state: State, id: string) {
