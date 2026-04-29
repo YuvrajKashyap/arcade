@@ -84,6 +84,31 @@ const CookieCrafterGame = dynamic(() => import("@/features/games/cookie-crafter"
   loading: GameLoadingState,
 });
 
+const LadderRaceGame = dynamic(() => import("@/features/games/ladder-race"), {
+  ssr: false,
+  loading: GameLoadingState,
+});
+
+const SorrySprintGame = dynamic(() => import("@/features/games/sorry-sprint"), {
+  ssr: false,
+  loading: GameLoadingState,
+});
+
+const ArcadeFighterGame = dynamic(() => import("@/features/games/arcade-fighter"), {
+  ssr: false,
+  loading: GameLoadingState,
+});
+
+const HelixDropGame = dynamic(() => import("@/features/games/helix-drop"), {
+  ssr: false,
+  loading: GameLoadingState,
+});
+
+const StackTowerGame = dynamic(() => import("@/features/games/stack-tower"), {
+  ssr: false,
+  loading: GameLoadingState,
+});
+
 export const gameComponentMap: Record<GameSlug, React.ComponentType> = {
   snake: SnakeGame,
   pong: PongGame,
@@ -101,4 +126,9 @@ export const gameComponentMap: Record<GameSlug, React.ComponentType> = {
   "pac-maze": PacMazeGame,
   "block-drop": BlockDropGame,
   "cookie-crafter": CookieCrafterGame,
+  "ladder-race": LadderRaceGame,
+  "sorry-sprint": SorrySprintGame,
+  "arcade-fighter": ArcadeFighterGame,
+  "helix-drop": HelixDropGame,
+  "stack-tower": StackTowerGame,
 };

@@ -601,6 +601,211 @@ export const gameCatalog = [
     libraryOrder: 16,
     relatedSlugs: ["2048", "dino-run"],
   },
+  {
+    slug: "ladder-race",
+    title: "Ladder Race",
+    shortDescription:
+      "A bright snakes-and-ladders board race with dice rolls, CPU turns, ladders, slides, and best-roll tracking.",
+    description:
+      "Ladder Race turns the classic snakes-and-ladders loop into a quick cartoony browser board game. Roll the die, climb green ladders, slide down red snakes, race a CPU pawn, and reach square 100 in as few rolls as possible.",
+    thumbnail: "/games/ladder-race/thumbnail.png?v=20260428",
+    genre: "Puzzle",
+    tags: ["Board", "Dice", "Cartoon", "Keyboard", "Touch"],
+    controls: {
+      summary: "Press Space, Enter, or Roll to roll the die. R restarts.",
+      items: [
+        { label: "Roll", action: "Space, Enter, or Roll button" },
+        { label: "Restart", action: "R or Restart" },
+        { label: "Ladders", action: "Green lines move you upward" },
+        { label: "Snakes", action: "Red lines move you downward" },
+      ],
+    },
+    difficulty: "easy",
+    sessionLength: "2-6 min",
+    releaseDate: "2026-04-29",
+    status: "live",
+    featured: false,
+    published: true,
+    supports: ["keyboard", "mouse", "touch"],
+    mobileSupport: "full",
+    version: "1.0.0",
+    developerNotes:
+      "Ladder Race is a self-coded, original-art board game inspired by the public-domain snakes-and-ladders ruleset.",
+    howToPlay: {
+      summary: "Reach square 100 before the CPU.",
+      tips: [
+        "Ladders jump you forward.",
+        "Snakes send you backward.",
+        "Your best score is the fewest rolls needed to win.",
+      ],
+    },
+    libraryOrder: 17,
+    relatedSlugs: ["sorry-sprint", "tic-tac-toe"],
+  },
+  {
+    slug: "sorry-sprint",
+    title: "Sorry Sprint",
+    shortDescription:
+      "A cartoony card-and-pawn race with start spaces, home goals, bumps, draw cards, and quick restarts.",
+    description:
+      "Sorry Sprint is an original card-race board game inspired by classic pawn racers. Draw movement cards, bring blue pawns out of start, bump rival pawns back, and get all four home before the red rivals.",
+    thumbnail: "/games/sorry-sprint/thumbnail.png?v=20260428",
+    genre: "Strategy",
+    tags: ["Board", "Cards", "Strategy", "Keyboard", "Touch"],
+    controls: {
+      summary: "Press Space, Enter, or Draw to draw a movement card. R restarts.",
+      items: [
+        { label: "Draw card", action: "Space, Enter, or Draw button" },
+        { label: "Restart", action: "R or Restart" },
+        { label: "Bump", action: "Landing on a rival sends it back to start" },
+        { label: "Goal", action: "Get all four blue pawns home" },
+      ],
+    },
+    difficulty: "medium",
+    sessionLength: "3-8 min",
+    releaseDate: "2026-04-29",
+    status: "live",
+    featured: false,
+    published: true,
+    supports: ["keyboard", "mouse", "touch"],
+    mobileSupport: "full",
+    version: "1.0.0",
+    developerNotes:
+      "Sorry Sprint uses original board art and a simplified self-coded card movement loop without copying protected board artwork.",
+    howToPlay: {
+      summary: "Draw cards to move pawns from start to home.",
+      tips: [
+        "A 1 or 2 can bring a pawn out of start.",
+        "Landing on a rival bumps it back.",
+        "First side with all four pawns home wins.",
+      ],
+    },
+    libraryOrder: 18,
+    relatedSlugs: ["ladder-race", "block-drop"],
+  },
+  {
+    slug: "arcade-fighter",
+    title: "Arcade Fighter",
+    shortDescription:
+      "A retro one-round fighter with health bars, timer, movement, jump, punch, kick, CPU pressure, and wins.",
+    description:
+      "Arcade Fighter brings a classic fighting-game feel without copied characters: health bars, timer, side-view arena, jump arcs, punch and kick timing, CPU movement, round wins, and instant restart.",
+    thumbnail: "/games/arcade-fighter/thumbnail.png?v=20260428",
+    genre: "Arcade",
+    tags: ["Canvas", "Fighter", "Action", "Keyboard", "Score Loop"],
+    controls: {
+      summary: "A/D move, W jumps, J punches, K kicks. Space starts and R restarts.",
+      items: [
+        { label: "Move", action: "A/D or Arrow Left/Right" },
+        { label: "Jump", action: "W or Arrow Up" },
+        { label: "Attack", action: "J punch, K kick" },
+        { label: "Start / Restart", action: "Space or R" },
+      ],
+    },
+    difficulty: "hard",
+    sessionLength: "2-5 min",
+    releaseDate: "2026-04-29",
+    status: "live",
+    featured: false,
+    published: true,
+    supports: ["keyboard", "touch"],
+    mobileSupport: "partial",
+    version: "1.0.0",
+    developerNotes:
+      "Arcade Fighter uses original canvas-drawn fighters and UI inspired by arcade fighting conventions rather than copied sprites.",
+    howToPlay: {
+      summary: "Drain the rival's health before the timer ends.",
+      tips: [
+        "Stay close enough before attacking.",
+        "Jump can break spacing.",
+        "The higher health bar wins when time expires.",
+      ],
+    },
+    libraryOrder: 19,
+    relatedSlugs: ["dino-run", "asteroids"],
+  },
+  {
+    slug: "helix-drop",
+    title: "Helix Drop",
+    shortDescription:
+      "A colorful helix-fall arcade game with rotating platforms, gaps, danger slices, score, and high score.",
+    description:
+      "Helix Drop is an original vertical arcade dropper: rotate the stack, let the ball fall through gaps, bounce on safe slices, avoid black danger slices, and score each level you pass.",
+    thumbnail: "/games/helix-drop/thumbnail.png?v=20260428",
+    genre: "Arcade",
+    tags: ["Canvas", "Reaction", "Physics", "Touch", "High Score"],
+    controls: {
+      summary: "A/D or Arrow Left/Right rotate the tower. Space starts and R restarts.",
+      items: [
+        { label: "Rotate", action: "A/D, Arrow Left/Right, or touch buttons" },
+        { label: "Start / Restart", action: "Space or R" },
+        { label: "Avoid", action: "Black slices end the run" },
+        { label: "Goal", action: "Fall through as many gaps as possible" },
+      ],
+    },
+    difficulty: "medium",
+    sessionLength: "2-6 min",
+    releaseDate: "2026-04-29",
+    status: "live",
+    featured: false,
+    published: true,
+    supports: ["keyboard", "touch"],
+    mobileSupport: "full",
+    version: "1.0.0",
+    developerNotes:
+      "Helix Drop is a self-coded canvas dropper with original visuals, rotating arcs, collision slices, and local score persistence.",
+    howToPlay: {
+      summary: "Rotate the helix so the ball falls through open gaps.",
+      tips: [
+        "Safe slices bounce the ball upward.",
+        "Gaps score and move you downward.",
+        "Black danger slices end the run.",
+      ],
+    },
+    libraryOrder: 20,
+    relatedSlugs: ["stack-tower", "flappy-bird"],
+  },
+  {
+    slug: "stack-tower",
+    title: "Stack Tower",
+    shortDescription:
+      "A clean stacking arcade game with moving blocks, overlap trimming, speed ramp, score, and best score.",
+    description:
+      "Stack Tower is a self-coded timing game inspired by minimalist stacking arcades. Drop each moving block, keep only the overlapping section, build higher, and survive as the platform gets smaller and faster.",
+    thumbnail: "/games/stack-tower/thumbnail.png?v=20260428",
+    genre: "Arcade",
+    tags: ["Canvas", "Timing", "Stacking", "Touch", "High Score"],
+    controls: {
+      summary: "Press Space, Enter, click, or tap to drop the block. R restarts.",
+      items: [
+        { label: "Drop", action: "Space, Enter, click, or tap" },
+        { label: "Restart", action: "R" },
+        { label: "Goal", action: "Keep the overlap and build taller" },
+        { label: "Fail", action: "Missing the overlap ends the run" },
+      ],
+    },
+    difficulty: "medium",
+    sessionLength: "1-5 min",
+    releaseDate: "2026-04-29",
+    status: "live",
+    featured: false,
+    published: true,
+    supports: ["keyboard", "mouse", "touch"],
+    mobileSupport: "full",
+    version: "1.0.0",
+    developerNotes:
+      "Stack Tower uses original canvas art and a compact overlap-trimming model for crisp timing gameplay.",
+    howToPlay: {
+      summary: "Drop moving blocks so they overlap the tower below.",
+      tips: [
+        "Only the overlapping part remains.",
+        "The tower gets smaller if your timing is off.",
+        "A full miss ends the run.",
+      ],
+    },
+    libraryOrder: 21,
+    relatedSlugs: ["helix-drop", "cookie-crafter"],
+  },
 ] satisfies readonly GameCatalogEntry[];
 
 export type GameSlug = (typeof gameCatalog)[number]["slug"];
