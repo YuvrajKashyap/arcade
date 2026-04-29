@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { type TouchEvent, useEffect, useEffectEvent, useRef, useState } from "react";
 import { configureHiDPICanvas } from "@/features/games/shared/canvas/configure-canvas";
 import {
   GameButton,
@@ -109,6 +109,7 @@ const KEY_TO_DIR: Record<string, Direction> = {
 
 const FINAL_LEVEL = 3;
 const LEVEL_CLEAR_BONUS = 500;
+const MIN_SWIPE_DISTANCE = 24;
 
 const GHOSTS: Ghost[] = [
   {
@@ -617,6 +618,7 @@ export function PacMazeGame() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
   const stateRef = useRef(initialState);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const elapsedRef = useRef(0);
   const [hud, setHud] = useState({
     score: initialState.score,
@@ -661,6 +663,54 @@ export function PacMazeGame() {
     const current = stateRef.current.phase === "idle" ? { ...stateRef.current, phase: "playing" as Phase } : stateRef.current;
     if (current.phase !== "playing") return;
     sync({ ...current, pac: { ...current.pac, nextDirection: direction } }, true);
+  }
+
+  function touchStartOrRestart() {
+    const current = stateRef.current;
+    if (current.phase === "idle") {
+      sync({ ...current, phase: "playing" }, true);
+    } else if (current.phase === "game-over" || current.phase === "won") {
+      restart();
+    }
+  }
+
+  function onTouchStart(event: TouchEvent) {
+    const touch = event.touches[0];
+    if (!touch) return;
+    event.preventDefault();
+    event.stopPropagation();
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  }
+
+  function onTouchMove(event: TouchEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  function onTouchEnd(event: TouchEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    const touch = event.changedTouches[0];
+    if (!start || !touch) return;
+
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    const absX = Math.abs(dx);
+    const absY = Math.abs(dy);
+
+    if (Math.max(absX, absY) < MIN_SWIPE_DISTANCE) {
+      touchStartOrRestart();
+      return;
+    }
+
+    if (absX > absY) {
+      steer(dx > 0 ? DIRS.right : DIRS.left);
+    } else {
+      steer(dy > 0 ? DIRS.down : DIRS.up);
+    }
   }
 
   const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
@@ -721,7 +771,17 @@ export function PacMazeGame() {
         }
       />
       <GamePlayfield className="mx-auto aspect-[28/31] w-full max-w-[min(25rem,58dvh)] touch-none border-0 bg-black">
-        <canvas ref={canvasRef} className="h-full w-full" aria-label="Pacman field" />
+        <canvas
+          ref={canvasRef}
+          className="h-full w-full"
+          aria-label="Pacman field"
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+          onTouchCancel={() => {
+            touchStartRef.current = null;
+          }}
+        />
       </GamePlayfield>
       <GameStatus>Clear 3 mazes to win. Arrow keys or WASD steer. Power pellets turn ghosts blue.</GameStatus>
       <TouchControls className="max-w-[16rem]">
