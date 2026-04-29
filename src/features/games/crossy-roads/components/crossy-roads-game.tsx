@@ -30,6 +30,7 @@ import {
 } from "@/features/games/shared/utils/local-storage";
 
 const directionByKey: Record<string, CrossyDirection | undefined> = {
+  " ": "up",
   arrowup: "up",
   w: "up",
   arrowdown: "down",
@@ -53,7 +54,7 @@ function getStatusCopy(phase: CrossyPhase) {
     return "Traffic got you. Restart and time the next hop.";
   }
 
-  return "Press an arrow key or WASD to start hopping.";
+  return "Press Space, an arrow key, or WASD to start hopping.";
 }
 
 function laneY(row: number, cameraRow: number) {
@@ -112,42 +113,78 @@ function drawPlayer(context: CanvasRenderingContext2D, state: CrossyState) {
   const row = state.player.fromRow + (state.player.row - state.player.fromRow) * t;
   const x = 35 + column * CROSSY_TILE + CROSSY_TILE / 2;
   const y = laneY(row, state.cameraRow) - CROSSY_TILE / 2 - Math.sin(t * Math.PI) * 12;
+  const squash = 1 - Math.sin(t * Math.PI) * 0.08;
 
   context.save();
   context.translate(x, y);
+  context.scale(1, squash);
   context.shadowColor = "rgba(25,31,35,0.24)";
   context.shadowBlur = 9;
   context.shadowOffsetY = 6;
+  context.lineJoin = "round";
 
-  context.fillStyle = "#fff0a8";
-  context.strokeStyle = "#874922";
-  context.lineWidth = 4;
+  context.fillStyle = "#fffdf1";
+  context.strokeStyle = "#202837";
+  context.lineWidth = 4.5;
   context.beginPath();
-  context.roundRect(-16, -18, 32, 35, 9);
+  context.roundRect(-16, -11, 32, 30, 5);
   context.fill();
   context.stroke();
 
-  context.fillStyle = "#ff8b2f";
+  context.fillStyle = "#ffffff";
   context.beginPath();
-  context.moveTo(16, -3);
-  context.lineTo(30, 4);
-  context.lineTo(16, 10);
+  context.roundRect(-9, -31, 25, 24, 5);
+  context.fill();
+  context.stroke();
+
+  context.fillStyle = "#e94435";
+  context.beginPath();
+  context.roundRect(-10, -43, 8, 13, 3);
+  context.roundRect(-3, -48, 8, 18, 3);
+  context.roundRect(4, -43, 8, 13, 3);
+  context.fill();
+  context.stroke();
+
+  context.fillStyle = "#ff9f25";
+  context.beginPath();
+  context.moveTo(15, -24);
+  context.lineTo(30, -18);
+  context.lineTo(15, -12);
   context.closePath();
   context.fill();
   context.stroke();
 
-  context.fillStyle = "#18243d";
-  context.beginPath();
-  context.arc(6, -7, 2.5, 0, Math.PI * 2);
-  context.fill();
+  context.fillStyle = "#141925";
+  context.fillRect(7, -25, 5, 5);
 
-  context.strokeStyle = "#874922";
+  context.fillStyle = "#f04f3e";
+  context.strokeStyle = "#202837";
   context.lineWidth = 3;
   context.beginPath();
+  context.roundRect(8, -10, 8, 11, 3);
+  context.fill();
+  context.stroke();
+
+  context.fillStyle = "#f5f1df";
+  context.strokeStyle = "#202837";
+  context.lineWidth = 3.5;
+  context.beginPath();
+  context.roundRect(-25, -5, 12, 20, 4);
+  context.roundRect(13, -5, 12, 20, 4);
+  context.fill();
+  context.stroke();
+
+  context.strokeStyle = "#c16a1d";
+  context.lineWidth = 4;
+  context.beginPath();
   context.moveTo(-7, 17);
-  context.lineTo(-11, 25);
+  context.lineTo(-12, 26);
+  context.moveTo(-17, 26);
+  context.lineTo(-8, 26);
   context.moveTo(7, 17);
-  context.lineTo(11, 25);
+  context.lineTo(12, 26);
+  context.moveTo(7, 26);
+  context.lineTo(17, 26);
   context.stroke();
   context.restore();
 }
@@ -193,7 +230,7 @@ function drawOverlay(context: CanvasRenderingContext2D, phase: CrossyPhase) {
   context.fillText(phase === "paused" ? "Paused" : phase === "game-over" ? "Roadkill" : "Crossy Roads", 0, -10);
   context.font = "800 14px sans-serif";
   context.fillStyle = "#42658c";
-  context.fillText("Arrow keys, WASD, or swipe to hop", 0, 24);
+  context.fillText("Space, arrows, WASD, or swipe to hop", 0, 24);
   context.restore();
 }
 
@@ -296,7 +333,7 @@ export function CrossyRoadsGame() {
       return;
     }
 
-    if (normalizedKey === "r" || normalizedKey === " ") {
+    if (normalizedKey === "r") {
       event.preventDefault();
       restart();
     }

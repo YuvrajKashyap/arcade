@@ -407,11 +407,11 @@ export const gameCatalog = [
     tags: ["Canvas", "Cartoon", "Grid", "Traffic", "Touch"],
     controls: {
       summary:
-        "Use Arrow keys, WASD, or touch swipes to hop. P pauses and R restarts.",
+        "Use Space, Arrow keys, WASD, or touch swipes to hop. P pauses and R restarts.",
       items: [
-        { label: "Hop", action: "Arrow keys, WASD, or touch swipe" },
+        { label: "Hop", action: "Space, Arrow keys, WASD, or touch swipe" },
         { label: "Pause", action: "P" },
-        { label: "Restart", action: "R or Start" },
+        { label: "Restart", action: "R or Start button" },
         { label: "Goal", action: "Reach higher lanes without getting hit" },
       ],
     },
