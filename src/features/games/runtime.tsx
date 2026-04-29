@@ -64,6 +64,26 @@ const CrossyRoadsGame = dynamic(() => import("@/features/games/crossy-roads"), {
   loading: GameLoadingState,
 });
 
+const DinoRunGame = dynamic(() => import("@/features/games/dino-run"), {
+  ssr: false,
+  loading: GameLoadingState,
+});
+
+const PacMazeGame = dynamic(() => import("@/features/games/pac-maze"), {
+  ssr: false,
+  loading: GameLoadingState,
+});
+
+const BlockDropGame = dynamic(() => import("@/features/games/block-drop"), {
+  ssr: false,
+  loading: GameLoadingState,
+});
+
+const CookieCrafterGame = dynamic(() => import("@/features/games/cookie-crafter"), {
+  ssr: false,
+  loading: GameLoadingState,
+});
+
 export const gameComponentMap: Record<GameSlug, React.ComponentType> = {
   snake: SnakeGame,
   pong: PongGame,
@@ -77,4 +97,8 @@ export const gameComponentMap: Record<GameSlug, React.ComponentType> = {
   "doodle-jump": DoodleJumpGame,
   "flappy-bird": FlappyBirdGame,
   "crossy-roads": CrossyRoadsGame,
+  "dino-run": DinoRunGame,
+  "pac-maze": PacMazeGame,
+  "block-drop": BlockDropGame,
+  "cookie-crafter": CookieCrafterGame,
 };
