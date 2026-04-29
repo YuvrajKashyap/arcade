@@ -107,6 +107,9 @@ const KEY_TO_DIR: Record<string, Direction> = {
   d: DIRS.right,
 };
 
+const FINAL_LEVEL = 3;
+const LEVEL_CLEAR_BONUS = 500;
+
 const GHOSTS: Ghost[] = [
   {
     name: "blinky",
@@ -260,6 +263,20 @@ function resetActors(state: State): State {
   };
 }
 
+function createNextLevelState(state: State, score: number, lives: number): State {
+  const bestScore = Math.max(state.bestScore, score);
+  const nextState = createState(bestScore, state.level + 1);
+
+  return {
+    ...nextState,
+    phase: "playing",
+    score,
+    bestScore,
+    lives,
+    deathPause: 1.25,
+  };
+}
+
 function moveActor(actor: Actor, speed: number, delta: number, type: "pac" | "ghost"): Actor {
   let direction = actor.direction;
   const centered = atTileCenter(actor);
@@ -379,7 +396,32 @@ function updateState(state: State, delta: number, elapsed: number): State {
   });
 
   let lives = state.lives;
-  let phase: Phase = pellets.size === 0 && powers.size === 0 ? "won" : "playing";
+  let phase: Phase = "playing";
+
+  if (pellets.size === 0 && powers.size === 0) {
+    score += LEVEL_CLEAR_BONUS * state.level;
+    const bestScore = Math.max(state.bestScore, score);
+
+    if (state.level >= FINAL_LEVEL) {
+      return {
+        ...state,
+        ...mode,
+        phase: "won",
+        pac,
+        ghosts,
+        pellets,
+        powers,
+        frightenedUntil,
+        ghostCombo,
+        score,
+        bestScore,
+        lives,
+      };
+    }
+
+    return createNextLevelState({ ...state, bestScore }, score, lives);
+  }
+
   const hitIndex = ghosts.findIndex((ghost) => !ghost.eaten && Math.hypot(ghost.x - pac.x, ghost.y - pac.y) < 0.72);
 
   if (hitIndex >= 0) {
@@ -530,22 +572,28 @@ function drawTextOverlay(context: CanvasRenderingContext2D, state: State) {
 
   const title =
     state.phase === "won"
-      ? "MAZE CLEARED"
+      ? "YOU WON!"
       : state.phase === "game-over"
         ? "GAME OVER"
         : state.phase === "paused"
           ? "PAUSED"
-          : "READY!";
+          : `LEVEL ${state.level}`;
+  const subtitle =
+    state.phase === "won"
+      ? "ALL 3 LEVELS CLEARED"
+      : state.phase === "game-over"
+        ? "SPACE OR R TO RESTART"
+        : "ARROWS / WASD TO MOVE";
 
   context.fillStyle = "rgba(0,0,0,0.64)";
   context.fillRect(0, 0, WIDTH, HEIGHT);
-  context.fillStyle = state.phase === "game-over" ? "#ff3030" : "#ffd500";
+  context.fillStyle = state.phase === "game-over" ? "#ff3030" : state.phase === "won" ? "#ffe760" : "#ffd500";
   context.textAlign = "center";
   context.font = "900 24px 'Courier New', monospace";
   context.fillText(title, WIDTH / 2, HEIGHT / 2 - 8);
   context.font = "700 12px 'Courier New', monospace";
   context.fillStyle = "#ffffff";
-  context.fillText("ARROWS / WASD TO MOVE", WIDTH / 2, HEIGHT / 2 + 17);
+  context.fillText(subtitle, WIDTH / 2, HEIGHT / 2 + 17);
   context.textAlign = "left";
 }
 
@@ -574,6 +622,7 @@ export function PacMazeGame() {
     score: initialState.score,
     bestScore: initialState.bestScore,
     lives: initialState.lives,
+    level: initialState.level,
     phase: initialState.phase,
   });
   const hudRef = useRef(hud);
@@ -585,6 +634,7 @@ export function PacMazeGame() {
       forceHud ||
       nextState.phase !== previousHud.phase ||
       nextState.lives !== previousHud.lives ||
+      nextState.level !== previousHud.level ||
       Math.floor(nextState.score / 10) !== Math.floor(previousHud.score / 10) ||
       Math.floor(nextState.bestScore / 10) !== Math.floor(previousHud.bestScore / 10)
     ) {
@@ -592,6 +642,7 @@ export function PacMazeGame() {
         score: Math.floor(nextState.score),
         bestScore: Math.floor(nextState.bestScore),
         lives: nextState.lives,
+        level: nextState.level,
         phase: nextState.phase,
       };
       hudRef.current = nextHud;
@@ -660,6 +711,7 @@ export function PacMazeGame() {
           { label: "Score", value: hud.score },
           { label: "Best", value: hud.bestScore },
           { label: "Lives", value: hud.lives },
+          { label: "Level", value: `${hud.level}/${FINAL_LEVEL}` },
           { label: "Status", value: hud.phase },
         ]}
         actions={
@@ -671,7 +723,7 @@ export function PacMazeGame() {
       <GamePlayfield className="mx-auto aspect-[28/31] w-full max-w-[min(25rem,58dvh)] touch-none border-0 bg-black">
         <canvas ref={canvasRef} className="h-full w-full" aria-label="Pacman field" />
       </GamePlayfield>
-      <GameStatus>Arrow keys or WASD steer. Power pellets turn ghosts blue. Space or R restarts.</GameStatus>
+      <GameStatus>Clear 3 mazes to win. Arrow keys or WASD steer. Power pellets turn ghosts blue.</GameStatus>
       <TouchControls className="max-w-[16rem]">
         <div className="grid grid-cols-3 gap-2">
           <span />
