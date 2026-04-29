@@ -46,6 +46,7 @@ type PickupEffect = {
 };
 
 const PICKUP_EFFECT_SECONDS = 0.55;
+let cachedArenaCanvas: HTMLCanvasElement | null = null;
 
 function getStatusCopy(phase: SnakePhase) {
   if (phase === "playing") {
@@ -431,6 +432,20 @@ function drawSnakeHead(
   context.restore();
 }
 
+function getArenaCanvas() {
+  if (!cachedArenaCanvas) {
+    cachedArenaCanvas = document.createElement("canvas");
+    cachedArenaCanvas.width = SNAKE_CANVAS_SIZE;
+    cachedArenaCanvas.height = SNAKE_CANVAS_SIZE;
+    const arenaContext = cachedArenaCanvas.getContext("2d");
+    if (arenaContext) {
+      drawArena(arenaContext);
+    }
+  }
+
+  return cachedArenaCanvas;
+}
+
 function drawSnakeScene(
   context: CanvasRenderingContext2D,
   state: SnakeState,
@@ -439,7 +454,7 @@ function drawSnakeScene(
   elapsedSeconds: number,
 ) {
   context.clearRect(0, 0, SNAKE_CANVAS_SIZE, SNAKE_CANVAS_SIZE);
-  drawArena(context);
+  context.drawImage(getArenaCanvas(), 0, 0);
   drawFood(context, state.food, elapsedSeconds);
   drawPickupEffects(context, effects);
 
@@ -754,7 +769,7 @@ export function SnakeGame() {
         }
       />
 
-      <GamePlayfield className="mx-auto aspect-square w-full max-w-[min(34rem,52dvh)] md:max-w-[62dvh]">
+      <GamePlayfield className="mx-auto aspect-square w-full max-w-[min(34rem,52dvh)] md:max-w-[min(34rem,62dvh)]">
         <canvas
           ref={canvasRef}
           className="h-full w-full"
