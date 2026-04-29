@@ -319,6 +319,7 @@ export function DoodleJumpGame() {
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
   const stateRef = useRef<DoodleJumpState>(initialState);
   const touchDirectionRef = useRef(0);
+  const touchPointerIdRef = useRef<number | null>(null);
   const elapsedSecondsRef = useRef(0);
   const pressedKeysRef = useKeyboardState({
     preventDefaultKeys: ["a", "d", "arrowleft", "arrowright", " "],
@@ -349,6 +350,30 @@ export function DoodleJumpGame() {
   function beginRun() {
     syncState(startDoodleJump(stateRef.current));
     renderCurrentState();
+  }
+
+  function updateTouchDirection(clientX: number) {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    const bounds = canvas.getBoundingClientRect();
+    const scaleX = DOODLE_WIDTH / bounds.width;
+    const touchX = (clientX - bounds.left) * scaleX;
+    const playerCenterX = stateRef.current.player.x + DOODLE_PLAYER_WIDTH / 2;
+    const deadZone = DOODLE_PLAYER_WIDTH * 0.35;
+    touchDirectionRef.current =
+      Math.abs(touchX - playerCenterX) <= deadZone ? 0 : touchX > playerCenterX ? 1 : -1;
+  }
+
+  function clearTouchDirection(pointerId: number) {
+    if (touchPointerIdRef.current !== pointerId) {
+      return;
+    }
+
+    touchPointerIdRef.current = null;
+    touchDirectionRef.current = 0;
   }
 
   function togglePause() {
@@ -429,8 +454,37 @@ export function DoodleJumpGame() {
         }
       />
 
-      <GamePlayfield className="mx-auto aspect-[3/4] w-full max-w-[min(24rem,54dvh)] border-0 bg-[#fff9dd]">
-        <canvas ref={canvasRef} className="h-full w-full" aria-label="Doodle Jump field" />
+      <GamePlayfield className="mx-auto aspect-[3/4] w-full max-w-[min(24rem,54dvh)] touch-none border-0 bg-[#fff9dd]">
+        <canvas
+          ref={canvasRef}
+          className="h-full w-full touch-none"
+          aria-label="Doodle Jump field"
+          onPointerDown={(event) => {
+            event.preventDefault();
+            beginRun();
+            if (event.pointerType === "mouse") {
+              return;
+            }
+
+            touchPointerIdRef.current = event.pointerId;
+            try {
+              event.currentTarget.setPointerCapture(event.pointerId);
+            } catch {
+              // Some mobile browsers reject capture for synthesized pointer streams.
+            }
+            updateTouchDirection(event.clientX);
+          }}
+          onPointerMove={(event) => {
+            if (touchPointerIdRef.current !== event.pointerId) {
+              return;
+            }
+
+            event.preventDefault();
+            updateTouchDirection(event.clientX);
+          }}
+          onPointerUp={(event) => clearTouchDirection(event.pointerId)}
+          onPointerCancel={(event) => clearTouchDirection(event.pointerId)}
+        />
       </GamePlayfield>
 
       <GameStatus>{getStatusCopy(hudState.phase)}</GameStatus>
