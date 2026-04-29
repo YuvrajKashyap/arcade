@@ -117,6 +117,11 @@ export function updateDoodleJump(
     );
 
     if (landedPlatform?.kind === "breakable") {
+      player = {
+        ...player,
+        y: landedPlatform.y - DOODLE_PLAYER_HEIGHT,
+        vy: DOODLE_JUMP_VELOCITY,
+      };
       state = {
         ...state,
         platforms: state.platforms.map((platform) =>
