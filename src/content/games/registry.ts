@@ -437,6 +437,170 @@ export const gameCatalog = [
     libraryOrder: 12,
     relatedSlugs: ["flappy-bird", "doodle-jump"],
   },
+  {
+    slug: "dino-run",
+    title: "Dino Run",
+    shortDescription:
+      "A monochrome runner with jump, duck, cactus and flyer obstacles, speed ramp, and local high score.",
+    description:
+      "Dino Run is a self-coded browser runner inspired by offline arcade classics: jump over cactus clusters, duck under flyers, survive the speed ramp, and chase a local best score inside the arcade shell.",
+    thumbnail: "/games/dino-run/thumbnail.png?v=20260428",
+    genre: "Arcade",
+    tags: ["Canvas", "Runner", "Keyboard", "High Score", "Touch"],
+    controls: {
+      summary: "Space, W, or Arrow Up jumps. S or Arrow Down ducks. P pauses and R restarts.",
+      items: [
+        { label: "Jump", action: "Space, W, Arrow Up, tap, or Jump button" },
+        { label: "Duck", action: "S, Arrow Down, or Duck button" },
+        { label: "Pause", action: "P" },
+        { label: "Restart", action: "R or Start" },
+      ],
+    },
+    difficulty: "medium",
+    sessionLength: "1-4 min",
+    releaseDate: "2026-04-29",
+    status: "live",
+    featured: false,
+    published: true,
+    supports: ["keyboard", "mouse", "touch"],
+    mobileSupport: "full",
+    version: "1.0.0",
+    developerNotes:
+      "Dino Run uses original canvas art and a simple deterministic runner loop with speed scaling and local score persistence.",
+    howToPlay: {
+      summary: "Stay alive as long as possible while the run keeps getting faster.",
+      tips: [
+        "Jump over low obstacles.",
+        "Duck under flying obstacles once they appear.",
+        "Your score climbs automatically while you survive.",
+      ],
+    },
+    libraryOrder: 13,
+    relatedSlugs: ["flappy-bird", "doodle-jump"],
+  },
+  {
+    slug: "pac-maze",
+    title: "Pac Maze",
+    shortDescription:
+      "A neon maze chase with pellets, power pellets, ghost-like enemies, lives, score, and local best.",
+    description:
+      "Pac Maze is an original maze-chase homage with pellets, power pellets, frightened chasers, lives, tunnels, scoring, restart, and keyboard/touch steering without copying official maze art or characters.",
+    thumbnail: "/games/pac-maze/thumbnail.png?v=20260428",
+    genre: "Arcade",
+    tags: ["Canvas", "Maze", "Chase", "Keyboard", "Score Loop"],
+    controls: {
+      summary: "Arrow keys or WASD steer. Space or R restarts, and P pauses.",
+      items: [
+        { label: "Steer", action: "Arrow keys, WASD, or touch direction pad" },
+        { label: "Power pellet", action: "Eat large pellets to frighten chasers" },
+        { label: "Pause", action: "P" },
+        { label: "Restart", action: "Space, R, or Start" },
+      ],
+    },
+    difficulty: "medium",
+    sessionLength: "3-8 min",
+    releaseDate: "2026-04-29",
+    status: "live",
+    featured: false,
+    published: true,
+    supports: ["keyboard", "touch"],
+    mobileSupport: "full",
+    version: "1.0.0",
+    developerNotes:
+      "Pac Maze is self-coded with original canvas drawing, pellet state, simple chaser AI, frightened mode, and local best-score persistence.",
+    howToPlay: {
+      summary: "Clear the maze while avoiding the chasers.",
+      tips: [
+        "Small pellets score points and disappear when eaten.",
+        "Large pellets temporarily turn chasers vulnerable.",
+        "Lose all lives and the run ends.",
+      ],
+    },
+    libraryOrder: 14,
+    relatedSlugs: ["dino-run", "block-drop"],
+  },
+  {
+    slug: "block-drop",
+    title: "Block Drop",
+    shortDescription:
+      "A falling-block puzzle with seven shapes, rotation, hard drop, line clears, levels, and local best score.",
+    description:
+      "Block Drop brings a polished falling-block loop to the arcade with a 10-by-20 board, seven geometric pieces, rotation, hard drop, line clears, levels, scoring, pause, restart, and touch controls.",
+    thumbnail: "/games/block-drop/thumbnail.png?v=20260428",
+    genre: "Puzzle",
+    tags: ["Puzzle", "Blocks", "Keyboard", "Score Loop", "Touch"],
+    controls: {
+      summary: "Arrow keys or WASD move, Up/W rotates, Space hard drops, P pauses, and R restarts.",
+      items: [
+        { label: "Move", action: "A/D or Arrow Left/Right" },
+        { label: "Soft drop", action: "S or Arrow Down" },
+        { label: "Rotate", action: "W, X, or Arrow Up" },
+        { label: "Hard drop", action: "Space" },
+      ],
+    },
+    difficulty: "medium",
+    sessionLength: "3-10 min",
+    releaseDate: "2026-04-29",
+    status: "live",
+    featured: false,
+    published: true,
+    supports: ["keyboard", "touch"],
+    mobileSupport: "full",
+    version: "1.0.0",
+    developerNotes:
+      "Block Drop uses original DOM-rendered tiles and a self-contained board reducer for movement, rotation, locking, line clears, and level speed.",
+    howToPlay: {
+      summary: "Stack falling blocks and clear full rows before the board fills.",
+      tips: [
+        "Clear more rows at once for more points.",
+        "Levels increase as you clear lines.",
+        "Use hard drop when a piece is lined up.",
+      ],
+    },
+    libraryOrder: 15,
+    relatedSlugs: ["2048", "pac-maze"],
+  },
+  {
+    slug: "cookie-crafter",
+    title: "Cookie Crafter",
+    shortDescription:
+      "A cozy clicker with a big cookie, automatic upgrades, cookies-per-second, and saved progress.",
+    description:
+      "Cookie Crafter is a self-coded incremental game: click the cookie, buy upgrades, grow cookies-per-second, save progress locally, and reset when you want a fresh run.",
+    thumbnail: "/games/cookie-crafter/thumbnail.png?v=20260428",
+    genre: "Arcade",
+    tags: ["Clicker", "Incremental", "Mouse", "Touch", "Persistence"],
+    controls: {
+      summary: "Click, tap, Space, or Enter to bake. Number keys buy upgrades. R resets.",
+      items: [
+        { label: "Bake", action: "Click, tap, Space, or Enter" },
+        { label: "Buy upgrades", action: "Click upgrade cards or press 1, 2, 3" },
+        { label: "Reset", action: "R or Reset" },
+        { label: "Goal", action: "Grow cookies-per-second and total cookies" },
+      ],
+    },
+    difficulty: "easy",
+    sessionLength: "2-15 min",
+    releaseDate: "2026-04-29",
+    status: "live",
+    featured: false,
+    published: true,
+    supports: ["keyboard", "mouse", "touch"],
+    mobileSupport: "full",
+    version: "1.0.0",
+    developerNotes:
+      "Cookie Crafter stores its full local run state and uses a small incremental economy with active clicks and passive CPS.",
+    howToPlay: {
+      summary: "Bake cookies, spend them on upgrades, and increase passive production.",
+      tips: [
+        "Upgrades cost more each time you buy them.",
+        "Cookies-per-second keeps producing while the game is open.",
+        "Reset clears the local run.",
+      ],
+    },
+    libraryOrder: 16,
+    relatedSlugs: ["2048", "dino-run"],
+  },
 ] satisfies readonly GameCatalogEntry[];
 
 export type GameSlug = (typeof gameCatalog)[number]["slug"];

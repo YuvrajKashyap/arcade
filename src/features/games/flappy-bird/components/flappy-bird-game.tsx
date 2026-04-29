@@ -135,8 +135,8 @@ function drawPipe(context: CanvasRenderingContext2D, pipe: FlappyPipe) {
 
 function drawBird(context: CanvasRenderingContext2D, state: FlappyBirdState, elapsedSeconds: number) {
   const flapFrame = Math.floor(elapsedSeconds * 16) % 3;
-  const wingPose = flapFrame === 0 ? -13 : flapFrame === 1 ? 0 : 13;
-  const wingY = flapFrame === 0 ? -9 : flapFrame === 1 ? 1 : 9;
+  const wingTipY = flapFrame === 0 ? -20 : flapFrame === 1 ? -2 : 17;
+  const wingRootY = flapFrame === 0 ? 1 : flapFrame === 1 ? 4 : 7;
 
   context.save();
   context.translate(FLAPPY_BIRD_X, state.bird.y);
@@ -148,36 +148,34 @@ function drawBird(context: CanvasRenderingContext2D, state: FlappyBirdState, ela
   context.lineJoin = "round";
   context.lineCap = "round";
 
-  context.fillStyle = "#ffd83a";
+  context.fillStyle = "#f7c62e";
   context.strokeStyle = "#4b321c";
   context.lineWidth = 5;
   context.beginPath();
-  context.ellipse(-1, 0, FLAPPY_BIRD_RADIUS + 8, FLAPPY_BIRD_RADIUS + 5, 0.04, 0, Math.PI * 2);
+  context.ellipse(-2, 1, FLAPPY_BIRD_RADIUS + 9, FLAPPY_BIRD_RADIUS + 7, 0.06, 0, Math.PI * 2);
   context.fill();
   context.stroke();
 
-  context.fillStyle = "#ffe86a";
+  context.fillStyle = "#fff06b";
   context.beginPath();
-  context.ellipse(-7, -5, 12, 9, -0.2, 0, Math.PI * 2);
+  context.ellipse(-9, -5, 12, 9, -0.25, 0, Math.PI * 2);
   context.fill();
 
   context.save();
-  context.translate(-11, wingY);
-  context.rotate((wingPose * Math.PI) / 180);
-  context.fillStyle = "#f47b2d";
+  context.fillStyle = "#ffffff";
   context.strokeStyle = "#4b321c";
   context.lineWidth = 4;
   context.beginPath();
-  context.moveTo(2, -12);
-  context.quadraticCurveTo(-21, -7, -24, 6);
-  context.quadraticCurveTo(-11, 15, 5, 7);
-  context.quadraticCurveTo(10, -1, 2, -12);
+  context.moveTo(-9, wingRootY - 8);
+  context.quadraticCurveTo(-31, wingTipY, -34, wingRootY + 3);
+  context.quadraticCurveTo(-26, wingRootY + 18, -6, wingRootY + 10);
+  context.quadraticCurveTo(1, wingRootY + 1, -9, wingRootY - 8);
   context.closePath();
   context.fill();
   context.stroke();
-  context.fillStyle = "#ffd25d";
+  context.fillStyle = "#f0782b";
   context.beginPath();
-  context.ellipse(-7, 3, 8, 5, -0.25, 0, Math.PI * 2);
+  context.ellipse(-20, wingRootY + 5, 9, 5.5, -0.15, 0, Math.PI * 2);
   context.fill();
   context.restore();
 
@@ -185,22 +183,22 @@ function drawBird(context: CanvasRenderingContext2D, state: FlappyBirdState, ela
   context.strokeStyle = "#4b321c";
   context.lineWidth = 4;
   context.beginPath();
-  context.arc(10, -8, 8, 0, Math.PI * 2);
+  context.arc(12, -9, 8.5, 0, Math.PI * 2);
   context.fill();
   context.stroke();
 
   context.fillStyle = "#1b1f2f";
   context.beginPath();
-  context.arc(13, -8, 3, 0, Math.PI * 2);
+  context.arc(15, -9, 3, 0, Math.PI * 2);
   context.fill();
 
   context.fillStyle = "#ff8b24";
   context.strokeStyle = "#4b321c";
   context.lineWidth = 4;
   context.beginPath();
-  context.moveTo(19, -2);
-  context.lineTo(39, 4);
-  context.lineTo(19, 11);
+  context.moveTo(20, -2);
+  context.lineTo(41, 4);
+  context.lineTo(20, 11);
   context.closePath();
   context.fill();
   context.stroke();
@@ -208,8 +206,8 @@ function drawBird(context: CanvasRenderingContext2D, state: FlappyBirdState, ela
   context.strokeStyle = "#b74615";
   context.lineWidth = 2;
   context.beginPath();
-  context.moveTo(22, 5);
-  context.lineTo(35, 5);
+  context.moveTo(23, 5);
+  context.lineTo(37, 5);
   context.stroke();
   context.restore();
 }

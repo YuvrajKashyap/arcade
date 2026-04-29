@@ -50,8 +50,9 @@ const tileColors = new Map<number, string>([
 ]);
 
 const TILE_GAP = 10;
-const SLIDE_DURATION_MS = 155;
+const SLIDE_DURATION_MS = 185;
 const POP_DURATION_MS = 145;
+const SPAWN_DURATION_MS = 130;
 
 type RenderTile = {
   renderKey: string;
@@ -151,6 +152,7 @@ export function TwentyFortyEightGame() {
   const isAnimatingRef = useRef(false);
   const slideTimerRef = useRef<number | null>(null);
   const settleTimerRef = useRef<number | null>(null);
+  const spawnTimerRef = useRef<number | null>(null);
   const cells = useMemo(
     () =>
       Array.from({ length: TWENTY_FORTY_EIGHT_SIZE * TWENTY_FORTY_EIGHT_SIZE }, (_, index) => ({
@@ -169,6 +171,11 @@ export function TwentyFortyEightGame() {
     if (settleTimerRef.current !== null) {
       window.clearTimeout(settleTimerRef.current);
       settleTimerRef.current = null;
+    }
+
+    if (spawnTimerRef.current !== null) {
+      window.clearTimeout(spawnTimerRef.current);
+      spawnTimerRef.current = null;
     }
   }
 
@@ -202,12 +209,19 @@ export function TwentyFortyEightGame() {
       setRenderTiles(createMoveRenderTiles(state.tiles, nextState.tiles, true));
     });
 
-    slideTimerRef.current = window.setTimeout(() => {
-      syncState(nextState, true);
+    const mergedTiles = nextState.tiles.filter((tile) => !tile.isNew);
+    const allTiles = nextState.tiles;
 
+    slideTimerRef.current = window.setTimeout(() => {
+      setState(nextState);
+      writeStoredNumber(TWENTY_FORTY_EIGHT_STORAGE_KEY, nextState.bestScore);
+      setRenderTiles(createFinalRenderTiles(mergedTiles));
       settleTimerRef.current = window.setTimeout(() => {
-        setRenderTiles(createSettledRenderTiles(nextState.tiles));
-        isAnimatingRef.current = false;
+        setRenderTiles(createFinalRenderTiles(allTiles));
+        spawnTimerRef.current = window.setTimeout(() => {
+          setRenderTiles(createSettledRenderTiles(allTiles));
+          isAnimatingRef.current = false;
+        }, SPAWN_DURATION_MS);
       }, POP_DURATION_MS);
     }, SLIDE_DURATION_MS);
   }
@@ -297,7 +311,7 @@ export function TwentyFortyEightGame() {
               <div
                 key={tile.renderKey}
                 className={`absolute grid place-items-center rounded-[1rem] border-2 border-white/40 text-2xl font-black transition-all ease-[cubic-bezier(0.2,0.78,0.24,1)] sm:text-4xl ${
-                  tile.phase === "slide" ? "duration-[155ms]" : "duration-[145ms]"
+                  tile.phase === "slide" ? "duration-[185ms]" : "duration-[145ms]"
                 } ${
                   tile.phase === "spawn"
                     ? "z-20 animate-[tileSpawn_145ms_cubic-bezier(0.2,0.9,0.25,1.2)]"
