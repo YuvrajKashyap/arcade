@@ -140,7 +140,7 @@ export function SorrySprintGame() {
             return <span key={cell} className="absolute grid h-7 w-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-lg border-2 border-[#263b7b] bg-white text-[0.55rem] font-black" style={{ left: `${point.x}%`, top: `${point.y}%` }}>{cell + 1}</span>;
           })}
           <div className="absolute left-1/2 top-1/2 grid h-[36%] w-[36%] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-3xl border-4 border-[#e23b42] bg-[#ffffff] text-center text-lg font-black text-[#21468b]">
-            SORRY<br />SPRINT
+            SORRY!
           </div>
           {[...state.pawns.map((pawn, index) => ({ pawn, index, color: "#278cff", offset: -5 })), ...state.rivals.map((pawn, index) => ({ pawn, index, color: "#ff454e", offset: 5 }))].map(({ pawn, index, color, offset }) => {
             const point = pawn.home ? { x: color === "#278cff" ? 39 + index * 4 : 39 + index * 4, y: color === "#278cff" ? 57 : 43 } : pawn.position < 0 ? { x: color === "#278cff" ? 18 + index * 5 : 62 + index * 5, y: color === "#278cff" ? 78 : 22 } : pointFor(pawn.position);

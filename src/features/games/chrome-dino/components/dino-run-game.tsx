@@ -191,7 +191,7 @@ function drawScene(context: CanvasRenderingContext2D, state: State, elapsed: num
     context.fillStyle = "#555";
     context.textAlign = "center";
     context.font = "900 30px monospace";
-    context.fillText(state.phase === "game-over" ? "GAME OVER" : state.phase === "paused" ? "PAUSED" : "DINO RUN", WIDTH / 2, 112);
+    context.fillText(state.phase === "game-over" ? "GAME OVER" : state.phase === "paused" ? "PAUSED" : "CHROME DINO", WIDTH / 2, 112);
     context.font = "700 16px monospace";
     context.fillText("SPACE JUMPS  DOWN DUCKS", WIDTH / 2, 144);
   }
@@ -269,7 +269,7 @@ export function DinoRunGame() {
         actions={<GameButton variant="primary" onClick={() => sync({ ...createState(stateRef.current.bestScore), phase: "playing" })}>Start</GameButton>}
       />
       <GamePlayfield className="mx-auto aspect-[38/15] w-full max-w-[min(48rem,86dvh)] touch-none border-0 bg-white">
-        <canvas ref={canvasRef} className="h-full w-full" aria-label="Dino Run field" onPointerDown={jump} />
+        <canvas ref={canvasRef} className="h-full w-full" aria-label="Chrome Dino field" onPointerDown={jump} />
       </GamePlayfield>
       <GameStatus>Space jumps, Down ducks, P pauses, and R restarts.</GameStatus>
       <TouchControls className="max-w-[24rem]">

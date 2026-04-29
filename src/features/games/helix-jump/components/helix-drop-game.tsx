@@ -117,7 +117,7 @@ function drawScene(context: CanvasRenderingContext2D, state: State) {
     context.fillStyle = "#fff";
     context.textAlign = "center";
     context.font = "900 34px sans-serif";
-    context.fillText(state.phase === "game-over" ? "GAME OVER" : state.phase === "paused" ? "PAUSED" : "HELIX DROP", WIDTH / 2, HEIGHT / 2);
+    context.fillText(state.phase === "game-over" ? "GAME OVER" : state.phase === "paused" ? "PAUSED" : "HELIX JUMP", WIDTH / 2, HEIGHT / 2);
     context.font = "800 15px sans-serif";
     context.fillText("rotate to fall through gaps", WIDTH / 2, HEIGHT / 2 + 30);
     context.textAlign = "left";
@@ -188,7 +188,7 @@ export function HelixDropGame() {
     <GamePanel>
       <GameHud items={[{ label: "Score", value: hud.score }, { label: "Best", value: hud.bestScore }, { label: "Status", value: hud.phase }]} actions={<GameButton variant="primary" onClick={start}>Start</GameButton>} />
       <GamePlayfield className="mx-auto aspect-[3/4] w-full max-w-[min(24rem,54dvh)] touch-none border-0 bg-[#7f5bff]">
-        <canvas ref={canvasRef} className="h-full w-full" aria-label="Helix Drop field" />
+        <canvas ref={canvasRef} className="h-full w-full" aria-label="Helix Jump field" />
       </GamePlayfield>
       <GameStatus>A/D or arrows rotate. Avoid black slices. Space starts.</GameStatus>
       <TouchControls className="max-w-[18rem]">

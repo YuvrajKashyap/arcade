@@ -438,13 +438,13 @@ export const gameCatalog = [
     relatedSlugs: ["flappy-bird", "doodle-jump"],
   },
   {
-    slug: "dino-run",
-    title: "Dino Run",
+    slug: "chrome-dino",
+    title: "Chrome Dino",
     shortDescription:
       "A monochrome runner with jump, duck, cactus and flyer obstacles, speed ramp, and local high score.",
     description:
-      "Dino Run is a self-coded browser runner inspired by offline arcade classics: jump over cactus clusters, duck under flyers, survive the speed ramp, and chase a local best score inside the arcade shell.",
-    thumbnail: "/games/dino-run/thumbnail.png?v=20260428",
+      "Chrome Dino is a self-coded browser runner inspired by offline arcade classics: jump over cactus clusters, duck under flyers, survive the speed ramp, and chase a local best score inside the arcade shell.",
+    thumbnail: "/games/chrome-dino/thumbnail.png?v=20260428",
     genre: "Arcade",
     tags: ["Canvas", "Runner", "Keyboard", "High Score", "Touch"],
     controls: {
@@ -466,7 +466,7 @@ export const gameCatalog = [
     mobileSupport: "full",
     version: "1.0.0",
     developerNotes:
-      "Dino Run uses original canvas art and a simple deterministic runner loop with speed scaling and local score persistence.",
+      "Chrome Dino uses original canvas art and a simple deterministic runner loop with speed scaling and local score persistence.",
     howToPlay: {
       summary: "Stay alive as long as possible while the run keeps getting faster.",
       tips: [
@@ -479,13 +479,13 @@ export const gameCatalog = [
     relatedSlugs: ["flappy-bird", "doodle-jump"],
   },
   {
-    slug: "pac-maze",
-    title: "Pac Maze",
+    slug: "pacman",
+    title: "Pacman",
     shortDescription:
       "A neon maze chase with pellets, power pellets, ghost-like enemies, lives, score, and local best.",
     description:
-      "Pac Maze is an original maze-chase homage with pellets, power pellets, frightened chasers, lives, tunnels, scoring, restart, and keyboard/touch steering without copying official maze art or characters.",
-    thumbnail: "/games/pac-maze/thumbnail.png?v=20260428",
+      "Pacman is an original maze-chase homage with pellets, power pellets, frightened chasers, lives, tunnels, scoring, restart, and keyboard/touch steering without copying official maze art or characters.",
+    thumbnail: "/games/pacman/thumbnail.png?v=20260428",
     genre: "Arcade",
     tags: ["Canvas", "Maze", "Chase", "Keyboard", "Score Loop"],
     controls: {
@@ -507,7 +507,7 @@ export const gameCatalog = [
     mobileSupport: "full",
     version: "1.0.0",
     developerNotes:
-      "Pac Maze is self-coded with original canvas drawing, pellet state, simple chaser AI, frightened mode, and local best-score persistence.",
+      "Pacman is self-coded with original canvas drawing, pellet state, simple chaser AI, frightened mode, and local best-score persistence.",
     howToPlay: {
       summary: "Clear the maze while avoiding the chasers.",
       tips: [
@@ -517,16 +517,16 @@ export const gameCatalog = [
       ],
     },
     libraryOrder: 14,
-    relatedSlugs: ["dino-run", "block-drop"],
+    relatedSlugs: ["chrome-dino", "tetris"],
   },
   {
-    slug: "block-drop",
-    title: "Block Drop",
+    slug: "tetris",
+    title: "Tetris",
     shortDescription:
       "A falling-block puzzle with seven shapes, rotation, hard drop, line clears, levels, and local best score.",
     description:
-      "Block Drop brings a polished falling-block loop to the arcade with a 10-by-20 board, seven geometric pieces, rotation, hard drop, line clears, levels, scoring, pause, restart, and touch controls.",
-    thumbnail: "/games/block-drop/thumbnail.png?v=20260428",
+      "Tetris brings a polished falling-block loop to the arcade with a 10-by-20 board, seven geometric pieces, rotation, hard drop, line clears, levels, scoring, pause, restart, and touch controls.",
+    thumbnail: "/games/tetris/thumbnail.png?v=20260428",
     genre: "Puzzle",
     tags: ["Puzzle", "Blocks", "Keyboard", "Score Loop", "Touch"],
     controls: {
@@ -548,7 +548,7 @@ export const gameCatalog = [
     mobileSupport: "full",
     version: "1.0.0",
     developerNotes:
-      "Block Drop uses original DOM-rendered tiles and a self-contained board reducer for movement, rotation, locking, line clears, and level speed.",
+      "Tetris uses original DOM-rendered tiles and a self-contained board reducer for movement, rotation, locking, line clears, and level speed.",
     howToPlay: {
       summary: "Stack falling blocks and clear full rows before the board fills.",
       tips: [
@@ -558,16 +558,16 @@ export const gameCatalog = [
       ],
     },
     libraryOrder: 15,
-    relatedSlugs: ["2048", "pac-maze"],
+    relatedSlugs: ["2048", "pacman"],
   },
   {
-    slug: "cookie-crafter",
-    title: "Cookie Crafter",
+    slug: "cookie-clicker",
+    title: "Cookie Clicker",
     shortDescription:
       "A cozy clicker with a big cookie, automatic upgrades, cookies-per-second, and saved progress.",
     description:
-      "Cookie Crafter is a self-coded incremental game: click the cookie, buy upgrades, grow cookies-per-second, save progress locally, and reset when you want a fresh run.",
-    thumbnail: "/games/cookie-crafter/thumbnail.png?v=20260428",
+      "Cookie Clicker is a self-coded incremental game: click the cookie, buy upgrades, grow cookies-per-second, save progress locally, and reset when you want a fresh run.",
+    thumbnail: "/games/cookie-clicker/thumbnail.png?v=20260428",
     genre: "Arcade",
     tags: ["Clicker", "Incremental", "Mouse", "Touch", "Persistence"],
     controls: {
@@ -589,7 +589,7 @@ export const gameCatalog = [
     mobileSupport: "full",
     version: "1.0.0",
     developerNotes:
-      "Cookie Crafter stores its full local run state and uses a small incremental economy with active clicks and passive CPS.",
+      "Cookie Clicker stores its full local run state and uses a small incremental economy with active clicks and passive CPS.",
     howToPlay: {
       summary: "Bake cookies, spend them on upgrades, and increase passive production.",
       tips: [
@@ -599,16 +599,16 @@ export const gameCatalog = [
       ],
     },
     libraryOrder: 16,
-    relatedSlugs: ["2048", "dino-run"],
+    relatedSlugs: ["2048", "chrome-dino"],
   },
   {
-    slug: "ladder-race",
-    title: "Ladder Race",
+    slug: "snakes-and-ladders",
+    title: "Snakes and Ladders",
     shortDescription:
       "A bright snakes-and-ladders board race with dice rolls, CPU turns, ladders, slides, and best-roll tracking.",
     description:
-      "Ladder Race turns the classic snakes-and-ladders loop into a quick cartoony browser board game. Roll the die, climb green ladders, slide down red snakes, race a CPU pawn, and reach square 100 in as few rolls as possible.",
-    thumbnail: "/games/ladder-race/thumbnail.png?v=20260428",
+      "Snakes and Ladders turns the classic snakes-and-ladders loop into a quick cartoony browser board game. Roll the die, climb green ladders, slide down red snakes, race a CPU pawn, and reach square 100 in as few rolls as possible.",
+    thumbnail: "/games/snakes-and-ladders/thumbnail.png?v=20260428",
     genre: "Puzzle",
     tags: ["Board", "Dice", "Cartoon", "Keyboard", "Touch"],
     controls: {
@@ -630,7 +630,7 @@ export const gameCatalog = [
     mobileSupport: "full",
     version: "1.0.0",
     developerNotes:
-      "Ladder Race is a self-coded, original-art board game inspired by the public-domain snakes-and-ladders ruleset.",
+      "Snakes and Ladders is a self-coded, original-art board game inspired by the public-domain snakes-and-ladders ruleset.",
     howToPlay: {
       summary: "Reach square 100 before the CPU.",
       tips: [
@@ -640,16 +640,16 @@ export const gameCatalog = [
       ],
     },
     libraryOrder: 17,
-    relatedSlugs: ["sorry-sprint", "tic-tac-toe"],
+    relatedSlugs: ["sorry", "tic-tac-toe"],
   },
   {
-    slug: "sorry-sprint",
-    title: "Sorry Sprint",
+    slug: "sorry",
+    title: "Sorry!",
     shortDescription:
       "A cartoony card-and-pawn race with start spaces, home goals, bumps, draw cards, and quick restarts.",
     description:
-      "Sorry Sprint is an original card-race board game inspired by classic pawn racers. Draw movement cards, bring blue pawns out of start, bump rival pawns back, and get all four home before the red rivals.",
-    thumbnail: "/games/sorry-sprint/thumbnail.png?v=20260428",
+      "Sorry! is an original card-race board game inspired by classic pawn racers. Draw movement cards, bring blue pawns out of start, bump rival pawns back, and get all four home before the red rivals.",
+    thumbnail: "/games/sorry/thumbnail.png?v=20260428",
     genre: "Strategy",
     tags: ["Board", "Cards", "Strategy", "Keyboard", "Touch"],
     controls: {
@@ -671,7 +671,7 @@ export const gameCatalog = [
     mobileSupport: "full",
     version: "1.0.0",
     developerNotes:
-      "Sorry Sprint uses original board art and a simplified self-coded card movement loop without copying protected board artwork.",
+      "Sorry! uses original board art and a simplified self-coded card movement loop without copying protected board artwork.",
     howToPlay: {
       summary: "Draw cards to move pawns from start to home.",
       tips: [
@@ -681,16 +681,16 @@ export const gameCatalog = [
       ],
     },
     libraryOrder: 18,
-    relatedSlugs: ["ladder-race", "block-drop"],
+    relatedSlugs: ["snakes-and-ladders", "tetris"],
   },
   {
-    slug: "arcade-fighter",
-    title: "Arcade Fighter",
+    slug: "street-fighter",
+    title: "Street Fighter",
     shortDescription:
       "A retro one-round fighter with health bars, timer, movement, jump, punch, kick, CPU pressure, and wins.",
     description:
-      "Arcade Fighter brings a classic fighting-game feel without copied characters: health bars, timer, side-view arena, jump arcs, punch and kick timing, CPU movement, round wins, and instant restart.",
-    thumbnail: "/games/arcade-fighter/thumbnail.png?v=20260428",
+      "Street Fighter brings a classic fighting-game feel without copied characters: health bars, timer, side-view arena, jump arcs, punch and kick timing, CPU movement, round wins, and instant restart.",
+    thumbnail: "/games/street-fighter/thumbnail.png?v=20260428",
     genre: "Arcade",
     tags: ["Canvas", "Fighter", "Action", "Keyboard", "Score Loop"],
     controls: {
@@ -712,7 +712,7 @@ export const gameCatalog = [
     mobileSupport: "partial",
     version: "1.0.0",
     developerNotes:
-      "Arcade Fighter uses original canvas-drawn fighters and UI inspired by arcade fighting conventions rather than copied sprites.",
+      "Street Fighter uses original canvas-drawn fighters and UI inspired by arcade fighting conventions rather than copied sprites.",
     howToPlay: {
       summary: "Drain the rival's health before the timer ends.",
       tips: [
@@ -722,16 +722,16 @@ export const gameCatalog = [
       ],
     },
     libraryOrder: 19,
-    relatedSlugs: ["dino-run", "asteroids"],
+    relatedSlugs: ["chrome-dino", "asteroids"],
   },
   {
-    slug: "helix-drop",
-    title: "Helix Drop",
+    slug: "helix-jump",
+    title: "Helix Jump",
     shortDescription:
       "A colorful helix-fall arcade game with rotating platforms, gaps, danger slices, score, and high score.",
     description:
-      "Helix Drop is an original vertical arcade dropper: rotate the stack, let the ball fall through gaps, bounce on safe slices, avoid black danger slices, and score each level you pass.",
-    thumbnail: "/games/helix-drop/thumbnail.png?v=20260428",
+      "Helix Jump is an original vertical arcade dropper: rotate the stack, let the ball fall through gaps, bounce on safe slices, avoid black danger slices, and score each level you pass.",
+    thumbnail: "/games/helix-jump/thumbnail.png?v=20260428",
     genre: "Arcade",
     tags: ["Canvas", "Reaction", "Physics", "Touch", "High Score"],
     controls: {
@@ -753,7 +753,7 @@ export const gameCatalog = [
     mobileSupport: "full",
     version: "1.0.0",
     developerNotes:
-      "Helix Drop is a self-coded canvas dropper with original visuals, rotating arcs, collision slices, and local score persistence.",
+      "Helix Jump is a self-coded canvas dropper with original visuals, rotating arcs, collision slices, and local score persistence.",
     howToPlay: {
       summary: "Rotate the helix so the ball falls through open gaps.",
       tips: [
@@ -763,16 +763,16 @@ export const gameCatalog = [
       ],
     },
     libraryOrder: 20,
-    relatedSlugs: ["stack-tower", "flappy-bird"],
+    relatedSlugs: ["stack", "flappy-bird"],
   },
   {
-    slug: "stack-tower",
-    title: "Stack Tower",
+    slug: "stack",
+    title: "Stack",
     shortDescription:
       "A clean stacking arcade game with moving blocks, overlap trimming, speed ramp, score, and best score.",
     description:
-      "Stack Tower is a self-coded timing game inspired by minimalist stacking arcades. Drop each moving block, keep only the overlapping section, build higher, and survive as the platform gets smaller and faster.",
-    thumbnail: "/games/stack-tower/thumbnail.png?v=20260428",
+      "Stack is a self-coded timing game inspired by minimalist stacking arcades. Drop each moving block, keep only the overlapping section, build higher, and survive as the platform gets smaller and faster.",
+    thumbnail: "/games/stack/thumbnail.png?v=20260428",
     genre: "Arcade",
     tags: ["Canvas", "Timing", "Stacking", "Touch", "High Score"],
     controls: {
@@ -794,7 +794,7 @@ export const gameCatalog = [
     mobileSupport: "full",
     version: "1.0.0",
     developerNotes:
-      "Stack Tower uses original canvas art and a compact overlap-trimming model for crisp timing gameplay.",
+      "Stack uses original canvas art and a compact overlap-trimming model for crisp timing gameplay.",
     howToPlay: {
       summary: "Drop moving blocks so they overlap the tower below.",
       tips: [
@@ -804,7 +804,7 @@ export const gameCatalog = [
       ],
     },
     libraryOrder: 21,
-    relatedSlugs: ["helix-drop", "cookie-crafter"],
+    relatedSlugs: ["helix-jump", "cookie-clicker"],
   },
 ] satisfies readonly GameCatalogEntry[];
 
