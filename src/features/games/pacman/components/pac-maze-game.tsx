@@ -16,40 +16,61 @@ import {
   writeStoredNumber,
 } from "@/features/games/shared/utils/local-storage";
 
-const TILE = 20;
-const COLS = 19;
-const ROWS = 21;
+const TILE = 16;
+const COLS = 28;
+const ROWS = 31;
 const WIDTH = COLS * TILE;
 const HEIGHT = ROWS * TILE;
 const STORAGE_KEY = "arcade.pacMaze.bestScore";
-const MAP = [
-  "###################",
-  "#o.......#.......o#",
-  "#.###.###.#.###.###",
-  "#.................#",
-  "#.###.#.#####.#.###",
-  "#.....#...#...#...#",
-  "#####.### # ###.###",
-  "    #.#       #.#  ",
-  "#####.# ## ## #.###",
-  "     .  #   #  .   ",
-  "#####.# ##### #.###",
-  "    #.#       #.#  ",
-  "#####.# ##### #.###",
-  "#........#........#",
-  "#.###.##.#.##.###.#",
-  "#o..#.........#..o#",
-  "###.#.#.#####.#.#.#",
-  "#.....#...#...#...#",
-  "#.#######.#.#######",
-  "#.................#",
-  "###################",
-];
 
-type Direction = { x: number; y: number };
+const RAW_MAP = [
+  "############################",
+  "#............##............#",
+  "#.####.#####.##.#####.####.#",
+  "#o####.#####.##.#####.####o#",
+  "#.####.#####.##.#####.####.#",
+  "#..........................#",
+  "#.####.##.########.##.####.#",
+  "#.####.##.########.##.####.#",
+  "#......##....##....##......#",
+  "######.##### ## #####.######",
+  "     #.##### ## #####.#     ",
+  "     #.##          ##.#     ",
+  "     #.## ###--### ##.#     ",
+  "######.## #      # ##.######",
+  "      .   #      #   .      ",
+  "######.## #      # ##.######",
+  "     #.## ######## ##.#     ",
+  "     #.##          ##.#     ",
+  "     #.## ######## ##.#     ",
+  "######.## ######## ##.######",
+  "#............##............#",
+  "#.####.#####.##.#####.####.#",
+  "#.####.#####.##.#####.####.#",
+  "#o..##.......  .......##..o#",
+  "###.##.##.########.##.##.###",
+  "###.##.##.########.##.##.###",
+  "#......##....##....##......#",
+  "#.##########.##.##########.#",
+  "#.##########.##.##########.#",
+  "#..........................#",
+  "############################",
+] as const;
+
+type DirectionName = "up" | "down" | "left" | "right" | "none";
 type Phase = "idle" | "playing" | "paused" | "game-over" | "won";
+type Mode = "scatter" | "chase" | "frightened";
+type Direction = { x: number; y: number; name: DirectionName };
 type Actor = { x: number; y: number; direction: Direction; nextDirection: Direction };
-type Ghost = Actor & { color: string; homeX: number; homeY: number };
+type GhostName = "blinky" | "pinky" | "inky" | "clyde";
+type Ghost = Actor & {
+  name: GhostName;
+  color: string;
+  scatter: { x: number; y: number };
+  home: { x: number; y: number };
+  releaseAt: number;
+  eaten: boolean;
+};
 type State = {
   phase: Phase;
   pac: Actor;
@@ -57,194 +78,490 @@ type State = {
   pellets: Set<string>;
   powers: Set<string>;
   frightenedUntil: number;
+  ghostCombo: number;
+  modeTimer: number;
+  mode: Mode;
   score: number;
   bestScore: number;
   lives: number;
+  level: number;
+  deathPause: number;
 };
 
-const directions: Record<string, Direction> = {
-  arrowup: { x: 0, y: -1 },
-  w: { x: 0, y: -1 },
-  arrowdown: { x: 0, y: 1 },
-  s: { x: 0, y: 1 },
-  arrowleft: { x: -1, y: 0 },
-  a: { x: -1, y: 0 },
-  arrowright: { x: 1, y: 0 },
-  d: { x: 1, y: 0 },
+const DIRS: Record<DirectionName, Direction> = {
+  up: { x: 0, y: -1, name: "up" },
+  down: { x: 0, y: 1, name: "down" },
+  left: { x: -1, y: 0, name: "left" },
+  right: { x: 1, y: 0, name: "right" },
+  none: { x: 0, y: 0, name: "none" },
 };
+
+const KEY_TO_DIR: Record<string, Direction> = {
+  arrowup: DIRS.up,
+  w: DIRS.up,
+  arrowdown: DIRS.down,
+  s: DIRS.down,
+  arrowleft: DIRS.left,
+  a: DIRS.left,
+  arrowright: DIRS.right,
+  d: DIRS.right,
+};
+
+const GHOSTS: Ghost[] = [
+  {
+    name: "blinky",
+    x: 13,
+    y: 11,
+    home: { x: 13, y: 11 },
+    scatter: { x: 25, y: 0 },
+    color: "#ff0000",
+    direction: DIRS.left,
+    nextDirection: DIRS.left,
+    releaseAt: 0,
+    eaten: false,
+  },
+  {
+    name: "pinky",
+    x: 14,
+    y: 14,
+    home: { x: 14, y: 14 },
+    scatter: { x: 2, y: 0 },
+    color: "#ffb8ff",
+    direction: DIRS.up,
+    nextDirection: DIRS.up,
+    releaseAt: 2,
+    eaten: false,
+  },
+  {
+    name: "inky",
+    x: 12,
+    y: 14,
+    home: { x: 12, y: 14 },
+    scatter: { x: 27, y: 30 },
+    color: "#00ffff",
+    direction: DIRS.up,
+    nextDirection: DIRS.up,
+    releaseAt: 5,
+    eaten: false,
+  },
+  {
+    name: "clyde",
+    x: 15,
+    y: 14,
+    home: { x: 15, y: 14 },
+    scatter: { x: 0, y: 30 },
+    color: "#ffb852",
+    direction: DIRS.up,
+    nextDirection: DIRS.up,
+    releaseAt: 8,
+    eaten: false,
+  },
+];
 
 function cellKey(column: number, row: number) {
   return `${column}:${row}`;
 }
 
-function isWall(column: number, row: number) {
+function tileAt(column: number, row: number) {
+  if (row < 0 || row >= ROWS) {
+    return "#";
+  }
+
   const wrappedColumn = (column + COLS) % COLS;
-  return MAP[row]?.[wrappedColumn] === "#";
+  return RAW_MAP[row]?.[wrappedColumn] ?? "#";
 }
 
-function createState(bestScore = 0): State {
+function isWall(column: number, row: number) {
+  const tile = tileAt(column, row);
+  return tile === "#" || tile === "-";
+}
+
+function canOccupy(column: number, row: number, actor: "pac" | "ghost") {
+  const tile = tileAt(column, row);
+  if (tile === "#") {
+    return false;
+  }
+  if (tile === "-" && actor === "pac") {
+    return false;
+  }
+  return true;
+}
+
+function isCenter(value: number) {
+  return Math.abs(value - Math.round(value)) < 0.045;
+}
+
+function atTileCenter(actor: Actor) {
+  return isCenter(actor.x) && isCenter(actor.y);
+}
+
+function directionAngle(direction: Direction) {
+  if (direction.name === "left") return Math.PI;
+  if (direction.name === "up") return -Math.PI / 2;
+  if (direction.name === "down") return Math.PI / 2;
+  return 0;
+}
+
+function reverse(direction: Direction) {
+  if (direction.name === "up") return DIRS.down;
+  if (direction.name === "down") return DIRS.up;
+  if (direction.name === "left") return DIRS.right;
+  if (direction.name === "right") return DIRS.left;
+  return DIRS.none;
+}
+
+function validDirections(actor: Actor, type: "pac" | "ghost", allowReverse = true) {
+  const column = Math.round(actor.x);
+  const row = Math.round(actor.y);
+  return [DIRS.up, DIRS.left, DIRS.down, DIRS.right].filter((direction) => {
+    if (!allowReverse && direction.name === reverse(actor.direction).name) {
+      return false;
+    }
+    return canOccupy(column + direction.x, row + direction.y, type);
+  });
+}
+
+function createState(bestScore = 0, level = 1): State {
   const pellets = new Set<string>();
   const powers = new Set<string>();
-  MAP.forEach((line, row) => {
+  RAW_MAP.forEach((line, row) => {
     [...line].forEach((cell, column) => {
       if (cell === ".") pellets.add(cellKey(column, row));
       if (cell === "o") powers.add(cellKey(column, row));
     });
   });
+
   return {
     phase: "idle",
-    pac: { x: 9.5, y: 15.5, direction: { x: 0, y: 0 }, nextDirection: { x: 0, y: 0 } },
-    ghosts: [
-      { x: 8.5, y: 9.5, homeX: 8.5, homeY: 9.5, color: "#ff4040", direction: { x: 1, y: 0 }, nextDirection: { x: 1, y: 0 } },
-      { x: 9.5, y: 9.5, homeX: 9.5, homeY: 9.5, color: "#ff9bd5", direction: { x: -1, y: 0 }, nextDirection: { x: -1, y: 0 } },
-      { x: 10.5, y: 9.5, homeX: 10.5, homeY: 9.5, color: "#38d9ff", direction: { x: 1, y: 0 }, nextDirection: { x: 1, y: 0 } },
-      { x: 9.5, y: 11.5, homeX: 9.5, homeY: 11.5, color: "#ffad33", direction: { x: -1, y: 0 }, nextDirection: { x: -1, y: 0 } },
-    ],
+    pac: { x: 13, y: 23, direction: DIRS.left, nextDirection: DIRS.left },
+    ghosts: GHOSTS.map((ghost) => ({ ...ghost })),
     pellets,
     powers,
     frightenedUntil: 0,
+    ghostCombo: 0,
+    modeTimer: 0,
+    mode: "scatter",
     score: 0,
     bestScore,
     lives: 3,
+    level,
+    deathPause: 0,
   };
 }
 
-function canMove(x: number, y: number, direction: Direction) {
-  const nx = Math.floor(x + direction.x * 0.64);
-  const ny = Math.floor(y + direction.y * 0.64);
-  return ny >= 0 && ny < ROWS && !isWall(nx, ny);
+function resetActors(state: State): State {
+  return {
+    ...state,
+    pac: { x: 13, y: 23, direction: DIRS.left, nextDirection: DIRS.left },
+    ghosts: GHOSTS.map((ghost) => ({ ...ghost })),
+    frightenedUntil: 0,
+    ghostCombo: 0,
+    deathPause: 0.9,
+  };
 }
 
-function moveActor(actor: Actor, speed: number, delta: number): Actor {
+function moveActor(actor: Actor, speed: number, delta: number, type: "pac" | "ghost"): Actor {
   let direction = actor.direction;
-  if (canMove(actor.x, actor.y, actor.nextDirection)) direction = actor.nextDirection;
-  if (!canMove(actor.x, actor.y, direction)) direction = { x: 0, y: 0 };
-  let x = actor.x + direction.x * speed * delta;
-  const y = actor.y + direction.y * speed * delta;
-  if (x < -0.6) x = COLS - 0.4;
-  if (x > COLS - 0.4) x = -0.6;
+  const centered = atTileCenter(actor);
+  let x = actor.x;
+  let y = actor.y;
+
+  if (centered) {
+    x = Math.round(x);
+    y = Math.round(y);
+
+    if (actor.nextDirection.name !== "none" && canOccupy(x + actor.nextDirection.x, y + actor.nextDirection.y, type)) {
+      direction = actor.nextDirection;
+    }
+
+    if (direction.name !== "none" && !canOccupy(x + direction.x, y + direction.y, type)) {
+      direction = DIRS.none;
+    }
+  }
+
+  x += direction.x * speed * delta;
+  y += direction.y * speed * delta;
+
+  if (x < -0.5) x = COLS - 0.5;
+  if (x > COLS - 0.5) x = -0.5;
+
   return { ...actor, x, y, direction };
 }
 
-function chooseGhostDirection(ghost: Ghost, pac: Actor, frightened: boolean) {
-  const options = Object.values(directions).filter((direction) => canMove(ghost.x, ghost.y, direction));
-  let best = options[0] ?? { x: 0, y: 0 };
-  let bestScore = frightened ? -Infinity : Infinity;
-  for (const option of options) {
-    const tx = ghost.x + option.x;
-    const ty = ghost.y + option.y;
-    const distance = Math.abs(tx - pac.x) + Math.abs(ty - pac.y);
-    if ((!frightened && distance < bestScore) || (frightened && distance > bestScore)) {
-      best = option;
-      bestScore = distance;
-    }
+function updateMode(state: State, delta: number): Pick<State, "mode" | "modeTimer"> {
+  const modeTimer = state.modeTimer + delta;
+  const cycle = modeTimer % 54;
+  if (cycle < 7 || (cycle >= 27 && cycle < 34)) {
+    return { mode: "scatter", modeTimer };
   }
-  return best;
+  return { mode: "chase", modeTimer };
+}
+
+function targetForGhost(ghost: Ghost, state: State) {
+  if (ghost.eaten) return ghost.home;
+  if (state.mode === "scatter") return ghost.scatter;
+
+  const pac = state.pac;
+  if (ghost.name === "blinky") {
+    return { x: pac.x, y: pac.y };
+  }
+  if (ghost.name === "pinky") {
+    return { x: pac.x + pac.direction.x * 4, y: pac.y + pac.direction.y * 4 };
+  }
+  if (ghost.name === "inky") {
+    const blinky = state.ghosts.find((candidate) => candidate.name === "blinky") ?? ghost;
+    const ahead = { x: pac.x + pac.direction.x * 2, y: pac.y + pac.direction.y * 2 };
+    return { x: ahead.x + (ahead.x - blinky.x), y: ahead.y + (ahead.y - blinky.y) };
+  }
+
+  const distance = Math.hypot(ghost.x - pac.x, ghost.y - pac.y);
+  return distance > 8 ? { x: pac.x, y: pac.y } : ghost.scatter;
+}
+
+function chooseGhostDirection(ghost: Ghost, state: State, frightened: boolean) {
+  const options = validDirections(ghost, "ghost", false);
+  const fallback = validDirections(ghost, "ghost", true);
+  const choices = options.length > 0 ? options : fallback;
+  if (choices.length === 0) {
+    return DIRS.none;
+  }
+
+  if (frightened && !ghost.eaten) {
+    const seed = Math.floor(state.score + ghost.x * 17 + ghost.y * 31 + state.modeTimer * 7);
+    return choices[Math.abs(seed) % choices.length] ?? choices[0]!;
+  }
+
+  const target = targetForGhost(ghost, state);
+  return choices.reduce((best, direction) => {
+    const bestDistance = Math.hypot(ghost.x + best.x - target.x, ghost.y + best.y - target.y);
+    const distance = Math.hypot(ghost.x + direction.x - target.x, ghost.y + direction.y - target.y);
+    return distance < bestDistance ? direction : best;
+  }, choices[0]!);
 }
 
 function updateState(state: State, delta: number, elapsed: number): State {
   if (state.phase !== "playing") return state;
+  if (state.deathPause > 0) {
+    return { ...state, deathPause: Math.max(0, state.deathPause - delta) };
+  }
+
+  const mode = updateMode(state, delta);
   const frightened = elapsed < state.frightenedUntil;
-  let pac = moveActor(state.pac, 6.2, delta);
-  const column = Math.floor(pac.x);
-  const row = Math.floor(pac.y);
+  const pac = moveActor(state.pac, 7.2, delta, "pac");
+  const column = Math.round(pac.x);
+  const row = Math.round(pac.y);
   const pellets = new Set(state.pellets);
   const powers = new Set(state.powers);
   let score = state.score;
   let frightenedUntil = state.frightenedUntil;
+  let ghostCombo = frightened ? state.ghostCombo : 0;
+
   if (pellets.delete(cellKey(column, row))) score += 10;
   if (powers.delete(cellKey(column, row))) {
     score += 50;
-    frightenedUntil = elapsed + 6;
+    frightenedUntil = elapsed + 7;
+    ghostCombo = 0;
   }
-  const ghosts = state.ghosts.map((ghost, index) => {
-    const nearCenter = Math.abs(ghost.x - Math.round(ghost.x) - 0.5) < 0.06 && Math.abs(ghost.y - Math.round(ghost.y) - 0.5) < 0.06;
-    const nextDirection = nearCenter ? chooseGhostDirection(ghost, pac, frightened || index === 3) : ghost.nextDirection;
-    return moveActor({ ...ghost, nextDirection }, frightened ? 3.3 : 4.2, delta) as Ghost;
+
+  const nextBeforeGhosts = { ...state, ...mode, pac, pellets, powers, score, frightenedUntil, ghostCombo };
+  const ghosts = state.ghosts.map((ghost) => {
+    let nextDirection = ghost.nextDirection;
+    let eaten = ghost.eaten;
+    if (Math.hypot(ghost.x - ghost.home.x, ghost.y - ghost.home.y) < 0.3 && ghost.eaten) {
+      eaten = false;
+    }
+    if (atTileCenter(ghost)) {
+      nextDirection = chooseGhostDirection({ ...ghost, eaten }, nextBeforeGhosts, frightened);
+    }
+    const speed = eaten ? 8.8 : frightened ? 4.2 : 5.45 + state.level * 0.08;
+    const moved = moveActor({ ...ghost, nextDirection }, speed, delta, "ghost") as Ghost;
+    return { ...moved, eaten };
   });
+
   let lives = state.lives;
   let phase: Phase = pellets.size === 0 && powers.size === 0 ? "won" : "playing";
-  const hitIndex = ghosts.findIndex((ghost) => Math.hypot(ghost.x - pac.x, ghost.y - pac.y) < 0.72);
+  const hitIndex = ghosts.findIndex((ghost) => !ghost.eaten && Math.hypot(ghost.x - pac.x, ghost.y - pac.y) < 0.72);
+
   if (hitIndex >= 0) {
     if (elapsed < frightenedUntil) {
-      score += 200;
-      ghosts[hitIndex] = { ...ghosts[hitIndex]!, x: ghosts[hitIndex]!.homeX, y: ghosts[hitIndex]!.homeY };
+      ghostCombo += 1;
+      score += 200 * 2 ** (ghostCombo - 1);
+      ghosts[hitIndex] = { ...ghosts[hitIndex]!, eaten: true, direction: reverse(ghosts[hitIndex]!.direction) };
     } else {
       lives -= 1;
-      pac = { ...pac, x: 9.5, y: 15.5, direction: { x: 0, y: 0 } };
       phase = lives <= 0 ? "game-over" : "playing";
+      return {
+        ...resetActors({ ...state, ...mode, pellets, powers, score, lives, phase }),
+        bestScore: Math.max(state.bestScore, score),
+      };
     }
   }
-  return { ...state, phase, pac, ghosts, pellets, powers, frightenedUntil, score, bestScore: Math.max(state.bestScore, score), lives };
+
+  return {
+    ...state,
+    ...mode,
+    phase,
+    pac,
+    ghosts,
+    pellets,
+    powers,
+    frightenedUntil,
+    ghostCombo,
+    score,
+    bestScore: Math.max(state.bestScore, score),
+    lives,
+  };
 }
 
-function drawGhost(context: CanvasRenderingContext2D, ghost: Ghost, frightened: boolean) {
-  const x = ghost.x * TILE;
-  const y = ghost.y * TILE;
-  context.fillStyle = frightened ? "#244dff" : ghost.color;
-  context.beginPath();
-  context.arc(x, y - 3, 10, Math.PI, 0);
-  context.lineTo(x + 10, y + 10);
-  context.lineTo(x + 5, y + 6);
-  context.lineTo(x, y + 10);
-  context.lineTo(x - 5, y + 6);
-  context.lineTo(x - 10, y + 10);
-  context.closePath();
-  context.fill();
-  context.fillStyle = "#fff";
-  context.beginPath();
-  context.arc(x - 4, y - 4, 3, 0, Math.PI * 2);
-  context.arc(x + 5, y - 4, 3, 0, Math.PI * 2);
-  context.fill();
-}
-
-function drawScene(context: CanvasRenderingContext2D, state: State, elapsed: number) {
-  context.fillStyle = "#020212";
+function drawMaze(context: CanvasRenderingContext2D) {
+  context.fillStyle = "#000000";
   context.fillRect(0, 0, WIDTH, HEIGHT);
-  context.strokeStyle = "#1d4fff";
-  context.lineWidth = 3;
-  MAP.forEach((line, row) => {
+  context.lineWidth = 2.8;
+  context.strokeStyle = "#2121ff";
+  context.shadowColor = "#0a39ff";
+  context.shadowBlur = 5;
+
+  RAW_MAP.forEach((line, row) => {
     [...line].forEach((cell, column) => {
-      if (cell === "#") context.strokeRect(column * TILE + 2, row * TILE + 2, TILE - 4, TILE - 4);
+      if (cell !== "#") return;
+      const x = column * TILE;
+      const y = row * TILE;
+      const up = isWall(column, row - 1);
+      const down = isWall(column, row + 1);
+      const left = isWall(column - 1, row);
+      const right = isWall(column + 1, row);
+
+      context.beginPath();
+      if (!up) {
+        context.moveTo(x + 2, y + 2);
+        context.lineTo(x + TILE - 2, y + 2);
+      }
+      if (!down) {
+        context.moveTo(x + 2, y + TILE - 2);
+        context.lineTo(x + TILE - 2, y + TILE - 2);
+      }
+      if (!left) {
+        context.moveTo(x + 2, y + 2);
+        context.lineTo(x + 2, y + TILE - 2);
+      }
+      if (!right) {
+        context.moveTo(x + TILE - 2, y + 2);
+        context.lineTo(x + TILE - 2, y + TILE - 2);
+      }
+      context.stroke();
     });
   });
-  context.fillStyle = "#ffe7a2";
+
+  context.shadowBlur = 0;
+  context.strokeStyle = "#ffb8ff";
+  context.lineWidth = 2;
+  context.beginPath();
+  context.moveTo(13 * TILE, 12.5 * TILE);
+  context.lineTo(15 * TILE, 12.5 * TILE);
+  context.stroke();
+}
+
+function drawPellets(context: CanvasRenderingContext2D, state: State, elapsed: number) {
+  context.fillStyle = "#f7d8a3";
   state.pellets.forEach((key) => {
     const [column, row] = key.split(":").map(Number);
     context.beginPath();
-    context.arc((column + 0.5) * TILE, (row + 0.5) * TILE, 2.5, 0, Math.PI * 2);
+    context.arc(column * TILE + TILE / 2, row * TILE + TILE / 2, 1.8, 0, Math.PI * 2);
     context.fill();
   });
+
+  const pulse = 4.5 + Math.sin(elapsed * 8) * 1.2;
   state.powers.forEach((key) => {
     const [column, row] = key.split(":").map(Number);
     context.beginPath();
-    context.arc((column + 0.5) * TILE, (row + 0.5) * TILE, 6, 0, Math.PI * 2);
+    context.arc(column * TILE + TILE / 2, row * TILE + TILE / 2, pulse, 0, Math.PI * 2);
     context.fill();
   });
-  const mouth = state.phase === "playing" ? Math.abs(Math.sin(elapsed * 12)) * 0.55 + 0.1 : 0.55;
-  const angle = Math.atan2(state.pac.direction.y, state.pac.direction.x || 0.0001);
-  context.fillStyle = "#ffd82e";
+}
+
+function drawPacman(context: CanvasRenderingContext2D, state: State, elapsed: number) {
+  const pac = state.pac;
+  const angle = directionAngle(pac.direction);
+  const mouth = state.phase === "playing" ? Math.abs(Math.sin(elapsed * 13)) * 0.58 + 0.06 : 0.55;
+  const x = pac.x * TILE + TILE / 2;
+  const y = pac.y * TILE + TILE / 2;
+
+  context.fillStyle = "#ffd500";
   context.beginPath();
-  context.moveTo(state.pac.x * TILE, state.pac.y * TILE);
-  context.arc(state.pac.x * TILE, state.pac.y * TILE, 9, angle + mouth, angle + Math.PI * 2 - mouth);
+  context.moveTo(x, y);
+  context.arc(x, y, 7.4, angle + mouth, angle + Math.PI * 2 - mouth);
   context.closePath();
   context.fill();
-  state.ghosts.forEach((ghost) => drawGhost(context, ghost, elapsed < state.frightenedUntil));
-  context.fillStyle = "#fff";
-  context.font = "800 14px monospace";
-  context.fillText(`score ${state.score}`, 8, 16);
-  context.fillText(`lives ${state.lives}`, WIDTH - 72, 16);
-  if (state.phase !== "playing") {
-    context.fillStyle = "rgba(0,0,0,0.62)";
-    context.fillRect(0, 0, WIDTH, HEIGHT);
-    context.fillStyle = "#ffd82e";
-    context.textAlign = "center";
-    context.font = "900 28px sans-serif";
-    context.fillText(state.phase === "won" ? "MAZE CLEARED" : state.phase === "game-over" ? "GAME OVER" : state.phase === "paused" ? "PAUSED" : "PACMAN", WIDTH / 2, HEIGHT / 2);
-    context.font = "700 14px sans-serif";
-    context.fillText("arrows or wasd to chase pellets", WIDTH / 2, HEIGHT / 2 + 30);
-    context.textAlign = "left";
+}
+
+function drawGhost(context: CanvasRenderingContext2D, ghost: Ghost, state: State, elapsed: number) {
+  const frightened = elapsed < state.frightenedUntil && !ghost.eaten;
+  const flashing = frightened && state.frightenedUntil - elapsed < 2 && Math.floor(elapsed * 8) % 2 === 0;
+  const x = ghost.x * TILE + TILE / 2;
+  const y = ghost.y * TILE + TILE / 2;
+
+  context.fillStyle = ghost.eaten ? "rgba(255,255,255,0.08)" : frightened ? (flashing ? "#ffffff" : "#1f4fff") : ghost.color;
+  context.beginPath();
+  context.arc(x, y - 2, 7.5, Math.PI, 0);
+  context.lineTo(x + 7.5, y + 7);
+  context.lineTo(x + 4, y + 4.5);
+  context.lineTo(x, y + 7);
+  context.lineTo(x - 4, y + 4.5);
+  context.lineTo(x - 7.5, y + 7);
+  context.closePath();
+  context.fill();
+
+  context.fillStyle = "#ffffff";
+  context.beginPath();
+  context.arc(x - 3.2, y - 2.8, 2.5, 0, Math.PI * 2);
+  context.arc(x + 3.2, y - 2.8, 2.5, 0, Math.PI * 2);
+  context.fill();
+  context.fillStyle = frightened ? "#ffffff" : "#1b3cff";
+  context.beginPath();
+  context.arc(x - 3.2 + ghost.direction.x * 1.1, y - 2.8 + ghost.direction.y * 1.1, 1.15, 0, Math.PI * 2);
+  context.arc(x + 3.2 + ghost.direction.x * 1.1, y - 2.8 + ghost.direction.y * 1.1, 1.15, 0, Math.PI * 2);
+  context.fill();
+}
+
+function drawTextOverlay(context: CanvasRenderingContext2D, state: State) {
+  if (state.phase === "playing" && state.deathPause <= 0) {
+    return;
   }
+
+  const title =
+    state.phase === "won"
+      ? "MAZE CLEARED"
+      : state.phase === "game-over"
+        ? "GAME OVER"
+        : state.phase === "paused"
+          ? "PAUSED"
+          : "READY!";
+
+  context.fillStyle = "rgba(0,0,0,0.64)";
+  context.fillRect(0, 0, WIDTH, HEIGHT);
+  context.fillStyle = state.phase === "game-over" ? "#ff3030" : "#ffd500";
+  context.textAlign = "center";
+  context.font = "900 24px 'Courier New', monospace";
+  context.fillText(title, WIDTH / 2, HEIGHT / 2 - 8);
+  context.font = "700 12px 'Courier New', monospace";
+  context.fillStyle = "#ffffff";
+  context.fillText("ARROWS / WASD TO MOVE", WIDTH / 2, HEIGHT / 2 + 17);
+  context.textAlign = "left";
+}
+
+function drawScene(context: CanvasRenderingContext2D, state: State, elapsed: number) {
+  context.clearRect(0, 0, WIDTH, HEIGHT);
+  drawMaze(context);
+  drawPellets(context, state, elapsed);
+  drawPacman(context, state, elapsed);
+  state.ghosts.forEach((ghost) => drawGhost(context, ghost, state, elapsed));
+
+  context.fillStyle = "#ffffff";
+  context.font = "800 11px 'Courier New', monospace";
+  context.fillText(`SCORE ${Math.floor(state.score)}`, 8, 13);
+  context.fillText(`LIVES ${state.lives}`, WIDTH - 70, 13);
+  context.fillText(`LEVEL ${state.level}`, WIDTH / 2 - 24, HEIGHT - 8);
+  drawTextOverlay(context, state);
 }
 
 export function PacMazeGame() {
@@ -253,31 +570,64 @@ export function PacMazeGame() {
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
   const stateRef = useRef(initialState);
   const elapsedRef = useRef(0);
-  const [hud, setHud] = useState({ score: initialState.score, bestScore: initialState.bestScore, lives: initialState.lives, phase: initialState.phase });
+  const [hud, setHud] = useState({
+    score: initialState.score,
+    bestScore: initialState.bestScore,
+    lives: initialState.lives,
+    phase: initialState.phase,
+  });
+  const hudRef = useRef(hud);
 
-  function sync(nextState: State) {
+  function sync(nextState: State, forceHud = false) {
+    const previousHud = hudRef.current;
     stateRef.current = nextState;
-    setHud({ score: nextState.score, bestScore: nextState.bestScore, lives: nextState.lives, phase: nextState.phase });
-    writeStoredNumber(STORAGE_KEY, nextState.bestScore);
+    if (
+      forceHud ||
+      nextState.phase !== previousHud.phase ||
+      nextState.lives !== previousHud.lives ||
+      Math.floor(nextState.score / 10) !== Math.floor(previousHud.score / 10) ||
+      Math.floor(nextState.bestScore / 10) !== Math.floor(previousHud.bestScore / 10)
+    ) {
+      const nextHud = {
+        score: Math.floor(nextState.score),
+        bestScore: Math.floor(nextState.bestScore),
+        lives: nextState.lives,
+        phase: nextState.phase,
+      };
+      hudRef.current = nextHud;
+      setHud(nextHud);
+    }
+    if (nextState.bestScore > previousHud.bestScore || nextState.phase === "game-over" || nextState.phase === "won") {
+      writeStoredNumber(STORAGE_KEY, nextState.bestScore);
+    }
   }
 
   function restart() {
-    sync({ ...createState(stateRef.current.bestScore), phase: "playing" });
+    sync({ ...createState(stateRef.current.bestScore), phase: "playing" }, true);
+  }
+
+  function steer(direction: Direction) {
+    const current = stateRef.current.phase === "idle" ? { ...stateRef.current, phase: "playing" as Phase } : stateRef.current;
+    if (current.phase !== "playing") return;
+    sync({ ...current, pac: { ...current.pac, nextDirection: direction } }, true);
   }
 
   const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
     const key = event.key.toLowerCase();
-    const direction = directions[key];
+    const direction = KEY_TO_DIR[key];
     if (direction) {
       event.preventDefault();
-      const current = stateRef.current.phase === "idle" ? { ...stateRef.current, phase: "playing" as Phase } : stateRef.current;
-      sync({ ...current, pac: { ...current.pac, nextDirection: direction } });
+      event.stopPropagation();
+      steer(direction);
     } else if (key === "p") {
       event.preventDefault();
+      event.stopPropagation();
       const current = stateRef.current;
-      sync({ ...current, phase: current.phase === "playing" ? "paused" : "playing" });
+      sync({ ...current, phase: current.phase === "playing" ? "paused" : "playing" }, true);
     } else if (key === "r" || key === " ") {
       event.preventDefault();
+      event.stopPropagation();
       restart();
     }
   });
@@ -285,44 +635,59 @@ export function PacMazeGame() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
-      contextRef.current = configureHiDPICanvas(canvas, WIDTH, HEIGHT);
-      drawScene(contextRef.current!, stateRef.current, 0);
+      const context = configureHiDPICanvas(canvas, WIDTH, HEIGHT);
+      if (context) {
+        contextRef.current = context;
+        drawScene(context, stateRef.current, 0);
+      }
     }
     const handler = (event: KeyboardEvent) => onKeyDown(event);
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    window.addEventListener("keydown", handler, true);
+    return () => window.removeEventListener("keydown", handler, true);
   }, []);
 
   useAnimationFrameLoop((delta, elapsed) => {
     elapsedRef.current = elapsed;
-    const nextState = updateState(stateRef.current, delta, elapsed);
+    const nextState = updateState(stateRef.current, Math.min(delta, 0.035), elapsed);
     if (nextState !== stateRef.current) sync(nextState);
     if (contextRef.current) drawScene(contextRef.current, stateRef.current, elapsed);
   });
 
-  const touch = (direction: Direction) => {
-    const current = stateRef.current.phase === "idle" ? { ...stateRef.current, phase: "playing" as Phase } : stateRef.current;
-    sync({ ...current, pac: { ...current.pac, nextDirection: direction } });
-  };
-
   return (
     <GamePanel>
       <GameHud
-        items={[{ label: "Score", value: hud.score }, { label: "Best", value: hud.bestScore }, { label: "Lives", value: hud.lives }, { label: "Status", value: hud.phase }]}
-        actions={<GameButton variant="primary" onClick={restart}>Start</GameButton>}
+        items={[
+          { label: "Score", value: hud.score },
+          { label: "Best", value: hud.bestScore },
+          { label: "Lives", value: hud.lives },
+          { label: "Status", value: hud.phase },
+        ]}
+        actions={
+          <GameButton variant="primary" onClick={restart}>
+            Start
+          </GameButton>
+        }
       />
-      <GamePlayfield className="mx-auto aspect-[19/21] w-full max-w-[min(26rem,54dvh)] touch-none border-0 bg-black">
+      <GamePlayfield className="mx-auto aspect-[28/31] w-full max-w-[min(25rem,58dvh)] touch-none border-0 bg-black">
         <canvas ref={canvasRef} className="h-full w-full" aria-label="Pacman field" />
       </GamePlayfield>
-      <GameStatus>Arrow keys or WASD steer. Power pellets turn chasers blue. R restarts.</GameStatus>
+      <GameStatus>Arrow keys or WASD steer. Power pellets turn ghosts blue. Space or R restarts.</GameStatus>
       <TouchControls className="max-w-[16rem]">
         <div className="grid grid-cols-3 gap-2">
           <span />
-          <GameButton variant="touch" onClick={() => touch({ x: 0, y: -1 })}>Up</GameButton>
+          <GameButton variant="touch" onClick={() => steer(DIRS.up)}>
+            Up
+          </GameButton>
           <span />
-          <GameButton variant="touch" onClick={() => touch({ x: -1, y: 0 })}>Left</GameButton>
-          <GameButton variant="touch" onClick={() => touch({ x: 0, y: 1 })}>Down</GameButton>
-          <GameButton variant="touch" onClick={() => touch({ x: 1, y: 0 })}>Right</GameButton>
+          <GameButton variant="touch" onClick={() => steer(DIRS.left)}>
+            Left
+          </GameButton>
+          <GameButton variant="touch" onClick={() => steer(DIRS.down)}>
+            Down
+          </GameButton>
+          <GameButton variant="touch" onClick={() => steer(DIRS.right)}>
+            Right
+          </GameButton>
         </div>
       </TouchControls>
     </GamePanel>
