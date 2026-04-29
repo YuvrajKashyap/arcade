@@ -609,6 +609,11 @@ export function CrossyRoadsGame() {
     const dx = x - start.x;
     const dy = y - start.y;
     if (Math.max(Math.abs(dx), Math.abs(dy)) < 22) {
+      if (stateRef.current.phase === "game-over") {
+        restart();
+        return;
+      }
+
       move("up");
       return;
     }
