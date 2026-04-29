@@ -5,6 +5,7 @@ import {
   FLAPPY_BIRD_RADIUS,
   FLAPPY_BIRD_X,
   FLAPPY_GROUND_HEIGHT,
+  FLAPPY_HARD_PIPE_GAP,
   FLAPPY_HEIGHT,
   FLAPPY_PIPE_GAP,
   FLAPPY_PIPE_WIDTH,
@@ -17,7 +18,12 @@ import {
   startFlappyBird,
   updateFlappyBird,
 } from "@/features/games/flappy-bird/logic/game";
-import type { FlappyBirdPhase, FlappyBirdState, FlappyPipe } from "@/features/games/flappy-bird/types";
+import type {
+  FlappyBirdDifficulty,
+  FlappyBirdPhase,
+  FlappyBirdState,
+  FlappyPipe,
+} from "@/features/games/flappy-bird/types";
 import { configureHiDPICanvas } from "@/features/games/shared/canvas/configure-canvas";
 import {
   GameButton,
@@ -32,6 +38,15 @@ import {
   readStoredNumber,
   writeStoredNumber,
 } from "@/features/games/shared/utils/local-storage";
+
+const FLAPPY_DIFFICULTY_OPTIONS = [
+  { id: "easy", label: "Easy", pipeGap: FLAPPY_PIPE_GAP },
+  { id: "hard", label: "Hard", pipeGap: FLAPPY_HARD_PIPE_GAP },
+] as const satisfies ReadonlyArray<{
+  id: FlappyBirdDifficulty;
+  label: string;
+  pipeGap: number;
+}>;
 
 function getStatusCopy(phase: FlappyBirdPhase) {
   if (phase === "playing") {
@@ -102,9 +117,13 @@ function drawBackground(context: CanvasRenderingContext2D, scroll: number) {
   }
 }
 
-function drawPipe(context: CanvasRenderingContext2D, pipe: FlappyPipe) {
+function drawPipe(
+  context: CanvasRenderingContext2D,
+  pipe: FlappyPipe,
+  pipeGap: number,
+) {
   const topHeight = pipe.gapY;
-  const bottomY = pipe.gapY + FLAPPY_PIPE_GAP;
+  const bottomY = pipe.gapY + pipeGap;
   const bottomHeight = FLAPPY_HEIGHT - FLAPPY_GROUND_HEIGHT - bottomY;
 
   const drawPipeBody = (x: number, y: number, width: number, height: number, capAtBottom: boolean) => {
@@ -254,10 +273,15 @@ function drawOverlay(context: CanvasRenderingContext2D, phase: FlappyBirdPhase) 
   context.restore();
 }
 
-function drawScene(context: CanvasRenderingContext2D, state: FlappyBirdState, elapsedSeconds: number) {
+function drawScene(
+  context: CanvasRenderingContext2D,
+  state: FlappyBirdState,
+  elapsedSeconds: number,
+  pipeGap: number,
+) {
   context.clearRect(0, 0, FLAPPY_WIDTH, FLAPPY_HEIGHT);
   drawBackground(context, state.scroll);
-  state.pipes.forEach((pipe) => drawPipe(context, pipe));
+  state.pipes.forEach((pipe) => drawPipe(context, pipe, pipeGap));
   drawBird(context, state, elapsedSeconds);
   drawScore(context, state.score);
   drawOverlay(context, state.phase);
@@ -269,6 +293,7 @@ export function FlappyBirdGame() {
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
   const stateRef = useRef<FlappyBirdState>(initialState);
   const elapsedSecondsRef = useRef(0);
+  const [difficulty, setDifficulty] = useState<FlappyBirdDifficulty>("easy");
   const [hudState, setHudState] = useState(() => ({
     score: initialState.score,
     bestScore: initialState.bestScore,
@@ -288,17 +313,45 @@ export function FlappyBirdGame() {
   function renderCurrentState() {
     const context = contextRef.current;
     if (context) {
-      drawScene(context, stateRef.current, elapsedSecondsRef.current);
+      drawScene(
+        context,
+        stateRef.current,
+        elapsedSecondsRef.current,
+        getPipeGap(difficulty),
+      );
     }
   }
 
+  function getPipeGap(nextDifficulty: FlappyBirdDifficulty) {
+    return (
+      FLAPPY_DIFFICULTY_OPTIONS.find((option) => option.id === nextDifficulty)
+        ?.pipeGap ?? FLAPPY_PIPE_GAP
+    );
+  }
+
   function restart() {
-    syncState(startFlappyBird(createFlappyBirdState(stateRef.current.bestScore)));
+    const pipeGap = getPipeGap(difficulty);
+    syncState(
+      startFlappyBird(
+        createFlappyBirdState(stateRef.current.bestScore, pipeGap),
+        pipeGap,
+      ),
+    );
     renderCurrentState();
   }
 
+  function selectDifficulty(nextDifficulty: FlappyBirdDifficulty) {
+    setDifficulty(nextDifficulty);
+    syncState(
+      createFlappyBirdState(
+        stateRef.current.bestScore,
+        getPipeGap(nextDifficulty),
+      ),
+    );
+  }
+
   function flap() {
-    syncState(flapFlappyBird(stateRef.current));
+    syncState(flapFlappyBird(stateRef.current, getPipeGap(difficulty)));
     renderCurrentState();
   }
 
@@ -339,7 +392,15 @@ export function FlappyBirdGame() {
     }
 
     contextRef.current = configureHiDPICanvas(canvas, FLAPPY_WIDTH, FLAPPY_HEIGHT);
-    renderCurrentState();
+    const context = contextRef.current;
+    if (context) {
+      drawScene(
+        context,
+        stateRef.current,
+        elapsedSecondsRef.current,
+        FLAPPY_PIPE_GAP,
+      );
+    }
   }, []);
 
   useEffect(() => {
@@ -350,7 +411,11 @@ export function FlappyBirdGame() {
 
   useAnimationFrameLoop((deltaSeconds) => {
     elapsedSecondsRef.current += deltaSeconds;
-    const nextState = updateFlappyBird(stateRef.current, deltaSeconds);
+    const nextState = updateFlappyBird(
+      stateRef.current,
+      deltaSeconds,
+      getPipeGap(difficulty),
+    );
     if (nextState !== stateRef.current) {
       syncState(nextState);
     }
@@ -375,17 +440,32 @@ export function FlappyBirdGame() {
         }
       />
 
-      <GamePlayfield className="mx-auto aspect-[3/4] w-full max-w-[min(24rem,54dvh)] touch-none border-0 bg-[#83dcff]">
-        <canvas
-          ref={canvasRef}
-          className="h-full w-full"
-          aria-label="Flappy Bird field"
-          onPointerDown={(event) => {
-            event.preventDefault();
-            flap();
-          }}
-        />
-      </GamePlayfield>
+      <div className="mx-auto flex w-full max-w-3xl flex-col items-center justify-center gap-3 md:flex-row md:items-start">
+        <GamePlayfield className="mx-0 aspect-[3/4] w-full max-w-[min(24rem,54dvh)] touch-none border-0 bg-[#83dcff]">
+          <canvas
+            ref={canvasRef}
+            className="h-full w-full"
+            aria-label="Flappy Bird field"
+            onPointerDown={(event) => {
+              event.preventDefault();
+              flap();
+            }}
+          />
+        </GamePlayfield>
+
+        <div className="flex shrink-0 gap-2 rounded-[1.1rem] border border-line bg-surface px-3 py-2 shadow-[0_18px_60px_rgba(0,0,0,0.2)] md:w-28 md:flex-col">
+          {FLAPPY_DIFFICULTY_OPTIONS.map((option) => (
+            <GameButton
+              key={option.id}
+              variant={difficulty === option.id ? "primary" : "secondary"}
+              className="px-3 py-1.5 text-xs"
+              onClick={() => selectDifficulty(option.id)}
+            >
+              {option.label}
+            </GameButton>
+          ))}
+        </div>
+      </div>
 
       <GameStatus>{getStatusCopy(hudState.phase)} R restarts and P pauses.</GameStatus>
 
