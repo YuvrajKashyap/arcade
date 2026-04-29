@@ -16,39 +16,69 @@ import {
   writeStoredNumber,
 } from "@/features/games/shared/utils/local-storage";
 
-const WIDTH = 760;
-const HEIGHT = 300;
-const GROUND_Y = 232;
-const DINO_X = 82;
-const DINO_STAND_WIDTH = 60;
-const DINO_STAND_HEIGHT = 68;
-const DINO_DUCK_WIDTH = 82;
-const DINO_DUCK_HEIGHT = 42;
+const CANVAS_WIDTH = 760;
+const CANVAS_HEIGHT = 300;
+const GAME_WIDTH = 600;
+const SCALE = 1.16;
+const GAME_X = Math.round((CANVAS_WIDTH - GAME_WIDTH * SCALE) / 2);
+const GAME_Y = 58;
+const GROUND_Y = 127;
+const TREX_X = 50;
+const TREX_WIDTH = 44;
+const TREX_HEIGHT = 47;
+const TREX_DUCK_WIDTH = 59;
 const STORAGE_KEY = "arcade.dinoRun.bestScore";
+const SPRITE_SRC = "/vendor/chrome-dino/200-offline-sprite.png";
+
+const SPRITE = {
+  CLOUD: { x: 166, y: 2, w: 92, h: 28, dw: 46, dh: 14 },
+  HORIZON: { x: 2, y: 104, w: 1200, h: 24, dw: 600, dh: 12 },
+  CACTUS_SMALL: { x: 446, y: 2, w: 34, h: 70, dw: 17, dh: 35 },
+  CACTUS_LARGE: { x: 652, y: 2, w: 50, h: 100, dw: 25, dh: 50 },
+  PTERODACTYL: { x: 260, y: 2, w: 92, h: 80, dw: 46, dh: 40 },
+  RESTART: { x: 2, y: 130, w: 72, h: 64, dw: 36, dh: 32 },
+  TEXT: { x: 1294, y: 28, w: 382, h: 26, dw: 191, dh: 13 },
+  TREX: { x: 1678, y: 2, w: 88, h: 94, dw: 44, dh: 47 },
+};
+
+const TREX_FRAMES = {
+  WAITING_1: 88,
+  WAITING_2: 0,
+  RUNNING_1: 176,
+  RUNNING_2: 264,
+  CRASHED: 440,
+  DUCKING_1: 528,
+  DUCKING_2: 646,
+};
 
 type Phase = "idle" | "playing" | "paused" | "game-over";
+type ObstacleKind = "small-cactus" | "large-cactus" | "pterodactyl";
 type Obstacle = {
   id: number;
   x: number;
   y: number;
   width: number;
   height: number;
-  kind: "cactus" | "bird";
-  variant: number;
+  kind: ObstacleKind;
+  count: number;
+  passed: boolean;
 };
+type Cloud = { id: number; x: number; y: number; speed: number };
 type State = {
   phase: Phase;
-  dinoY: number;
+  trexY: number;
   velocityY: number;
   ducking: boolean;
   obstacles: Obstacle[];
+  clouds: Cloud[];
   score: number;
   bestScore: number;
   speed: number;
   nextId: number;
   spawnTimer: number;
-  groundOffset: number;
-  flashTimer: number;
+  cloudTimer: number;
+  horizonOffset: number;
+  shakeTimer: number;
 };
 
 type RectLike = { x: number; y: number; width: number; height: number };
@@ -56,77 +86,166 @@ type RectLike = { x: number; y: number; width: number; height: number };
 function createState(bestScore = 0): State {
   return {
     phase: "idle",
-    dinoY: GROUND_Y - DINO_STAND_HEIGHT,
+    trexY: GROUND_Y - TREX_HEIGHT,
     velocityY: 0,
     ducking: false,
     obstacles: [],
+    clouds: [
+      { id: 1, x: 86, y: 32, speed: 18 },
+      { id: 2, x: 330, y: 48, speed: 14 },
+      { id: 3, x: 512, y: 34, speed: 12 },
+    ],
     score: 0,
     bestScore,
     speed: 360,
-    nextId: 1,
-    spawnTimer: 0.7,
-    groundOffset: 0,
-    flashTimer: 0,
+    nextId: 4,
+    spawnTimer: 0.85,
+    cloudTimer: 1.2,
+    horizonOffset: 0,
+    shakeTimer: 0,
   };
 }
 
-function isGrounded(state: State) {
-  return state.dinoY >= GROUND_Y - DINO_STAND_HEIGHT - 0.5;
+function toCanvasX(x: number) {
+  return GAME_X + x * SCALE;
 }
 
-function dinoRect(state: State): RectLike {
-  if (state.ducking && isGrounded(state)) {
-    return {
-      x: DINO_X,
-      y: GROUND_Y - DINO_DUCK_HEIGHT,
-      width: DINO_DUCK_WIDTH,
-      height: DINO_DUCK_HEIGHT,
-    };
-  }
-
-  return {
-    x: DINO_X + 3,
-    y: state.dinoY,
-    width: DINO_STAND_WIDTH - 8,
-    height: DINO_STAND_HEIGHT,
-  };
+function toCanvasY(y: number) {
+  return GAME_Y + y * SCALE;
 }
 
-function intersects(a: RectLike, b: Obstacle) {
-  const obstaclePad = b.kind === "bird" ? 9 : 7;
-  return (
-    a.x + a.width - 7 > b.x + obstaclePad &&
-    a.x + 8 < b.x + b.width - obstaclePad &&
-    a.y + a.height - 5 > b.y + obstaclePad &&
-    a.y + 5 < b.y + b.height - obstaclePad
+function drawSprite(
+  context: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  source: { x: number; y: number; w: number; h: number; dw: number; dh: number },
+  x: number,
+  y: number,
+  width = source.dw,
+  height = source.dh,
+) {
+  context.drawImage(
+    image,
+    source.x,
+    source.y,
+    source.w,
+    source.h,
+    Math.round(toCanvasX(x)),
+    Math.round(toCanvasY(y)),
+    Math.round(width * SCALE),
+    Math.round(height * SCALE),
   );
 }
 
-function createObstacle(id: number, score: number): Obstacle {
-  const bird = score > 650 && id % 5 === 0;
-  if (bird) {
-    const altitude = id % 2 === 0 ? GROUND_Y - 112 : GROUND_Y - 78;
+function drawTrexSprite(
+  context: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  x: number,
+  y: number,
+  frameOffset: number,
+  width = TREX_WIDTH,
+  height = TREX_HEIGHT,
+) {
+  context.drawImage(
+    image,
+    SPRITE.TREX.x + frameOffset,
+    SPRITE.TREX.y,
+    width * 2,
+    TREX_HEIGHT * 2,
+    Math.round(toCanvasX(x)),
+    Math.round(toCanvasY(y)),
+    Math.round(width * SCALE),
+    Math.round(height * SCALE),
+  );
+}
+
+function isGrounded(state: State) {
+  return state.trexY >= GROUND_Y - TREX_HEIGHT - 0.5;
+}
+
+function trexRect(state: State): RectLike {
+  if (state.ducking && isGrounded(state)) {
     return {
-      id,
-      x: WIDTH + 26,
-      y: altitude,
-      width: 60,
-      height: 34,
-      kind: "bird",
-      variant: id % 2,
+      x: TREX_X + 2,
+      y: GROUND_Y - 28,
+      width: TREX_DUCK_WIDTH - 5,
+      height: 24,
     };
   }
 
-  const cluster = 1 + (id % 3);
-  const tall = id % 4 === 0;
+  return {
+    x: TREX_X + 3,
+    y: state.trexY + 2,
+    width: TREX_WIDTH - 8,
+    height: TREX_HEIGHT - 4,
+  };
+}
+
+function obstacleRects(obstacle: Obstacle): RectLike[] {
+  if (obstacle.kind === "pterodactyl") {
+    return [
+      { x: obstacle.x + 15, y: obstacle.y + 15, width: 16, height: 5 },
+      { x: obstacle.x + 18, y: obstacle.y + 21, width: 24, height: 6 },
+      { x: obstacle.x + 7, y: obstacle.y + 10, width: 9, height: 10 },
+    ];
+  }
+
+  const boxes: RectLike[] = [];
+  const unitWidth = obstacle.kind === "small-cactus" ? 17 : 25;
+  const unitHeight = obstacle.kind === "small-cactus" ? 35 : 50;
+  for (let index = 0; index < obstacle.count; index += 1) {
+    const x = obstacle.x + index * unitWidth;
+    const y = GROUND_Y - unitHeight;
+    if (obstacle.kind === "small-cactus") {
+      boxes.push(
+        { x, y: y + 7, width: 5, height: 27 },
+        { x: x + 4, y, width: 6, height: 34 },
+        { x: x + 10, y: y + 4, width: 7, height: 14 },
+      );
+    } else {
+      boxes.push(
+        { x, y: y + 12, width: 7, height: 38 },
+        { x: x + 8, y, width: 7, height: 49 },
+        { x: x + 13, y: y + 10, width: 10, height: 38 },
+      );
+    }
+  }
+  return boxes;
+}
+
+function intersects(a: RectLike, b: RectLike) {
+  return a.x + a.width > b.x && a.x < b.x + b.width && a.y + a.height > b.y && a.y < b.y + b.height;
+}
+
+function createObstacle(id: number, score: number): Obstacle {
+  if (score > 700 && id % 5 === 0) {
+    const altitude = id % 2 === 0 ? 74 : 99;
+    return {
+      id,
+      x: GAME_WIDTH + 18,
+      y: altitude,
+      width: 46,
+      height: 40,
+      kind: "pterodactyl",
+      count: 1,
+      passed: false,
+    };
+  }
+
+  const large = score > 250 && id % 3 === 0;
+  const maxCount = large ? 2 : 3;
+  const count = 1 + (id % maxCount);
+  const unitWidth = large ? 25 : 17;
+  const unitHeight = large ? 50 : 35;
+
   return {
     id,
-    x: WIDTH + 24,
-    y: GROUND_Y - (tall ? 66 : 52),
-    width: cluster * 25 + (cluster - 1) * 7,
-    height: tall ? 66 : 52,
-    kind: "cactus",
-    variant: cluster,
+    x: GAME_WIDTH + 18,
+    y: GROUND_Y - unitHeight,
+    width: unitWidth * count,
+    height: unitHeight,
+    kind: large ? "large-cactus" : "small-cactus",
+    count,
+    passed: false,
   };
 }
 
@@ -136,282 +255,256 @@ function updateState(state: State, delta: number, holdingDown: boolean): State {
   }
 
   const grounded = isGrounded(state);
-  const gravity = holdingDown && !grounded ? 3600 : 2300;
-  const velocityY = grounded ? 0 : state.velocityY + gravity * delta;
-  const dinoY = Math.min(GROUND_Y - DINO_STAND_HEIGHT, state.dinoY + velocityY * delta);
-  const speed = Math.min(700, state.speed + delta * 8.2);
+  const gravity = holdingDown && !grounded ? 3200 : 1720;
+  const velocityY = grounded && state.velocityY >= 0 ? 0 : state.velocityY + gravity * delta;
+  const trexY = Math.min(GROUND_Y - TREX_HEIGHT, state.trexY + velocityY * delta);
+  const speed = Math.min(720, state.speed + delta * 8.5);
   let spawnTimer = state.spawnTimer - delta;
+  let cloudTimer = state.cloudTimer - delta;
   let nextId = state.nextId;
+  const score = state.score + delta * 65;
   let obstacles = state.obstacles
-    .map((obstacle) => ({ ...obstacle, x: obstacle.x - speed * delta }))
-    .filter((obstacle) => obstacle.x + obstacle.width > -35);
+    .map((obstacle) => ({
+      ...obstacle,
+      x: obstacle.x - speed * delta,
+      passed: obstacle.passed || obstacle.x + obstacle.width < TREX_X,
+    }))
+    .filter((obstacle) => obstacle.x + obstacle.width > -30);
+  let clouds = state.clouds
+    .map((cloud) => ({ ...cloud, x: cloud.x - cloud.speed * delta }))
+    .filter((cloud) => cloud.x > -60);
 
   if (spawnTimer <= 0) {
-    obstacles = [...obstacles, createObstacle(nextId, state.score)];
+    obstacles = [...obstacles, createObstacle(nextId, score)];
     nextId += 1;
-    spawnTimer = Math.max(0.56, 1.02 - speed / 1300) + Math.random() * 0.38;
+    spawnTimer = Math.max(0.58, 1.05 - speed / 1500) + Math.random() * 0.28;
+  }
+
+  if (cloudTimer <= 0) {
+    clouds = [
+      ...clouds,
+      {
+        id: nextId,
+        x: GAME_WIDTH + 20,
+        y: 28 + (nextId % 4) * 12,
+        speed: 10 + (nextId % 3) * 4,
+      },
+    ];
+    nextId += 1;
+    cloudTimer = 1.8 + Math.random() * 1.2;
   }
 
   const nextState = {
     ...state,
-    dinoY,
+    trexY,
     velocityY,
     ducking: holdingDown && grounded,
     obstacles,
-    score: state.score + delta * 62,
+    clouds,
+    score,
     speed,
     nextId,
     spawnTimer,
-    groundOffset: (state.groundOffset + speed * delta) % 44,
-    flashTimer: Math.max(0, state.flashTimer - delta),
+    cloudTimer,
+    horizonOffset: (state.horizonOffset + speed * delta) % GAME_WIDTH,
+    shakeTimer: Math.max(0, state.shakeTimer - delta),
   };
-  const hit = obstacles.some((obstacle) => intersects(dinoRect(nextState), obstacle));
+  const playerRect = trexRect(nextState);
+  const hit = obstacles.some((obstacle) => obstacleRects(obstacle).some((rect) => intersects(playerRect, rect)));
 
   return {
     ...nextState,
     phase: hit ? "game-over" : "playing",
     bestScore: Math.max(nextState.bestScore, nextState.score),
-    flashTimer: hit ? 0.16 : nextState.flashTimer,
+    shakeTimer: hit ? 0.16 : nextState.shakeTimer,
   };
 }
 
-function block(
-  context: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  fill: string,
-  outline = "#111111",
-) {
-  context.fillStyle = outline;
-  context.fillRect(Math.round(x - 2), Math.round(y - 2), Math.round(width + 4), Math.round(height + 4));
-  context.fillStyle = fill;
-  context.fillRect(Math.round(x), Math.round(y), Math.round(width), Math.round(height));
+function drawPixelSun(context: CanvasRenderingContext2D) {
+  const cx = 642;
+  const cy = 46;
+  context.fillStyle = "rgba(255, 171, 29, 0.22)";
+  context.fillRect(toCanvasX(cx - 37), toCanvasY(cy - 37), 74 * SCALE, 74 * SCALE);
+  context.fillStyle = "#f8ad22";
+  [
+    [cx - 15, cy - 15, 30, 30],
+    [cx - 5, cy - 48, 10, 17],
+    [cx - 5, cy + 31, 10, 17],
+    [cx - 50, cy - 5, 17, 10],
+    [cx + 33, cy - 5, 17, 10],
+    [cx - 35, cy - 33, 10, 10],
+    [cx + 25, cy + 24, 10, 10],
+  ].forEach(([x, y, width, height]) => {
+    context.fillRect(toCanvasX(x), toCanvasY(y), width * SCALE, height * SCALE);
+  });
 }
 
-function drawPixelSun(context: CanvasRenderingContext2D, elapsed: number) {
-  const cx = 640;
-  const cy = 64;
-  const pulse = Math.sin(elapsed * 1.6) * 2;
-  context.fillStyle = "rgba(255, 172, 31, 0.22)";
-  context.fillRect(cx - 52, cy - 52, 104, 104);
-  block(context, cx - 28, cy - 28, 56 + pulse, 56 + pulse, "#ffbf31", "rgba(219, 127, 14, 0.42)");
-  block(context, cx - 8, cy - 62, 16, 26, "#f7a421", "rgba(219, 127, 14, 0.3)");
-  block(context, cx - 8, cy + 39, 16, 26, "#f7a421", "rgba(219, 127, 14, 0.3)");
-  block(context, cx - 67, cy - 8, 26, 16, "#f7a421", "rgba(219, 127, 14, 0.3)");
-  block(context, cx + 42, cy - 8, 26, 16, "#f7a421", "rgba(219, 127, 14, 0.3)");
-  block(context, cx - 42, cy - 42, 16, 16, "#f7a421", "rgba(219, 127, 14, 0.3)");
-  block(context, cx + 28, cy + 28, 16, 16, "#f7a421", "rgba(219, 127, 14, 0.3)");
-}
-
-function drawCloud(context: CanvasRenderingContext2D, x: number, y: number, scale = 1) {
-  const color = "rgba(255,255,255,0.82)";
-  context.fillStyle = color;
-  context.fillRect(x, y + 16 * scale, 92 * scale, 13 * scale);
-  context.fillRect(x + 22 * scale, y + 6 * scale, 26 * scale, 10 * scale);
-  context.fillRect(x + 43 * scale, y, 24 * scale, 16 * scale);
-  context.fillRect(x + 63 * scale, y + 9 * scale, 20 * scale, 12 * scale);
-}
-
-function drawBackground(context: CanvasRenderingContext2D, state: State, elapsed: number) {
-  const sky = context.createLinearGradient(0, 0, 0, HEIGHT);
-  sky.addColorStop(0, "#fff0ad");
-  sky.addColorStop(0.52, "#ffe6a1");
-  sky.addColorStop(1, "#f2be77");
+function drawBackground(context: CanvasRenderingContext2D, image: HTMLImageElement, state: State) {
+  const sky = context.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
+  sky.addColorStop(0, "#fff0b0");
+  sky.addColorStop(0.58, "#ffe1a0");
+  sky.addColorStop(1, "#e8b06d");
   context.fillStyle = sky;
-  context.fillRect(0, 0, WIDTH, HEIGHT);
+  context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-  drawPixelSun(context, elapsed);
-  drawCloud(context, 64 - (state.groundOffset * 0.18) % 170, 58, 0.9);
-  drawCloud(context, 390 - (state.groundOffset * 0.13) % 210, 91, 0.72);
-  drawCloud(context, 666 - (state.groundOffset * 0.1) % 170, 142, 0.62);
+  drawPixelSun(context);
+  state.clouds.forEach((cloud) => drawSprite(context, image, SPRITE.CLOUD, cloud.x, cloud.y));
 
-  context.fillStyle = "rgba(177, 112, 62, 0.38)";
-  const mesaOffset = (state.groundOffset * 0.22) % 240;
-  for (let x = -mesaOffset - 70; x < WIDTH + 120; x += 240) {
-    context.fillRect(x, GROUND_Y - 34, 54, 34);
-    context.fillRect(x + 12, GROUND_Y - 50, 28, 16);
-    context.fillRect(x + 132, GROUND_Y - 19, 62, 19);
-    context.fillRect(x + 145, GROUND_Y - 31, 26, 12);
+  context.fillStyle = "rgba(160, 98, 55, 0.28)";
+  const mesaOffset = (state.horizonOffset * 0.16) % 230;
+  for (let x = -mesaOffset - 60; x < GAME_WIDTH + 120; x += 230) {
+    context.fillRect(toCanvasX(x), toCanvasY(GROUND_Y - 26), 45 * SCALE, 26 * SCALE);
+    context.fillRect(toCanvasX(x + 10), toCanvasY(GROUND_Y - 39), 24 * SCALE, 13 * SCALE);
+    context.fillRect(toCanvasX(x + 140), toCanvasY(GROUND_Y - 18), 55 * SCALE, 18 * SCALE);
+    context.fillRect(toCanvasX(x + 154), toCanvasY(GROUND_Y - 29), 22 * SCALE, 11 * SCALE);
   }
 
-  const ground = context.createLinearGradient(0, GROUND_Y, 0, HEIGHT);
-  ground.addColorStop(0, "#f0bc75");
-  ground.addColorStop(1, "#d99f60");
+  const firstHorizonX = -(state.horizonOffset % GAME_WIDTH);
+  drawSprite(context, image, SPRITE.HORIZON, firstHorizonX, GROUND_Y);
+  drawSprite(context, image, SPRITE.HORIZON, firstHorizonX + GAME_WIDTH, GROUND_Y);
+
+  const ground = context.createLinearGradient(0, toCanvasY(GROUND_Y + 10), 0, CANVAS_HEIGHT);
+  ground.addColorStop(0, "rgba(232, 174, 102, 0.62)");
+  ground.addColorStop(1, "rgba(190, 130, 76, 0.68)");
   context.fillStyle = ground;
-  context.fillRect(0, GROUND_Y, WIDTH, HEIGHT - GROUND_Y);
-
-  context.fillStyle = "#111111";
-  context.fillRect(0, GROUND_Y - 2, WIDTH, 5);
-
-  const rockOffset = state.groundOffset % 44;
-  for (let x = -rockOffset; x < WIDTH + 44; x += 44) {
-    const y = GROUND_Y + 16 + ((x / 44) % 3) * 10;
-    context.fillStyle = "rgba(95, 67, 48, 0.42)";
-    context.fillRect(Math.round(x + 7), Math.round(y), 15, 5);
-    context.fillStyle = "rgba(36, 33, 30, 0.82)";
-    context.fillRect(Math.round(x + 30), Math.round(GROUND_Y - 9), 6, 7);
-  }
+  context.fillRect(0, toCanvasY(GROUND_Y + 10), CANVAS_WIDTH, CANVAS_HEIGHT - toCanvasY(GROUND_Y + 10));
 }
 
-function drawCactusStem(context: CanvasRenderingContext2D, x: number, y: number, height: number, scale: number) {
-  const green = "#80bc1c";
-  const dark = "#20340e";
-  block(context, x + 9 * scale, y, 15 * scale, height, green, dark);
-  block(context, x + 13 * scale, y + 5 * scale, 4 * scale, Math.max(10, height - 11 * scale), "#a4d339", "transparent");
-  block(context, x - 1 * scale, y + height * 0.38, 11 * scale, 13 * scale, green, dark);
-  block(context, x - 1 * scale, y + height * 0.25, 8 * scale, height * 0.22, green, dark);
-  block(context, x + 23 * scale, y + height * 0.5, 12 * scale, 13 * scale, green, dark);
-  block(context, x + 28 * scale, y + height * 0.34, 8 * scale, height * 0.27, green, dark);
-}
-
-function drawCactus(context: CanvasRenderingContext2D, obstacle: Obstacle) {
-  const count = obstacle.variant;
-  for (let index = 0; index < count; index += 1) {
-    const scale = index === 1 ? 0.92 : 0.82 + (obstacle.id % 2) * 0.16;
-    const height = obstacle.height * (index === 1 ? 1 : 0.78);
-    drawCactusStem(
-      context,
-      obstacle.x + index * 31,
-      GROUND_Y - height,
-      height,
-      scale,
+function drawObstacle(context: CanvasRenderingContext2D, image: HTMLImageElement, obstacle: Obstacle, elapsed: number) {
+  if (obstacle.kind === "pterodactyl") {
+    const frame = Math.floor(elapsed * 6) % 2;
+    context.drawImage(
+      image,
+      SPRITE.PTERODACTYL.x + frame * SPRITE.PTERODACTYL.w,
+      SPRITE.PTERODACTYL.y,
+      SPRITE.PTERODACTYL.w,
+      SPRITE.PTERODACTYL.h,
+      Math.round(toCanvasX(obstacle.x)),
+      Math.round(toCanvasY(obstacle.y)),
+      Math.round(SPRITE.PTERODACTYL.dw * SCALE),
+      Math.round(SPRITE.PTERODACTYL.dh * SCALE),
     );
-  }
-}
-
-function drawBird(context: CanvasRenderingContext2D, obstacle: Obstacle, elapsed: number) {
-  const flapUp = Math.sin(elapsed * 17 + obstacle.id) > 0;
-  const x = obstacle.x;
-  const y = obstacle.y;
-  const dark = "#181818";
-  block(context, x + 16, y + 12, 28, 12, "#3b3b3b", dark);
-  block(context, x + 38, y + 9, 13, 10, "#3b3b3b", dark);
-  block(context, x + 49, y + 13, 9, 5, "#3b3b3b", dark);
-  if (flapUp) {
-    block(context, x + 14, y - 2, 12, 18, "#333333", dark);
-    block(context, x + 27, y + 1, 11, 13, "#333333", dark);
-  } else {
-    block(context, x + 14, y + 22, 13, 16, "#333333", dark);
-    block(context, x + 27, y + 20, 11, 12, "#333333", dark);
-  }
-  context.fillStyle = "#f8f2df";
-  context.fillRect(x + 43, y + 12, 4, 4);
-}
-
-function drawDino(context: CanvasRenderingContext2D, state: State, elapsed: number) {
-  const ducking = state.ducking && isGrounded(state);
-  const running = state.phase === "playing" && isGrounded(state);
-  const frame = running ? Math.floor(elapsed * 13) % 2 : 0;
-  const x = DINO_X;
-  const y = ducking ? GROUND_Y - DINO_DUCK_HEIGHT : state.dinoY;
-  const fill = "#4c5057";
-  const light = "#666b73";
-  const dark = "#111111";
-
-  context.save();
-  if (ducking) {
-    block(context, x + 2, y + 14, 47, 24, fill, dark);
-    block(context, x + 42, y + 3, 32, 24, fill, dark);
-    block(context, x + 69, y + 11, 12, 8, fill, dark);
-    block(context, x - 15, y + 20, 20, 10, fill, dark);
-    block(context, x + 20, y + 29, 12, 14, fill, dark);
-    block(context, x + 53, y + 27, 12, 14, fill, dark);
-    block(context, x + 48, y + 8, 8, 8, "#fffdf0", dark);
-    context.fillStyle = dark;
-    context.fillRect(x + 52, y + 11, 4, 4);
-    context.fillRect(x + 65, y + 25, 18, 4);
-  } else {
-    block(context, x + 9, y + 25, 33, 32, fill, dark);
-    block(context, x + 30, y + 7, 30, 27, fill, dark);
-    block(context, x + 54, y + 16, 18, 13, fill, dark);
-    block(context, x - 7, y + 35, 18, 12, fill, dark);
-    block(context, x + 14, y + 20, 10, 31, light, "transparent");
-    block(context, x + 39, y + 36, 11, 13, fill, dark);
-    block(context, x + 36, y + 13, 9, 9, "#fffdf0", dark);
-    context.fillStyle = dark;
-    context.fillRect(x + 40, y + 16, 4, 4);
-    context.fillRect(x + 51, y + 31, 18, 4);
-    if (running && frame === 0) {
-      block(context, x + 13, y + 54, 11, 17, fill, dark);
-      block(context, x + 38, y + 53, 13, 11, fill, dark);
-    } else if (running) {
-      block(context, x + 13, y + 53, 13, 11, fill, dark);
-      block(context, x + 38, y + 54, 11, 17, fill, dark);
-    } else {
-      block(context, x + 13, y + 54, 11, 14, fill, dark);
-      block(context, x + 38, y + 54, 11, 14, fill, dark);
-    }
+    return;
   }
 
-  if (running) {
-    context.fillStyle = "rgba(255,255,255,0.48)";
-    const dustX = x - 26 - (elapsed * 150) % 22;
-    context.fillRect(dustX, GROUND_Y - 16, 22, 4);
-    context.fillRect(dustX - 22, GROUND_Y - 32, 18, 4);
-    context.fillStyle = "#111111";
-    context.fillRect(x - 24 - (elapsed * 110) % 28, GROUND_Y + 5, 7, 7);
-  }
-  context.restore();
-}
-
-function drawScore(context: CanvasRenderingContext2D, state: State) {
-  context.fillStyle = "#242424";
-  context.font = "900 21px 'Courier New', monospace";
-  context.textAlign = "right";
-  context.fillText(
-    `HI ${String(Math.floor(state.bestScore)).padStart(5, "0")}  ${String(Math.floor(state.score)).padStart(5, "0")}`,
-    WIDTH - 24,
-    34,
+  const sprite = obstacle.kind === "small-cactus" ? SPRITE.CACTUS_SMALL : SPRITE.CACTUS_LARGE;
+  context.drawImage(
+    image,
+    sprite.x,
+    sprite.y,
+    sprite.w * obstacle.count,
+    sprite.h,
+    Math.round(toCanvasX(obstacle.x)),
+    Math.round(toCanvasY(GROUND_Y - sprite.dh)),
+    Math.round(sprite.dw * obstacle.count * SCALE),
+    Math.round(sprite.dh * SCALE),
   );
 }
 
-function drawOverlay(context: CanvasRenderingContext2D, state: State) {
+function drawTrex(context: CanvasRenderingContext2D, image: HTMLImageElement, state: State, elapsed: number) {
+  const grounded = isGrounded(state);
+  const running = state.phase === "playing" && grounded;
+  const waiting = state.phase === "idle";
+  const ducking = state.ducking && grounded;
+
+  if (ducking) {
+    const frame = Math.floor(elapsed * 10) % 2 === 0 ? TREX_FRAMES.DUCKING_1 : TREX_FRAMES.DUCKING_2;
+    drawTrexSprite(context, image, TREX_X, GROUND_Y - TREX_HEIGHT, frame, TREX_DUCK_WIDTH, TREX_HEIGHT);
+    return;
+  }
+
+  let frame = TREX_FRAMES.WAITING_2;
+  if (state.phase === "game-over") {
+    frame = TREX_FRAMES.CRASHED;
+  } else if (running) {
+    frame = Math.floor(elapsed * 12) % 2 === 0 ? TREX_FRAMES.RUNNING_1 : TREX_FRAMES.RUNNING_2;
+  } else if (waiting) {
+    frame = Math.floor(elapsed * 1.7) % 2 === 0 ? TREX_FRAMES.WAITING_1 : TREX_FRAMES.WAITING_2;
+  }
+
+  drawTrexSprite(context, image, TREX_X, state.trexY, frame);
+}
+
+function drawScore(context: CanvasRenderingContext2D, state: State) {
+  context.fillStyle = "#535353";
+  context.font = `${Math.round(16 * SCALE)}px 'Courier New', monospace`;
+  context.textAlign = "right";
+  context.textBaseline = "top";
+  context.fillText(
+    `HI ${String(Math.floor(state.bestScore)).padStart(5, "0")}  ${String(Math.floor(state.score)).padStart(5, "0")}`,
+    toCanvasX(GAME_WIDTH - 12),
+    toCanvasY(13),
+  );
+}
+
+function drawGameOver(context: CanvasRenderingContext2D, image: HTMLImageElement, state: State) {
   if (state.phase === "playing") {
     return;
   }
 
-  context.fillStyle = "rgba(255, 238, 178, 0.7)";
-  context.fillRect(0, 0, WIDTH, HEIGHT);
-  context.fillStyle = "#181818";
-  context.textAlign = "center";
-  context.font = "900 32px 'Courier New', monospace";
-  context.fillText(state.phase === "game-over" ? "GAME OVER" : state.phase === "paused" ? "PAUSED" : "CHROME DINO", WIDTH / 2, 105);
-  context.font = "800 16px 'Courier New', monospace";
-  context.fillText("SPACE / W / UP TO JUMP", WIDTH / 2, 138);
-  context.fillText("S / DOWN TO DUCK", WIDTH / 2, 160);
-
-  if (state.phase === "game-over") {
-    context.strokeStyle = "#181818";
-    context.lineWidth = 4;
-    context.strokeRect(WIDTH / 2 - 18, 182, 36, 30);
-    context.beginPath();
-    context.moveTo(WIDTH / 2 - 8, 190);
-    context.lineTo(WIDTH / 2 + 8, 197);
-    context.lineTo(WIDTH / 2 - 8, 204);
-    context.stroke();
+  if (state.phase === "idle") {
+    context.fillStyle = "#4f4f4f";
+    context.font = `900 ${Math.round(17 * SCALE)}px 'Courier New', monospace`;
+    context.textAlign = "center";
+    context.fillText("PRESS SPACE TO START", toCanvasX(GAME_WIDTH / 2), toCanvasY(70));
+    return;
   }
+
+  if (state.phase === "paused") {
+    context.fillStyle = "#4f4f4f";
+    context.font = `900 ${Math.round(18 * SCALE)}px 'Courier New', monospace`;
+    context.textAlign = "center";
+    context.fillText("PAUSED", toCanvasX(GAME_WIDTH / 2), toCanvasY(69));
+    return;
+  }
+
+  context.drawImage(
+    image,
+    SPRITE.TEXT.x,
+    SPRITE.TEXT.y,
+    SPRITE.TEXT.w,
+    SPRITE.TEXT.h,
+    Math.round(toCanvasX(GAME_WIDTH / 2 - SPRITE.TEXT.dw / 2)),
+    Math.round(toCanvasY(52)),
+    Math.round(SPRITE.TEXT.dw * SCALE),
+    Math.round(SPRITE.TEXT.dh * SCALE),
+  );
+  context.drawImage(
+    image,
+    SPRITE.RESTART.x,
+    SPRITE.RESTART.y,
+    SPRITE.RESTART.w,
+    SPRITE.RESTART.h,
+    Math.round(toCanvasX(GAME_WIDTH / 2 - SPRITE.RESTART.dw / 2)),
+    Math.round(toCanvasY(78)),
+    Math.round(SPRITE.RESTART.dw * SCALE),
+    Math.round(SPRITE.RESTART.dh * SCALE),
+  );
 }
 
-function drawScene(context: CanvasRenderingContext2D, state: State, elapsed: number) {
-  context.clearRect(0, 0, WIDTH, HEIGHT);
+function drawScene(context: CanvasRenderingContext2D, image: HTMLImageElement | null, state: State, elapsed: number) {
+  context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
   context.imageSmoothingEnabled = false;
-  drawBackground(context, state, elapsed);
-  state.obstacles.forEach((obstacle) => {
-    if (obstacle.kind === "bird") {
-      drawBird(context, obstacle, elapsed);
-    } else {
-      drawCactus(context, obstacle);
-    }
-  });
-  drawDino(context, state, elapsed);
-  drawScore(context, state);
-  if (state.flashTimer > 0) {
-    context.fillStyle = `rgba(255, 255, 255, ${state.flashTimer * 2.4})`;
-    context.fillRect(0, 0, WIDTH, HEIGHT);
+
+  if (!image) {
+    context.fillStyle = "#f7f7f7";
+    context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    context.fillStyle = "#555555";
+    context.font = "900 22px 'Courier New', monospace";
+    context.textAlign = "center";
+    context.fillText("LOADING CHROME DINO", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
+    return;
   }
-  drawOverlay(context, state);
+
+  const shake = state.shakeTimer > 0 ? Math.sin(elapsed * 90) * 3 : 0;
+  context.save();
+  context.translate(shake, 0);
+  drawBackground(context, image, state);
+  state.obstacles.forEach((obstacle) => drawObstacle(context, image, obstacle, elapsed));
+  drawTrex(context, image, state, elapsed);
+  drawScore(context, state);
+  drawGameOver(context, image, state);
+  context.restore();
 }
 
 export function DinoRunGame() {
@@ -419,6 +512,7 @@ export function DinoRunGame() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
   const stateRef = useRef(initialState);
+  const spriteRef = useRef<HTMLImageElement | null>(null);
   const downRef = useRef(false);
   const [hud, setHud] = useState({
     score: initialState.score,
@@ -452,51 +546,85 @@ export function DinoRunGame() {
   function jump() {
     const current = stateRef.current.phase === "game-over" ? createState(stateRef.current.bestScore) : stateRef.current;
     if (current.phase !== "playing") {
-      sync({ ...current, phase: "playing", velocityY: -790, flashTimer: 0 }, true);
+      sync({ ...current, phase: "playing", velocityY: -660 }, true);
     } else if (isGrounded(current)) {
-      sync({ ...current, velocityY: -790, ducking: false }, true);
+      sync({ ...current, velocityY: -660, ducking: false }, true);
     }
   }
 
-  const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
+  function restart() {
+    sync({ ...createState(stateRef.current.bestScore), phase: "playing", velocityY: -660 }, true);
+  }
+
+  const handleGameKey = useEffectEvent((event: KeyboardEvent) => {
+    if (event.ctrlKey || event.metaKey || event.altKey) {
+      return;
+    }
+
     const key = event.key.toLowerCase();
-    if (key === " " || key === "arrowup" || key === "w") {
+    const code = event.code.toLowerCase();
+    const jumpKey = key === " " || code === "space" || key === "arrowup" || key === "w";
+    const duckKey = key === "arrowdown" || key === "s";
+
+    if (jumpKey) {
       event.preventDefault();
+      event.stopPropagation();
       jump();
-    } else if (key === "arrowdown" || key === "s") {
+    } else if (duckKey) {
       event.preventDefault();
+      event.stopPropagation();
       downRef.current = true;
     } else if (key === "p") {
       event.preventDefault();
+      event.stopPropagation();
       const current = stateRef.current;
       sync({ ...current, phase: current.phase === "playing" ? "paused" : "playing" }, true);
     } else if (key === "r") {
       event.preventDefault();
-      sync({ ...createState(stateRef.current.bestScore), phase: "playing", velocityY: -790 }, true);
+      event.stopPropagation();
+      restart();
     }
   });
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
-      const context = configureHiDPICanvas(canvas, WIDTH, HEIGHT);
+      const context = configureHiDPICanvas(canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
       if (context) {
         context.imageSmoothingEnabled = false;
         contextRef.current = context;
-        drawScene(context, stateRef.current, 0);
       }
     }
-    const handleKeyDown = (event: KeyboardEvent) => onKeyDown(event);
+
+    const image = new Image();
+    image.onload = () => {
+      spriteRef.current = image;
+      if (contextRef.current) {
+        drawScene(contextRef.current, spriteRef.current, stateRef.current, 0);
+      }
+    };
+    image.src = SPRITE_SRC;
+
+    if (contextRef.current) {
+      drawScene(contextRef.current, null, stateRef.current, 0);
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => handleGameKey(event);
     const handleKeyUp = (event: KeyboardEvent) => {
-      if (["arrowdown", "s"].includes(event.key.toLowerCase())) {
+      const key = event.key.toLowerCase();
+      const code = event.code.toLowerCase();
+      if (key === "arrowdown" || key === "s" || code === "arrowdown") {
+        event.preventDefault();
+        event.stopPropagation();
         downRef.current = false;
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
+
+    window.addEventListener("keydown", handleKeyDown, true);
+    window.addEventListener("keyup", handleKeyUp, true);
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("keydown", handleKeyDown, true);
+      window.removeEventListener("keyup", handleKeyUp, true);
     };
   }, []);
 
@@ -506,7 +634,7 @@ export function DinoRunGame() {
       sync(nextState);
     }
     if (contextRef.current) {
-      drawScene(contextRef.current, stateRef.current, elapsed);
+      drawScene(contextRef.current, spriteRef.current, stateRef.current, elapsed);
     }
   });
 
@@ -519,15 +647,12 @@ export function DinoRunGame() {
           { label: "Status", value: hud.phase },
         ]}
         actions={
-          <GameButton
-            variant="primary"
-            onClick={() => sync({ ...createState(stateRef.current.bestScore), phase: "playing", velocityY: -790 }, true)}
-          >
+          <GameButton variant="primary" onClick={restart}>
             Start
           </GameButton>
         }
       />
-      <GamePlayfield className="mx-auto aspect-[38/15] w-full max-w-[min(48rem,86dvh)] touch-none overflow-hidden border-0 bg-[#ffe8a1]">
+      <GamePlayfield className="mx-auto aspect-[38/15] w-full max-w-[min(48rem,86dvh)] touch-none overflow-hidden border-0 bg-[#ffe5a1]">
         <canvas ref={canvasRef} className="h-full w-full" aria-label="Chrome Dino field" onPointerDown={jump} />
       </GamePlayfield>
       <GameStatus>Space jumps, Down ducks, P pauses, and R restarts.</GameStatus>
@@ -542,6 +667,9 @@ export function DinoRunGame() {
               downRef.current = true;
             }}
             onPointerUp={() => {
+              downRef.current = false;
+            }}
+            onPointerLeave={() => {
               downRef.current = false;
             }}
           >
