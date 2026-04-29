@@ -50,9 +50,9 @@ const tileColors = new Map<number, string>([
 ]);
 
 const TILE_GAP = 10;
-const SLIDE_DURATION_MS = 215;
-const POP_DURATION_MS = 155;
-const SPAWN_DURATION_MS = 135;
+const SLIDE_DURATION_MS = 78;
+const POP_DURATION_MS = 42;
+const SPAWN_DURATION_MS = 28;
 
 type RenderTile = {
   renderKey: string;
@@ -173,8 +173,10 @@ export function TwentyFortyEightGame() {
   const initialState = createInitialGameState();
   const [state, setState] = useState<TwentyFortyEightState>(initialState);
   const [renderTiles, setRenderTiles] = useState<RenderTile[]>(() => createFinalRenderTiles(initialState.tiles));
+  const stateRef = useRef(initialState);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const isAnimatingRef = useRef(false);
+  const queuedDirectionRef = useRef<TwentyFortyEightDirection | null>(null);
   const animationIdRef = useRef(0);
   const slideFrameRef = useRef<number | null>(null);
   const slideTimerRef = useRef<number | null>(null);
@@ -212,6 +214,7 @@ export function TwentyFortyEightGame() {
   }
 
   function syncState(nextState: TwentyFortyEightState, shouldAnimateFinal = false) {
+    stateRef.current = nextState;
     setState(nextState);
     setRenderTiles(shouldAnimateFinal ? createFinalRenderTiles(nextState.tiles) : createSettledRenderTiles(nextState.tiles));
     writeStoredNumber(TWENTY_FORTY_EIGHT_STORAGE_KEY, nextState.bestScore);
@@ -220,16 +223,19 @@ export function TwentyFortyEightGame() {
   function resetGame() {
     clearAnimationTimers();
     isAnimatingRef.current = false;
-    syncState(createTwentyFortyEightState(state.bestScore), true);
+    queuedDirectionRef.current = null;
+    syncState(createTwentyFortyEightState(stateRef.current.bestScore), true);
   }
 
   function move(direction: TwentyFortyEightDirection) {
     if (isAnimatingRef.current) {
+      queuedDirectionRef.current = direction;
       return;
     }
 
-    const nextState = moveTwentyFortyEight(state, direction);
-    if (nextState === state) {
+    const currentState = stateRef.current;
+    const nextState = moveTwentyFortyEight(currentState, direction);
+    if (nextState === currentState) {
       return;
     }
 
@@ -238,11 +244,11 @@ export function TwentyFortyEightGame() {
     animationIdRef.current += 1;
     const animationId = animationIdRef.current;
 
-    setRenderTiles(createMoveRenderTiles(state.tiles, nextState.tiles, animationId, false));
+    setRenderTiles(createMoveRenderTiles(currentState.tiles, nextState.tiles, animationId, false));
 
     slideFrameRef.current = window.requestAnimationFrame(() => {
       slideFrameRef.current = window.requestAnimationFrame(() => {
-        setRenderTiles(createMoveRenderTiles(state.tiles, nextState.tiles, animationId, true));
+        setRenderTiles(createMoveRenderTiles(currentState.tiles, nextState.tiles, animationId, true));
         slideFrameRef.current = null;
       });
     });
@@ -251,6 +257,7 @@ export function TwentyFortyEightGame() {
     const allTiles = nextState.tiles;
 
     slideTimerRef.current = window.setTimeout(() => {
+      stateRef.current = nextState;
       setState(nextState);
       writeStoredNumber(TWENTY_FORTY_EIGHT_STORAGE_KEY, nextState.bestScore);
       setRenderTiles(createFinalRenderTiles(mergedTiles));
@@ -259,6 +266,11 @@ export function TwentyFortyEightGame() {
         spawnTimerRef.current = window.setTimeout(() => {
           setRenderTiles(createSettledRenderTiles(allTiles));
           isAnimatingRef.current = false;
+          const queuedDirection = queuedDirectionRef.current;
+          queuedDirectionRef.current = null;
+          if (queuedDirection) {
+            window.requestAnimationFrame(() => move(queuedDirection));
+          }
         }, SPAWN_DURATION_MS);
       }, POP_DURATION_MS);
     }, SLIDE_DURATION_MS);
@@ -349,16 +361,17 @@ export function TwentyFortyEightGame() {
               <div
                 key={tile.renderKey}
                 className={`absolute grid place-items-center rounded-[1rem] border-2 border-white/40 text-2xl font-black sm:text-4xl ${
-                  tile.phase === "sliding" ? "z-10 transition-[left,top] duration-[215ms] ease-[cubic-bezier(0.18,0.84,0.2,1)]" : ""
+                  tile.phase === "sliding" ? "z-10 transition-[left,top] ease-[cubic-bezier(0.18,0.84,0.2,1)]" : ""
                 } ${
                   tile.phase === "spawn"
-                    ? "z-20 animate-[tileSpawn_145ms_cubic-bezier(0.2,0.9,0.25,1.2)]"
+                    ? "z-20 animate-[tileSpawn_80ms_cubic-bezier(0.2,0.9,0.25,1.2)]"
                     : tile.phase === "pop"
-                      ? "z-20 animate-[tilePop_145ms_cubic-bezier(0.2,0.9,0.25,1.2)]"
+                      ? "z-20 animate-[tilePop_90ms_cubic-bezier(0.2,0.9,0.25,1.2)]"
                       : ""
                 } ${getTileClass(tile.value)}`}
                 style={{
                   ...getTilePositionStyle(tile.row, tile.column),
+                  transitionDuration: tile.phase === "sliding" ? `${SLIDE_DURATION_MS}ms` : undefined,
                 }}
               >
                 {tile.value}
