@@ -56,6 +56,8 @@ function getStatusCopy(phase: BreakoutPhase) {
 }
 
 const BRICK_PALETTE = ["#fb3b42", "#ff8b2b", "#ffd84c", "#4ecf5b", "#36a4ff", "#8b5cff"];
+const BREAKOUT_TEXT_SCALE_X = 0.86;
+const BREAKOUT_PREVENT_DEFAULT_KEYS = ["a", "d", "arrowleft", "arrowright", " "];
 
 function roundedRect(
   context: CanvasRenderingContext2D,
@@ -77,6 +79,20 @@ function roundedRect(
   context.lineTo(x, y + safeRadius);
   context.quadraticCurveTo(x, y, x + safeRadius, y);
   context.closePath();
+}
+
+function drawCompressedText(
+  context: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  scaleX = BREAKOUT_TEXT_SCALE_X,
+) {
+  context.save();
+  context.translate(x, y);
+  context.scale(scaleX, 1);
+  context.fillText(text, 0, 0);
+  context.restore();
 }
 
 function drawBreakoutBackground(context: CanvasRenderingContext2D) {
@@ -180,7 +196,7 @@ function drawBrick(context: CanvasRenderingContext2D, brick: BreakoutState["bric
     context.textBaseline = "middle";
     context.fillStyle = "rgba(43, 25, 12, 0.65)";
     context.font = "800 12px sans-serif";
-    context.fillText(String(brick.strength), x + BREAKOUT_BRICK_WIDTH / 2, y + BREAKOUT_BRICK_HEIGHT / 2 + 1);
+    drawCompressedText(context, String(brick.strength), x + BREAKOUT_BRICK_WIDTH / 2, y + BREAKOUT_BRICK_HEIGHT / 2 + 1, 0.92);
     context.restore();
   }
 }
@@ -301,7 +317,7 @@ function drawBreakoutScene(context: CanvasRenderingContext2D, state: BreakoutSta
     context.fillStyle = "rgba(72, 36, 9, 0.42)";
     context.fillRect(0, 0, BREAKOUT_WIDTH, BREAKOUT_HEIGHT);
     context.textAlign = "center";
-    roundedRect(context, BREAKOUT_WIDTH / 2 - 150, BREAKOUT_HEIGHT / 2 - 64, 300, 118, 24);
+    roundedRect(context, BREAKOUT_WIDTH / 2 - 132, BREAKOUT_HEIGHT / 2 - 64, 264, 118, 24);
     context.fillStyle = "rgba(255, 248, 220, 0.92)";
     context.fill();
     context.lineWidth = 4;
@@ -309,7 +325,8 @@ function drawBreakoutScene(context: CanvasRenderingContext2D, state: BreakoutSta
     context.stroke();
     context.fillStyle = "#4c280e";
     context.font = "800 34px sans-serif";
-    context.fillText(
+    drawCompressedText(
+      context,
       state.phase === "cleared"
         ? "Wall cleared"
         : state.phase === "game-over"
@@ -322,7 +339,7 @@ function drawBreakoutScene(context: CanvasRenderingContext2D, state: BreakoutSta
     );
     context.font = "700 15px sans-serif";
     context.fillStyle = "rgba(76, 40, 14, 0.72)";
-    context.fillText("Press Space or Start", BREAKOUT_WIDTH / 2, BREAKOUT_HEIGHT / 2 + 22);
+    drawCompressedText(context, "Press Space or Start", BREAKOUT_WIDTH / 2, BREAKOUT_HEIGHT / 2 + 22);
   }
 }
 
@@ -334,7 +351,7 @@ export function BreakoutGame() {
   const pointerXRef = useRef<number | null>(null);
   const touchDirectionRef = useRef(0);
   const pressedKeysRef = useKeyboardState({
-    preventDefaultKeys: ["a", "d", "arrowleft", "arrowright", " "],
+    preventDefaultKeys: BREAKOUT_PREVENT_DEFAULT_KEYS,
   });
   const [hudState, setHudState] = useState(() => ({
     score: initialState.score,
@@ -423,11 +440,12 @@ export function BreakoutGame() {
     const keyboardDirection =
       Number(pressedKeys.has("d") || pressedKeys.has("arrowright")) -
       Number(pressedKeys.has("a") || pressedKeys.has("arrowleft"));
+    const inputDirection = keyboardDirection || touchDirectionRef.current;
     const nextState = updateBreakout(
       stateRef.current,
       deltaSeconds,
-      keyboardDirection || touchDirectionRef.current,
-      pointerXRef.current,
+      inputDirection,
+      inputDirection ? null : pointerXRef.current,
     );
 
     if (nextState !== stateRef.current) {
