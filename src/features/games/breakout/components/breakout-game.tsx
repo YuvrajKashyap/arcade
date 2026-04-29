@@ -521,6 +521,9 @@ export function BreakoutGame() {
       </GamePlayfield>
 
       <GameStatus>{getStatusCopy(hudState.phase)}</GameStatus>
+      <p className="hidden text-center text-xs font-medium uppercase tracking-[0.16em] text-foreground-muted md:block">
+        Mouse controls paddle
+      </p>
 
       <TouchControls className="max-w-[22rem]">
         <div className="flex gap-3">
