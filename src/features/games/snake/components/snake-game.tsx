@@ -630,6 +630,10 @@ export function SnakeGame() {
     const dx = x - start.x;
     const dy = y - start.y;
     if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) {
+      const currentPhase = stateRef.current.phase;
+      if (currentPhase === "idle" || currentPhase === "game-over") {
+        resetGame("playing");
+      }
       return;
     }
 
