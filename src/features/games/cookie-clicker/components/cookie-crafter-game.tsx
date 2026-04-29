@@ -536,13 +536,13 @@ export function CookieCrafterGame() {
         }
       />
 
-      <GamePlayfield className="mx-auto grid aspect-[7/9] w-full max-w-[min(64rem,86dvh)] grid-cols-1 grid-rows-[1.05fr_0.78fr_1.2fr] overflow-hidden border-0 bg-[#1b1220] text-[#4a2d16] shadow-[0_28px_90px_rgba(32,16,6,0.38)] md:aspect-[16/10] md:grid-cols-[1.05fr_1fr_19rem] md:grid-rows-none">
-        <section className="relative min-h-0 overflow-hidden bg-[radial-gradient(circle_at_50%_42%,#f5d690_0%,#d69a42_38%,#835324_69%,#322018_100%)] p-4">
+      <GamePlayfield className="mx-auto grid aspect-[7/9] w-full max-w-[min(64rem,86dvh)] grid-cols-1 grid-rows-[1.56fr_0.62fr_0.85fr] overflow-hidden border-0 bg-[#1b1220] text-[#4a2d16] shadow-[0_28px_90px_rgba(32,16,6,0.38)] md:aspect-[16/10] md:grid-cols-[1.05fr_1fr_19rem] md:grid-rows-none">
+        <section className="relative min-h-0 overflow-hidden bg-[radial-gradient(circle_at_50%_42%,#f5d690_0%,#d69a42_38%,#835324_69%,#322018_100%)] p-3 md:p-4">
           <div className="absolute inset-0 opacity-35 [background-image:linear-gradient(90deg,rgba(255,255,255,.16)_1px,transparent_1px),linear-gradient(rgba(255,255,255,.12)_1px,transparent_1px)] [background-size:34px_34px]" />
-          <div className="relative flex h-full min-h-0 flex-col items-center justify-between gap-3">
-            <div className="w-full rounded-xl border border-[#f7d98d]/45 bg-[#3b2418]/70 px-3 py-2 text-center text-[#ffe8a7] shadow-[inset_0_2px_0_rgba(255,255,255,0.16)]">
-              <p className="text-xs font-black uppercase tracking-[0.18em]">Bakery</p>
-              <p className="mt-1 text-sm font-bold">{notice}</p>
+          <div className="relative flex h-full min-h-0 flex-col items-center justify-between gap-2 md:gap-3">
+            <div className="w-full rounded-xl border border-[#f7d98d]/45 bg-[#3b2418]/70 px-3 py-1.5 text-center text-[#ffe8a7] shadow-[inset_0_2px_0_rgba(255,255,255,0.16)] md:py-2">
+              <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] md:text-xs">Bakery</p>
+              <p className="mt-0.5 line-clamp-2 text-xs font-bold md:mt-1 md:line-clamp-none md:text-sm">{notice}</p>
             </div>
 
             <div className="relative grid flex-1 place-items-center">
@@ -578,7 +578,7 @@ export function CookieCrafterGame() {
                   const rect = event.currentTarget.getBoundingClientRect();
                   bake(clickValue, ((event.clientX - rect.left) / rect.width) * 100, ((event.clientY - rect.top) / rect.height) * 100);
                 }}
-                className={`relative grid aspect-square w-[clamp(8.5rem,62%,18rem)] place-items-center rounded-full border-[10px] border-[#4f2d18] bg-[#b96f2f] shadow-[inset_0_22px_0_rgba(255,255,255,0.2),inset_0_-24px_0_rgba(77,37,12,0.22),0_18px_0_#5d341c,0_34px_70px_rgba(29,13,6,0.42)] transition-transform duration-75 hover:scale-[1.015] active:scale-95 ${isPressed ? "scale-95" : "scale-100"}`}
+                className={`relative grid aspect-square w-[clamp(6.25rem,46%,18rem)] place-items-center rounded-full border-[10px] border-[#4f2d18] bg-[#b96f2f] shadow-[inset_0_22px_0_rgba(255,255,255,0.2),inset_0_-24px_0_rgba(77,37,12,0.22),0_18px_0_#5d341c,0_34px_70px_rgba(29,13,6,0.42)] transition-transform duration-75 hover:scale-[1.015] active:scale-95 md:w-[clamp(8.5rem,62%,18rem)] ${isPressed ? "scale-95" : "scale-100"}`}
                 aria-label="Bake cookie"
               >
                 <span className="absolute inset-[9%] rounded-full bg-[#d89244] shadow-[inset_0_12px_0_rgba(255,255,255,0.18)]" />
@@ -605,18 +605,18 @@ export function CookieCrafterGame() {
               ) : null}
             </div>
 
-            <div className="grid w-full grid-cols-3 gap-2 text-center text-[#fff1be]">
-              <div className="rounded-lg bg-[#3b2418]/72 px-2 py-2">
-                <span className="block text-[0.62rem] font-black uppercase tracking-[0.14em]">Baked</span>
-                <span className="text-sm font-black">{formatNumber(state.totalCookies)}</span>
+            <div className="grid w-full grid-cols-3 gap-1 text-center text-[#fff1be] md:gap-2">
+              <div className="rounded-lg bg-[#3b2418]/72 px-1.5 py-1 md:px-2 md:py-2">
+                <span className="block text-[0.55rem] font-black uppercase tracking-normal md:text-[0.62rem] md:tracking-[0.14em]">Cookies</span>
+                <span className="text-xs font-black md:text-sm">{formatNumber(state.cookies)}</span>
               </div>
-              <div className="rounded-lg bg-[#3b2418]/72 px-2 py-2">
-                <span className="block text-[0.62rem] font-black uppercase tracking-[0.14em]">Clicks</span>
-                <span className="text-sm font-black">{formatNumber(state.clicks)}</span>
+              <div className="rounded-lg bg-[#3b2418]/72 px-1.5 py-1 md:px-2 md:py-2">
+                <span className="block text-[0.55rem] font-black uppercase tracking-normal md:text-[0.62rem] md:tracking-[0.14em]">Baked</span>
+                <span className="text-xs font-black md:text-sm">{formatNumber(state.totalCookies)}</span>
               </div>
-              <div className="rounded-lg bg-[#3b2418]/72 px-2 py-2">
-                <span className="block text-[0.62rem] font-black uppercase tracking-[0.14em]">Prestige</span>
-                <span className="text-sm font-black">{formatNumber(state.prestige)}</span>
+              <div className="rounded-lg bg-[#3b2418]/72 px-1.5 py-1 md:px-2 md:py-2">
+                <span className="block text-[0.55rem] font-black uppercase tracking-normal md:text-[0.62rem] md:tracking-[0.14em]">Clicks</span>
+                <span className="text-xs font-black md:text-sm">{formatNumber(state.clicks)}</span>
               </div>
             </div>
           </div>
