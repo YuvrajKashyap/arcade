@@ -1,5 +1,5 @@
 export const BREAKOUT_WIDTH = 720;
-export const BREAKOUT_HEIGHT = 520;
+export const BREAKOUT_HEIGHT = 540;
 export const BREAKOUT_PADDLE_WIDTH = 104;
 export const BREAKOUT_PADDLE_HEIGHT = 16;
 export const BREAKOUT_PADDLE_Y = BREAKOUT_HEIGHT - 44;

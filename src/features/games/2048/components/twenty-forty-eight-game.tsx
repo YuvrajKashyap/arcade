@@ -392,7 +392,11 @@ export function TwentyFortyEightGame() {
               return;
             }
 
-            event.currentTarget.setPointerCapture(event.pointerId);
+            try {
+              event.currentTarget.setPointerCapture(event.pointerId);
+            } catch {
+              // Some touch-capable browsers can reject capture for synthesized pointer streams.
+            }
             touchStartRef.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
           }}
           onPointerUp={(event) => {

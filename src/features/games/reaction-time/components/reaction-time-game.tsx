@@ -120,6 +120,7 @@ function getAttemptAverage(attempts: number[], count: number) {
 export function ReactionTimeGame() {
   const timeoutRef = useRef<number | null>(null);
   const readyAtRef = useRef(0);
+  const skipNextClickRef = useRef(false);
   const [phase, setPhase] = useState<ReactionPhase>("idle");
   const [lastResult, setLastResult] = useState<number | null>(null);
   const [bestTime, setBestTime] = useState(() =>
@@ -178,6 +179,15 @@ export function ReactionTimeGame() {
     if (phase === "ready") {
       recordResult(performance.now() - readyAtRef.current);
     }
+  }
+
+  function handleStageClick() {
+    if (skipNextClickRef.current) {
+      skipNextClickRef.current = false;
+      return;
+    }
+
+    handlePrimaryAction();
   }
 
   function resetSession() {
@@ -255,7 +265,16 @@ export function ReactionTimeGame() {
 
       <button
         type="button"
-        onClick={handlePrimaryAction}
+        onClick={handleStageClick}
+        onPointerUp={(event) => {
+          if (event.pointerType !== "touch" || !event.isPrimary) {
+            return;
+          }
+
+          event.preventDefault();
+          skipNextClickRef.current = true;
+          handlePrimaryAction();
+        }}
         className={`arcade-game-playfield relative min-h-0 flex-1 overflow-hidden rounded-[1.4rem] border px-6 py-8 text-center text-foreground shadow-[0_28px_80px_rgba(0,0,0,0.3)] transition duration-300 ${getStageClasses(phase)}`}
       >
         <span className="pointer-events-none absolute inset-x-12 top-10 h-px bg-gradient-to-r from-transparent via-white/35 to-transparent" />
