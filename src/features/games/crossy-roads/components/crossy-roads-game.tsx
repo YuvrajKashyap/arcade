@@ -17,6 +17,7 @@ import {
 import type {
   CrossyDirection,
   CrossyLane,
+  CrossyLog,
   CrossyPhase,
   CrossyScenery,
   CrossyState,
@@ -205,12 +206,32 @@ function drawRailLane(context: CanvasRenderingContext2D, lane: CrossyLane, y: nu
   }
 }
 
-function drawLog(context: CanvasRenderingContext2D, log: { x: number; width: number }, y: number) {
+function drawLog(context: CanvasRenderingContext2D, log: CrossyLog, y: number) {
   context.save();
   context.translate(log.x, y - 43);
   context.shadowColor = "rgba(10,60,90,0.22)";
   context.shadowBlur = 8;
   context.shadowOffsetY = 5;
+
+  if (log.kind === "lily") {
+    context.translate(log.width / 2, 17);
+    context.fillStyle = "#46bf61";
+    context.strokeStyle = "#1f7d3b";
+    context.lineWidth = 4;
+    context.beginPath();
+    context.ellipse(0, 0, 34, 19, 0, 0.18, Math.PI * 1.82);
+    context.lineTo(4, 1);
+    context.closePath();
+    context.fill();
+    context.stroke();
+    context.fillStyle = "rgba(255,255,255,0.24)";
+    context.beginPath();
+    context.ellipse(-9, -5, 12, 4, -0.28, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
+    return;
+  }
+
   drawRoundRect(context, 0, 5, log.width, 27, 14);
   context.fillStyle = "#9b5a27";
   context.fill();
@@ -236,6 +257,8 @@ function drawVehicle(context: CanvasRenderingContext2D, vehicle: CrossyVehicle, 
   context.shadowOffsetY = 7;
 
   if (vehicle.kind === "train") {
+    context.fillStyle = "rgba(255,255,255,0.38)";
+    context.fillRect(-34, 6, 22, 34);
     drawRoundRect(context, 0, 2, vehicle.width, 42, 8);
     context.fillStyle = vehicle.color;
     context.fill();
@@ -254,6 +277,9 @@ function drawVehicle(context: CanvasRenderingContext2D, vehicle: CrossyVehicle, 
   }
 
   const height = vehicle.kind === "car" ? 35 : 42;
+  context.fillStyle = "rgba(15,20,28,0.24)";
+  drawRoundRect(context, 3, height - 4, vehicle.width - 6, 10, 6);
+  context.fill();
   drawRoundRect(context, 0, 0, vehicle.width, height, 9);
   context.fillStyle = vehicle.color;
   context.fill();
@@ -274,6 +300,9 @@ function drawVehicle(context: CanvasRenderingContext2D, vehicle: CrossyVehicle, 
   context.fill();
   context.fillStyle = "#ffec8a";
   context.fillRect(vehicle.speed > 0 ? vehicle.width - 4 : 0, 9, 4, 10);
+  context.fillStyle = "rgba(255,255,255,0.34)";
+  drawRoundRect(context, 10, 4, vehicle.width - 20, 5, 3);
+  context.fill();
   context.restore();
 }
 
@@ -446,7 +475,7 @@ function drawOverlay(context: CanvasRenderingContext2D, phase: CrossyPhase) {
   context.fillText(phase === "paused" ? "Paused" : phase === "game-over" ? "Try Again" : "Crossy Roads", 0, -13);
   context.font = "800 14px sans-serif";
   context.fillStyle = "#42658c";
-  context.fillText("Arrows, WASD, swipe, or tap controls", 0, 24);
+  context.fillText(phase === "game-over" ? "Space or tap Restart to play again" : "Arrows, WASD, swipe, or tap controls", 0, 24);
   context.restore();
 }
 
@@ -545,6 +574,12 @@ export function CrossyRoadsGame() {
 
   const handleKeyboardInput = useEffectEvent((event: KeyboardEvent) => {
     const normalizedKey = event.key.toLowerCase();
+    if (normalizedKey === " " && stateRef.current.phase === "game-over") {
+      event.preventDefault();
+      restart();
+      return;
+    }
+
     const direction = directionByKey[normalizedKey];
     if (direction) {
       event.preventDefault();
@@ -644,7 +679,7 @@ export function CrossyRoadsGame() {
         />
       </GamePlayfield>
 
-      <GameStatus>{getStatusCopy(hudState.phase)} R restarts and P pauses.</GameStatus>
+      <GameStatus>{getStatusCopy(hudState.phase)} Space or R restarts after a crash. P pauses.</GameStatus>
 
       <TouchControls className="max-w-[18rem]">
         <div className="grid grid-cols-3 gap-2">
