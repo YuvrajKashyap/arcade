@@ -506,6 +506,7 @@ export function SnakeGame() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
   const stateRef = useRef<SnakeState>(initialState);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const renderStateRef = useRef<SnakeRenderState>({
     previousSnake: initialState.snake,
     currentSnake: initialState.snake,
@@ -575,7 +576,10 @@ export function SnakeGame() {
     }
   }
 
-  function queueDirection(direction: SnakeDirection) {
+  function queueDirection(
+    direction: SnakeDirection,
+    { startIfIdle = false }: { startIfIdle?: boolean } = {},
+  ) {
     const currentState = stateRef.current;
     if (currentState.phase === "game-over") {
       return;
@@ -585,11 +589,45 @@ export function SnakeGame() {
       currentState.direction,
       direction,
     );
+    const nextPhase =
+      startIfIdle && currentState.phase === "idle" ? "playing" : currentState.phase;
 
-    if (nextDirection !== currentState.queuedDirection) {
-      syncState({ ...currentState, queuedDirection: nextDirection });
+    if (
+      nextDirection !== currentState.queuedDirection ||
+      nextPhase !== currentState.phase
+    ) {
+      syncState({
+        ...currentState,
+        phase: nextPhase,
+        queuedDirection: nextDirection,
+      });
       renderCurrentState();
     }
+  }
+
+  function handleTouchEnd(x: number, y: number) {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    if (!start) {
+      return;
+    }
+
+    const dx = x - start.x;
+    const dy = y - start.y;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) {
+      return;
+    }
+
+    queueDirection(
+      Math.abs(dx) > Math.abs(dy)
+        ? dx > 0
+          ? "right"
+          : "left"
+        : dy > 0
+          ? "down"
+          : "up",
+      { startIfIdle: true },
+    );
   }
 
   const handleKeyboardInput = useEffectEvent((event: KeyboardEvent) => {
@@ -716,11 +754,37 @@ export function SnakeGame() {
         }
       />
 
-      <GamePlayfield className="mx-auto aspect-square w-full max-w-[min(34rem,52dvh)] md:max-w-[min(34rem,62dvh)]">
+      <GamePlayfield className="mx-auto aspect-square w-full max-w-[min(34rem,52dvh)] md:max-w-[62dvh]">
         <canvas
           ref={canvasRef}
           className="h-full w-full"
+          style={{ touchAction: "none" }}
           aria-label="Snake game board"
+          onTouchStart={(event) => {
+            const touch = event.touches[0];
+            if (!touch) {
+              return;
+            }
+
+            touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+          }}
+          onTouchMove={(event) => {
+            if (touchStartRef.current) {
+              event.preventDefault();
+            }
+          }}
+          onTouchEnd={(event) => {
+            const touch = event.changedTouches[0];
+            if (!touch) {
+              touchStartRef.current = null;
+              return;
+            }
+
+            handleTouchEnd(touch.clientX, touch.clientY);
+          }}
+          onTouchCancel={() => {
+            touchStartRef.current = null;
+          }}
         />
       </GamePlayfield>
 

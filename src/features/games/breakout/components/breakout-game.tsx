@@ -378,6 +378,16 @@ export function BreakoutGame() {
     renderCurrentState();
   }
 
+  function updatePointerTarget(clientX: number) {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    const bounds = canvas.getBoundingClientRect();
+    pointerXRef.current = ((clientX - bounds.left) / bounds.width) * BREAKOUT_WIDTH;
+  }
+
   const handleKeyboardInput = useEffectEvent((event: KeyboardEvent) => {
     const normalizedKey = event.key.toLowerCase();
     if (normalizedKey === " ") {
@@ -454,10 +464,32 @@ export function BreakoutGame() {
           className="h-full w-full touch-none"
           aria-label="Breakout board"
           onPointerMove={(event) => {
-            const bounds = event.currentTarget.getBoundingClientRect();
-            pointerXRef.current = ((event.clientX - bounds.left) / bounds.width) * BREAKOUT_WIDTH;
+            updatePointerTarget(event.clientX);
           }}
           onPointerLeave={() => {
+            pointerXRef.current = null;
+          }}
+          onTouchStart={(event) => {
+            const touch = event.touches[0];
+            if (!touch) {
+              return;
+            }
+
+            updatePointerTarget(touch.clientX);
+          }}
+          onTouchMove={(event) => {
+            const touch = event.touches[0];
+            if (!touch) {
+              return;
+            }
+
+            event.preventDefault();
+            updatePointerTarget(touch.clientX);
+          }}
+          onTouchEnd={() => {
+            pointerXRef.current = null;
+          }}
+          onTouchCancel={() => {
             pointerXRef.current = null;
           }}
         />
