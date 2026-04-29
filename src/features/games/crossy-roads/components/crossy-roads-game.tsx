@@ -661,16 +661,29 @@ export function CrossyRoadsGame() {
       <GamePlayfield className="mx-auto aspect-[7/8] w-full max-w-[min(30rem,56dvh)] touch-none overflow-hidden border-0 bg-[#70d45a] shadow-[0_28px_80px_rgba(17,63,34,0.28)]">
         <canvas
           ref={canvasRef}
-          className="h-full w-full"
+          className="h-full w-full touch-none"
           aria-label="Crossy Roads field"
           onPointerDown={(event) => {
             if (event.pointerType !== "touch" && event.pointerType !== "pen") {
               return;
             }
 
+            event.preventDefault();
+            event.currentTarget.setPointerCapture(event.pointerId);
             touchStartRef.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
           }}
-          onPointerUp={(event) => handleTouchEnd(event.pointerId, event.clientX, event.clientY)}
+          onPointerMove={(event) => {
+            if (touchStartRef.current?.id === event.pointerId) {
+              event.preventDefault();
+            }
+          }}
+          onPointerUp={(event) => {
+            if (touchStartRef.current?.id === event.pointerId) {
+              event.preventDefault();
+            }
+
+            handleTouchEnd(event.pointerId, event.clientX, event.clientY);
+          }}
           onPointerCancel={(event) => {
             if (touchStartRef.current?.id === event.pointerId) {
               touchStartRef.current = null;
