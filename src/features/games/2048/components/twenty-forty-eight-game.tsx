@@ -53,6 +53,7 @@ const TILE_GAP = 10;
 const SLIDE_DURATION_MS = 78;
 const POP_DURATION_MS = 42;
 const SPAWN_DURATION_MS = 28;
+const SWIPE_THRESHOLD_PX = 28;
 
 type RenderTile = {
   renderKey: string;
@@ -106,10 +107,12 @@ function getTileClass(value: number) {
 
 function createInitialGameState() {
   const bestScore = readStoredNumber(TWENTY_FORTY_EIGHT_STORAGE_KEY);
+  const debugBoard =
+    process.env.NODE_ENV !== "production" && typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("debugBoard")
+      : null;
   if (
-    process.env.NODE_ENV !== "production" &&
-    typeof window !== "undefined" &&
-    new URLSearchParams(window.location.search).get("debugBoard") === "merge"
+    debugBoard === "merge"
   ) {
     return {
       tiles: [
@@ -122,6 +125,33 @@ function createInitialGameState() {
       bestScore,
       phase: "playing",
       nextTileId: 5,
+    } satisfies TwentyFortyEightState;
+  }
+
+  if (debugBoard === "locked") {
+    return {
+      tiles: [
+        { id: 1, value: 2, row: 0, column: 0 },
+        { id: 2, value: 4, row: 0, column: 1 },
+        { id: 3, value: 2, row: 0, column: 2 },
+        { id: 4, value: 4, row: 0, column: 3 },
+        { id: 5, value: 4, row: 1, column: 0 },
+        { id: 6, value: 2, row: 1, column: 1 },
+        { id: 7, value: 4, row: 1, column: 2 },
+        { id: 8, value: 2, row: 1, column: 3 },
+        { id: 9, value: 2, row: 2, column: 0 },
+        { id: 10, value: 4, row: 2, column: 1 },
+        { id: 11, value: 2, row: 2, column: 2 },
+        { id: 12, value: 4, row: 2, column: 3 },
+        { id: 13, value: 4, row: 3, column: 0 },
+        { id: 14, value: 2, row: 3, column: 1 },
+        { id: 15, value: 4, row: 3, column: 2 },
+        { id: 16, value: 2, row: 3, column: 3 },
+      ],
+      score: 128,
+      bestScore: Math.max(bestScore, 128),
+      phase: "game-over",
+      nextTileId: 17,
     } satisfies TwentyFortyEightState;
   }
 
@@ -193,7 +223,7 @@ export function TwentyFortyEightGame() {
   const [state, setState] = useState<TwentyFortyEightState>(initialState);
   const [renderTiles, setRenderTiles] = useState<RenderTile[]>(() => createFinalRenderTiles(initialState.tiles));
   const stateRef = useRef(initialState);
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const touchStartRef = useRef<{ id: number; x: number; y: number } | null>(null);
   const isAnimatingRef = useRef(false);
   const queuedDirectionRef = useRef<TwentyFortyEightDirection | null>(null);
   const animationIdRef = useRef(0);
@@ -322,16 +352,17 @@ export function TwentyFortyEightGame() {
     };
   }, []);
 
-  const handleTouchEnd = (x: number, y: number) => {
+  const handleTouchEnd = (id: number, x: number, y: number) => {
     const start = touchStartRef.current;
-    touchStartRef.current = null;
-    if (!start) {
+    if (!start || start.id !== id) {
       return;
     }
 
+    touchStartRef.current = null;
+
     const dx = x - start.x;
     const dy = y - start.y;
-    if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) {
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < SWIPE_THRESHOLD_PX) {
       return;
     }
 
@@ -357,11 +388,24 @@ export function TwentyFortyEightGame() {
         <div
           className="relative aspect-square w-full rounded-[1.55rem] border-[5px] border-[#8b5a2b] bg-[#b9824b] p-2.5 shadow-[inset_0_5px_0_rgba(255,255,255,0.35),0_10px_0_#6f4322]"
           onPointerDown={(event) => {
-            touchStartRef.current = { x: event.clientX, y: event.clientY };
+            if (event.pointerType !== "touch" || !event.isPrimary) {
+              return;
+            }
+
+            event.currentTarget.setPointerCapture(event.pointerId);
+            touchStartRef.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
           }}
-          onPointerUp={(event) => handleTouchEnd(event.clientX, event.clientY)}
-          onPointerCancel={() => {
-            touchStartRef.current = null;
+          onPointerUp={(event) => {
+            if (event.pointerType !== "touch") {
+              return;
+            }
+
+            handleTouchEnd(event.pointerId, event.clientX, event.clientY);
+          }}
+          onPointerCancel={(event) => {
+            if (touchStartRef.current?.id === event.pointerId) {
+              touchStartRef.current = null;
+            }
           }}
           aria-label="2048 board"
           role="application"
@@ -401,6 +445,26 @@ export function TwentyFortyEightGame() {
               </div>
             ))}
           </div>
+
+          {state.phase === "game-over" ? (
+            <div className="absolute inset-0 z-30 grid place-items-center rounded-[1.25rem] bg-[#2a1608]/72 px-5 text-center shadow-[inset_0_0_80px_rgba(0,0,0,0.38)] backdrop-blur-[2px]">
+              <div className="rounded-[1.2rem] border-[4px] border-[#fff1b8] bg-[linear-gradient(180deg,#ffdf6f,#f2953b)] px-5 py-4 text-[#4b2507] shadow-[0_9px_0_#7a4218,0_24px_48px_rgba(35,18,4,0.42)]">
+                <div className="font-black uppercase tracking-[0.14em] text-[#6d270c] text-[clamp(1.55rem,7vw,3rem)]">
+                  GAME OVER
+                </div>
+                <p className="mt-2 text-sm font-black uppercase tracking-[0.12em] text-[#7a4218]">
+                  Press R or Space to restart
+                </p>
+                <button
+                  type="button"
+                  className="mt-4 rounded-full border-2 border-[#4b2507] bg-[#fff6bf] px-5 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#4b2507] shadow-[0_5px_0_#9b5a22] transition-transform hover:-translate-y-0.5 active:translate-y-0"
+                  onClick={resetGame}
+                >
+                  Restart
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
       </GamePlayfield>
 
