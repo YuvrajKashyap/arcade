@@ -475,6 +475,14 @@ export function BreakoutGame() {
               return;
             }
 
+            const phase = stateRef.current.phase;
+            if (
+              phase === "idle" ||
+              phase === "game-over" ||
+              phase === "cleared"
+            ) {
+              beginRun();
+            }
             updatePointerTarget(touch.clientX);
           }}
           onTouchMove={(event) => {

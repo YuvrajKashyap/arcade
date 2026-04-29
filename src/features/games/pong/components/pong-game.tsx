@@ -731,6 +731,12 @@ export function PongGame() {
               return;
             }
 
+            if (
+              stateRef.current.phase === "idle" ||
+              stateRef.current.phase === "finished"
+            ) {
+              startMatch();
+            }
             updateTouchPaddleTarget(touch.clientY);
           }}
           onTouchMove={(event) => {
