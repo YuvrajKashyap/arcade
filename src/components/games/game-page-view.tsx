@@ -251,7 +251,7 @@ export function GamePageView({ data }: GamePageViewProps) {
           padding-block: clamp(0.22rem, 0.7dvh, 0.375rem);
         }
         .theater-content .arcade-game-playfield {
-          flex: 1 1 auto;
+          flex: 0 1 auto;
           min-height: 0;
           max-height: min(100%, 62dvh);
         }

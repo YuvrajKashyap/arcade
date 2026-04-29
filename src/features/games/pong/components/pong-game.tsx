@@ -479,6 +479,7 @@ export function PongGame() {
   const ballTrailRef = useRef<BallTrailPoint[]>([]);
   const elapsedSecondsRef = useRef(0);
   const touchDirectionRef = useRef(0);
+  const touchPaddleYRef = useRef<number | null>(null);
   const pressedKeysRef = useKeyboardState({
     preventDefaultKeys: PONG_PREVENT_DEFAULT_KEYS,
   });
@@ -566,6 +567,20 @@ export function PongGame() {
     }
   }
 
+  function updateTouchPaddleTarget(clientY: number) {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    const bounds = canvas.getBoundingClientRect();
+    const y = ((clientY - bounds.top) / bounds.height) * PONG_HEIGHT;
+    touchPaddleYRef.current = Math.min(
+      Math.max(y - PONG_PADDLE_HEIGHT / 2, 0),
+      PONG_HEIGHT - PONG_PADDLE_HEIGHT,
+    );
+  }
+
   const handleKeyboardInput = useEffectEvent((event: KeyboardEvent) => {
     const normalizedKey = event.key.toLowerCase();
 
@@ -621,8 +636,13 @@ export function PongGame() {
     const keyboardDirection =
       Number(pressedKeys.has("s") || pressedKeys.has("arrowdown")) -
       Number(pressedKeys.has("w") || pressedKeys.has("arrowup"));
-    const inputDirection = keyboardDirection || touchDirectionRef.current;
-    const previousState = stateRef.current;
+    const inputDirection =
+      keyboardDirection ||
+      (touchPaddleYRef.current === null ? touchDirectionRef.current : 0);
+    const previousState =
+      touchPaddleYRef.current === null
+        ? stateRef.current
+        : { ...stateRef.current, playerY: touchPaddleYRef.current };
     const nextState = updatePong(previousState, deltaSeconds, inputDirection);
 
     if (nextState !== stateRef.current) {
@@ -700,7 +720,35 @@ export function PongGame() {
       </div>
 
       <GamePlayfield className="mx-auto aspect-[12/7] w-full max-w-[89dvh] md:max-w-[106dvh]">
-        <canvas ref={canvasRef} className="h-full w-full" aria-label="Pong match" />
+        <canvas
+          ref={canvasRef}
+          className="h-full w-full"
+          style={{ touchAction: "none" }}
+          aria-label="Pong match"
+          onTouchStart={(event) => {
+            const touch = event.touches[0];
+            if (!touch) {
+              return;
+            }
+
+            updateTouchPaddleTarget(touch.clientY);
+          }}
+          onTouchMove={(event) => {
+            const touch = event.touches[0];
+            if (!touch) {
+              return;
+            }
+
+            event.preventDefault();
+            updateTouchPaddleTarget(touch.clientY);
+          }}
+          onTouchEnd={() => {
+            touchPaddleYRef.current = null;
+          }}
+          onTouchCancel={() => {
+            touchPaddleYRef.current = null;
+          }}
+        />
       </GamePlayfield>
 
       <GameStatus>{getStatusCopy(hudState.phase, hudState.winner)}</GameStatus>
