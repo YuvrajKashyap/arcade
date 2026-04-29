@@ -240,7 +240,7 @@ function drawScene(context: CanvasRenderingContext2D, state: State, elapsed: num
     context.fillStyle = "#ffd82e";
     context.textAlign = "center";
     context.font = "900 28px sans-serif";
-    context.fillText(state.phase === "won" ? "MAZE CLEARED" : state.phase === "game-over" ? "GAME OVER" : state.phase === "paused" ? "PAUSED" : "PAC MAZE", WIDTH / 2, HEIGHT / 2);
+    context.fillText(state.phase === "won" ? "MAZE CLEARED" : state.phase === "game-over" ? "GAME OVER" : state.phase === "paused" ? "PAUSED" : "PACMAN", WIDTH / 2, HEIGHT / 2);
     context.font = "700 14px sans-serif";
     context.fillText("arrows or wasd to chase pellets", WIDTH / 2, HEIGHT / 2 + 30);
     context.textAlign = "left";
@@ -312,7 +312,7 @@ export function PacMazeGame() {
         actions={<GameButton variant="primary" onClick={restart}>Start</GameButton>}
       />
       <GamePlayfield className="mx-auto aspect-[19/21] w-full max-w-[min(26rem,54dvh)] touch-none border-0 bg-black">
-        <canvas ref={canvasRef} className="h-full w-full" aria-label="Pac Maze field" />
+        <canvas ref={canvasRef} className="h-full w-full" aria-label="Pacman field" />
       </GamePlayfield>
       <GameStatus>Arrow keys or WASD steer. Power pellets turn chasers blue. R restarts.</GameStatus>
       <TouchControls className="max-w-[16rem]">

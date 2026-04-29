@@ -95,7 +95,7 @@ function drawScene(context: CanvasRenderingContext2D, state: State) {
     context.fillRect(0, 0, WIDTH, HEIGHT);
     context.fillStyle = "#fff";
     context.font = "900 32px sans-serif";
-    context.fillText(state.phase === "game-over" ? "GAME OVER" : "STACK TOWER", WIDTH / 2, HEIGHT / 2);
+    context.fillText(state.phase === "game-over" ? "GAME OVER" : "STACK", WIDTH / 2, HEIGHT / 2);
     context.font = "800 15px sans-serif";
     context.fillText("space or tap to drop", WIDTH / 2, HEIGHT / 2 + 30);
   }
@@ -146,7 +146,7 @@ export function StackTowerGame() {
     <GamePanel>
       <GameHud items={[{ label: "Score", value: hud.score }, { label: "Best", value: hud.bestScore }, { label: "Status", value: hud.phase }]} actions={<GameButton variant="primary" onClick={() => sync(dropBlock(stateRef.current))}>Drop</GameButton>} />
       <GamePlayfield className="mx-auto aspect-[3/4] w-full max-w-[min(24rem,54dvh)] touch-none border-0 bg-[#ff8ab0]">
-        <canvas ref={canvasRef} className="h-full w-full" aria-label="Stack Tower field" onPointerDown={() => sync(dropBlock(stateRef.current))} />
+        <canvas ref={canvasRef} className="h-full w-full" aria-label="Stack field" onPointerDown={() => sync(dropBlock(stateRef.current))} />
       </GamePlayfield>
       <GameStatus>Space, Enter, tap, or click drops the moving block. R restarts.</GameStatus>
     </GamePanel>

@@ -6,7 +6,6 @@ const nextConfig: NextConfig = {
     localPatterns: [
       {
         pathname: "/games/**/thumbnail.png",
-        search: "?v=20260428",
       },
     ],
   },

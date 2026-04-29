@@ -64,47 +64,47 @@ const CrossyRoadsGame = dynamic(() => import("@/features/games/crossy-roads"), {
   loading: GameLoadingState,
 });
 
-const DinoRunGame = dynamic(() => import("@/features/games/dino-run"), {
+const ChromeDinoGame = dynamic(() => import("@/features/games/chrome-dino"), {
   ssr: false,
   loading: GameLoadingState,
 });
 
-const PacMazeGame = dynamic(() => import("@/features/games/pac-maze"), {
+const PacmanGame = dynamic(() => import("@/features/games/pacman"), {
   ssr: false,
   loading: GameLoadingState,
 });
 
-const BlockDropGame = dynamic(() => import("@/features/games/block-drop"), {
+const TetrisGame = dynamic(() => import("@/features/games/tetris"), {
   ssr: false,
   loading: GameLoadingState,
 });
 
-const CookieCrafterGame = dynamic(() => import("@/features/games/cookie-crafter"), {
+const CookieClickerGame = dynamic(() => import("@/features/games/cookie-clicker"), {
   ssr: false,
   loading: GameLoadingState,
 });
 
-const LadderRaceGame = dynamic(() => import("@/features/games/ladder-race"), {
+const SnakesAndLaddersGame = dynamic(() => import("@/features/games/snakes-and-ladders"), {
   ssr: false,
   loading: GameLoadingState,
 });
 
-const SorrySprintGame = dynamic(() => import("@/features/games/sorry-sprint"), {
+const SorryGame = dynamic(() => import("@/features/games/sorry"), {
   ssr: false,
   loading: GameLoadingState,
 });
 
-const ArcadeFighterGame = dynamic(() => import("@/features/games/arcade-fighter"), {
+const StreetFighterGame = dynamic(() => import("@/features/games/street-fighter"), {
   ssr: false,
   loading: GameLoadingState,
 });
 
-const HelixDropGame = dynamic(() => import("@/features/games/helix-drop"), {
+const HelixJumpGame = dynamic(() => import("@/features/games/helix-jump"), {
   ssr: false,
   loading: GameLoadingState,
 });
 
-const StackTowerGame = dynamic(() => import("@/features/games/stack-tower"), {
+const StackGame = dynamic(() => import("@/features/games/stack"), {
   ssr: false,
   loading: GameLoadingState,
 });
@@ -122,13 +122,13 @@ export const gameComponentMap: Record<GameSlug, React.ComponentType> = {
   "doodle-jump": DoodleJumpGame,
   "flappy-bird": FlappyBirdGame,
   "crossy-roads": CrossyRoadsGame,
-  "dino-run": DinoRunGame,
-  "pac-maze": PacMazeGame,
-  "block-drop": BlockDropGame,
-  "cookie-crafter": CookieCrafterGame,
-  "ladder-race": LadderRaceGame,
-  "sorry-sprint": SorrySprintGame,
-  "arcade-fighter": ArcadeFighterGame,
-  "helix-drop": HelixDropGame,
-  "stack-tower": StackTowerGame,
+  "chrome-dino": ChromeDinoGame,
+  pacman: PacmanGame,
+  tetris: TetrisGame,
+  "cookie-clicker": CookieClickerGame,
+  "snakes-and-ladders": SnakesAndLaddersGame,
+  sorry: SorryGame,
+  "street-fighter": StreetFighterGame,
+  "helix-jump": HelixJumpGame,
+  stack: StackGame,
 };

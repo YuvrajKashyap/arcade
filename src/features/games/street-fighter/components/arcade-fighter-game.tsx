@@ -145,7 +145,7 @@ function drawScene(context: CanvasRenderingContext2D, state: State) {
     context.fillRect(0, 0, WIDTH, HEIGHT);
     context.fillStyle = "#fff3a8";
     context.font = "900 34px sans-serif";
-    context.fillText(state.phase === "paused" ? "PAUSED" : state.phase === "round-over" ? state.message : "ARCADE FIGHTER", WIDTH / 2, 180);
+    context.fillText(state.phase === "paused" ? "PAUSED" : state.phase === "round-over" ? state.message : "STREET FIGHTER", WIDTH / 2, 180);
     context.font = "800 16px sans-serif";
     context.fillText("A/D move  W jump  J punch  K kick", WIDTH / 2, 214);
   }
@@ -217,7 +217,7 @@ export function ArcadeFighterGame() {
         actions={<GameButton variant="primary" onClick={start}>Fight</GameButton>}
       />
       <GamePlayfield className="mx-auto aspect-[19/10] w-full max-w-[min(48rem,86dvh)] touch-none border-0 bg-black">
-        <canvas ref={canvasRef} className="h-full w-full" aria-label="Arcade Fighter field" />
+        <canvas ref={canvasRef} className="h-full w-full" aria-label="Street Fighter field" />
       </GamePlayfield>
       <GameStatus>A/D move, W jumps, J punches, K kicks. Space starts and R restarts.</GameStatus>
       <TouchControls className="max-w-[24rem]">
