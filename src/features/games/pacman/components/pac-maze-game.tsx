@@ -109,7 +109,7 @@ const KEY_TO_DIR: Record<string, Direction> = {
 
 const FINAL_LEVEL = 3;
 const LEVEL_CLEAR_BONUS = 500;
-const MIN_SWIPE_DISTANCE = 24;
+const MIN_SWIPE_DISTANCE = 16;
 
 const GHOSTS: Ghost[] = [
   {
@@ -619,6 +619,7 @@ export function PacMazeGame() {
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
   const stateRef = useRef(initialState);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const touchMovedRef = useRef(false);
   const elapsedRef = useRef(0);
   const [hud, setHud] = useState({
     score: initialState.score,
@@ -665,6 +666,27 @@ export function PacMazeGame() {
     sync({ ...current, pac: { ...current.pac, nextDirection: direction } }, true);
   }
 
+  function steerFromTouch(direction: Direction) {
+    const current = stateRef.current.phase === "idle" ? { ...stateRef.current, phase: "playing" as Phase } : stateRef.current;
+    if (current.phase !== "playing") return;
+
+    const pac = current.pac;
+    const centered = atTileCenter(pac);
+    const column = Math.round(pac.x);
+    const row = Math.round(pac.y);
+    const reversing =
+      pac.direction.name !== "none" &&
+      direction.x === -pac.direction.x &&
+      direction.y === -pac.direction.y;
+    const canTurnNow = centered && canOccupy(column + direction.x, row + direction.y, "pac");
+    const nextPac =
+      reversing || canTurnNow
+        ? { ...pac, direction, nextDirection: direction }
+        : { ...pac, nextDirection: direction };
+
+    sync({ ...current, pac: nextPac }, true);
+  }
+
   function touchStartOrRestart() {
     const current = stateRef.current;
     if (current.phase === "idle") {
@@ -680,11 +702,25 @@ export function PacMazeGame() {
     event.preventDefault();
     event.stopPropagation();
     touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+    touchMovedRef.current = false;
   }
 
   function onTouchMove(event: TouchEvent) {
+    const touch = event.touches[0];
+    const start = touchStartRef.current;
     event.preventDefault();
     event.stopPropagation();
+    if (!touch || !start) return;
+
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    const absX = Math.abs(dx);
+    const absY = Math.abs(dy);
+    if (Math.max(absX, absY) < MIN_SWIPE_DISTANCE) return;
+
+    touchMovedRef.current = true;
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+    steerFromTouch(absX > absY ? (dx > 0 ? DIRS.right : DIRS.left) : dy > 0 ? DIRS.down : DIRS.up);
   }
 
   function onTouchEnd(event: TouchEvent) {
@@ -701,15 +737,17 @@ export function PacMazeGame() {
     const absX = Math.abs(dx);
     const absY = Math.abs(dy);
 
-    if (Math.max(absX, absY) < MIN_SWIPE_DISTANCE) {
+    if (!touchMovedRef.current && Math.max(absX, absY) < MIN_SWIPE_DISTANCE) {
       touchStartOrRestart();
       return;
     }
 
+    if (touchMovedRef.current && Math.max(absX, absY) < MIN_SWIPE_DISTANCE) return;
+
     if (absX > absY) {
-      steer(dx > 0 ? DIRS.right : DIRS.left);
+      steerFromTouch(dx > 0 ? DIRS.right : DIRS.left);
     } else {
-      steer(dy > 0 ? DIRS.down : DIRS.up);
+      steerFromTouch(dy > 0 ? DIRS.down : DIRS.up);
     }
   }
 
@@ -780,6 +818,7 @@ export function PacMazeGame() {
           onTouchEnd={onTouchEnd}
           onTouchCancel={() => {
             touchStartRef.current = null;
+            touchMovedRef.current = false;
           }}
         />
       </GamePlayfield>
