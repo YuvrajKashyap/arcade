@@ -50,9 +50,9 @@ const tileColors = new Map<number, string>([
 ]);
 
 const TILE_GAP = 10;
-const SLIDE_DURATION_MS = 185;
-const POP_DURATION_MS = 145;
-const SPAWN_DURATION_MS = 130;
+const SLIDE_DURATION_MS = 215;
+const POP_DURATION_MS = 155;
+const SPAWN_DURATION_MS = 135;
 
 type RenderTile = {
   renderKey: string;
@@ -311,7 +311,7 @@ export function TwentyFortyEightGame() {
               <div
                 key={tile.renderKey}
                 className={`absolute grid place-items-center rounded-[1rem] border-2 border-white/40 text-2xl font-black transition-all ease-[cubic-bezier(0.2,0.78,0.24,1)] sm:text-4xl ${
-                  tile.phase === "slide" ? "duration-[185ms]" : "duration-[145ms]"
+                  tile.phase === "slide" ? "duration-[215ms]" : "duration-[155ms]"
                 } ${
                   tile.phase === "spawn"
                     ? "z-20 animate-[tileSpawn_145ms_cubic-bezier(0.2,0.9,0.25,1.2)]"
