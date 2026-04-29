@@ -482,9 +482,9 @@ export const gameCatalog = [
     slug: "pacman",
     title: "Pac-Man",
     shortDescription:
-      "A classic maze chase with pellets, power pellets, four ghosts, tunnels, lives, score, and local best.",
+      "A classic three-level maze chase with pellets, power pellets, four ghosts, lives, score, and local best.",
     description:
-      "Pac-Man is a self-coded arcade maze chase with a faithful 28-by-31 maze structure, pellets, power pellets, frightened ghosts, tunnels, lives, scoring, restart, and keyboard/touch steering.",
+      "Pac-Man is a self-coded arcade maze chase with a faithful 28-by-31 maze structure, three levels, pellets, power pellets, frightened ghosts, tunnels, lives, scoring, restart, and keyboard/touch steering.",
     thumbnail: "/games/pacman/thumbnail.png?v=20260428",
     genre: "Arcade",
     tags: ["Canvas", "Maze", "Chase", "Keyboard", "Score Loop"],
@@ -509,10 +509,11 @@ export const gameCatalog = [
     developerNotes:
       "Pac-Man is self-coded with canvas rendering, tile-center movement, arcade-style ghost targeting, frightened mode, and local best-score persistence.",
     howToPlay: {
-      summary: "Clear the maze while avoiding the chasers.",
+      summary: "Clear three maze levels while avoiding the chasers.",
       tips: [
         "Small pellets score points and disappear when eaten.",
         "Large pellets temporarily turn chasers vulnerable.",
+        "Clear all pellets to advance levels 1-3, then win the run.",
         "Lose all lives and the run ends.",
       ],
     },
