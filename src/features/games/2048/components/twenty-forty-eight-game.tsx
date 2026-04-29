@@ -60,6 +60,9 @@ type RenderTile = {
   value: number;
   row: number;
   column: number;
+  slideRowDelta?: number;
+  slideColumnDelta?: number;
+  isSlideTarget?: boolean;
   phase?: "sliding" | "pop" | "spawn";
 };
 
@@ -70,6 +73,19 @@ function getTilePositionStyle(row: number, column: number) {
     left: `calc(${column * 25}% + ${(column * TILE_GAP) / 4}px)`,
     top: `calc(${row * 25}% + ${(row * TILE_GAP) / 4}px)`,
   };
+}
+
+function getSlideTransform(rowDelta = 0, columnDelta = 0, isSlideTarget = false) {
+  if (!isSlideTarget) {
+    return "translate3d(0, 0, 0)";
+  }
+
+  const xSign = columnDelta < 0 ? "-1" : "1";
+  const ySign = rowDelta < 0 ? "-1" : "1";
+  const xMagnitude = Math.abs(columnDelta);
+  const yMagnitude = Math.abs(rowDelta);
+
+  return `translate3d(calc(${xSign} * ${xMagnitude} * (100% + ${TILE_GAP}px)), calc(${ySign} * ${yMagnitude} * (100% + ${TILE_GAP}px)), 0)`;
 }
 
 function getStatusCopy(phase: TwentyFortyEightPhase) {
@@ -161,8 +177,11 @@ function createMoveRenderTiles(
         renderKey: `move-${animationId}-${source.id}`,
         id: source.id,
         value: source.value,
-        row: useTargetPositions ? target.row : source.row,
-        column: useTargetPositions ? target.column : source.column,
+        row: source.row,
+        column: source.column,
+        slideRowDelta: target.row - source.row,
+        slideColumnDelta: target.column - source.column,
+        isSlideTarget: useTargetPositions,
         phase: "sliding",
       });
       return tiles;
@@ -361,7 +380,7 @@ export function TwentyFortyEightGame() {
               <div
                 key={tile.renderKey}
                 className={`absolute grid place-items-center rounded-[1rem] border-2 border-white/40 text-2xl font-black sm:text-4xl ${
-                  tile.phase === "sliding" ? "z-10 transition-[left,top] ease-[cubic-bezier(0.18,0.84,0.2,1)]" : ""
+                  tile.phase === "sliding" ? "z-10 will-change-transform transition-transform ease-[cubic-bezier(0.18,0.84,0.2,1)]" : ""
                 } ${
                   tile.phase === "spawn"
                     ? "z-20 animate-[tileSpawn_80ms_cubic-bezier(0.2,0.9,0.25,1.2)]"
@@ -371,6 +390,10 @@ export function TwentyFortyEightGame() {
                 } ${getTileClass(tile.value)}`}
                 style={{
                   ...getTilePositionStyle(tile.row, tile.column),
+                  transform:
+                    tile.phase === "sliding"
+                      ? getSlideTransform(tile.slideRowDelta, tile.slideColumnDelta, tile.isSlideTarget)
+                      : undefined,
                   transitionDuration: tile.phase === "sliding" ? `${SLIDE_DURATION_MS}ms` : undefined,
                 }}
               >
