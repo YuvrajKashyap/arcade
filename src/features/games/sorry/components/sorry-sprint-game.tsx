@@ -7,58 +7,67 @@ import {
   GamePanel,
   GamePlayfield,
   GameStatus,
-  TouchControls,
 } from "@/features/games/shared/components/game-ui";
 import {
   readStoredNumber,
   writeStoredNumber,
 } from "@/features/games/shared/utils/local-storage";
 
-const STORAGE_KEY = "arcade.sorry.bestScore";
+const STORAGE_KEY = "arcade.sorry.bestScore.v3";
 const TRACK_LENGTH = 60;
+const SAFETY_START = 60;
 const HOME_PROGRESS = 65;
 const BOARD_CELLS = 16;
 const PAWNS_PER_SIDE = 4;
-const CARD_DECK = [1, 1, 2, 3, 4, 5, 7, 8, 10, 11, 12, "sorry"] as const;
 
-type Card = (typeof CARD_DECK)[number];
+const CARD_RANKS = [1, 2, 3, 4, 5, 7, 8, 10, 11, 12, "sorry"] as const;
+
+type Card = (typeof CARD_RANKS)[number];
 type Color = "blue" | "red" | "yellow" | "green";
-type Phase = "ready" | "choosing" | "animating" | "won" | "lost";
+type Phase = "ready" | "choosing" | "game-over";
 type Pawn = { progress: number };
 type Side = {
   color: Color;
   label: string;
-  pawns: Pawn[];
   startIndex: number;
+  pawns: Pawn[];
 };
+type MoveKind = "enter" | "forward" | "back" | "minus-one" | "swap" | "sorry";
 type Move = {
+  kind: MoveKind;
   side: Color;
   pawnIndex: number;
-  card: Card;
-  progress: number;
   targetProgress: number;
-  targetAbsolute: number | null;
-  sorryTarget?: { side: Color; pawnIndex: number };
+  label: string;
+  target?: { side: Color; pawnIndex: number };
+};
+type SplitMove = {
+  first: Move;
+  second: Move | null;
   label: string;
 };
+type TurnOption = Move | SplitMove;
 type State = {
   phase: Phase;
   sides: Record<Color, Side>;
   current: Color;
   card: Card | null;
-  moves: number;
+  deck: Card[];
+  discard: Card[];
+  turns: number;
   bestScore: number;
-  message: string;
   selectedMove: number;
   winner: Color | null;
+  message: string;
+  log: string[];
 };
 
 const TURN_ORDER: Color[] = ["blue", "red", "yellow", "green"];
-const SIDE_META: Record<Color, { label: string; startIndex: number; color: string; dark: string; glow: string }> = {
-  blue: { label: "Blue", startIndex: 4, color: "#2089ff", dark: "#124aa8", glow: "rgba(32,137,255,0.42)" },
-  red: { label: "Red", startIndex: 19, color: "#ef3340", dark: "#9f1722", glow: "rgba(239,51,64,0.42)" },
-  yellow: { label: "Yellow", startIndex: 34, color: "#ffd43b", dark: "#b98300", glow: "rgba(255,212,59,0.42)" },
-  green: { label: "Green", startIndex: 49, color: "#18b957", dark: "#087335", glow: "rgba(24,185,87,0.42)" },
+const SIDE_META: Record<Color, { label: string; startIndex: number; color: string; dark: string; pale: string; glow: string }> = {
+  blue: { label: "Blue", startIndex: 4, color: "#2089ff", dark: "#113f9a", pale: "#cfe7ff", glow: "rgba(32,137,255,0.42)" },
+  red: { label: "Red", startIndex: 19, color: "#ef3340", dark: "#991b1b", pale: "#ffd3d7", glow: "rgba(239,51,64,0.42)" },
+  yellow: { label: "Yellow", startIndex: 34, color: "#ffd43b", dark: "#9a6700", pale: "#fff4bf", glow: "rgba(255,212,59,0.42)" },
+  green: { label: "Green", startIndex: 49, color: "#18b957", dark: "#087335", pale: "#c9f7dc", glow: "rgba(24,185,87,0.42)" },
 };
 
 const SLIDES: Array<{ start: number; end: number; color: Color }> = [
@@ -72,14 +81,29 @@ const SLIDES: Array<{ start: number; end: number; color: Color }> = [
   { start: 54, end: 59, color: "green" },
 ];
 
-function nextTurn(color: Color) {
-  return TURN_ORDER[(TURN_ORDER.indexOf(color) + 1) % TURN_ORDER.length]!;
+function shuffle<T>(items: T[]) {
+  const copy = [...items];
+  for (let index = copy.length - 1; index > 0; index -= 1) {
+    const swap = Math.floor(Math.random() * (index + 1));
+    [copy[index], copy[swap]] = [copy[swap]!, copy[index]!];
+  }
+  return copy;
+}
+
+function createDeck() {
+  const cards: Card[] = [];
+  for (const rank of CARD_RANKS) {
+    const count = rank === 1 ? 5 : 4;
+    for (let index = 0; index < count; index += 1) cards.push(rank);
+  }
+  return shuffle(cards);
 }
 
 function cardLabel(card: Card | null) {
   if (card === null) return "-";
   if (card === "sorry") return "SORRY!";
   if (card === 4) return "BACK 4";
+  if (card === 7) return "SPLIT 7";
   if (card === 10) return "10 / -1";
   if (card === 11) return "11 / SWAP";
   return String(card);
@@ -106,11 +130,14 @@ function createState(bestScore = 0): State {
     },
     current: "blue",
     card: null,
-    moves: 0,
+    deck: createDeck(),
+    discard: [],
+    turns: 0,
     bestScore,
-    message: "Draw a card, choose a legal blue pawn, and race every pawn home.",
     selectedMove: 0,
     winner: null,
+    message: "Draw a card. Get all four blue pawns from Start to Home before the CPU colors do.",
+    log: ["Classic-inspired rules: 1 or 2 starts, 4 moves back, 7 can split, 10 can move -1, 11 can swap, Sorry! bumps from Start."],
   };
 }
 
@@ -123,8 +150,26 @@ function cloneSides(sides: State["sides"]): State["sides"] {
   };
 }
 
-function drawCard() {
-  return CARD_DECK[Math.floor(Math.random() * CARD_DECK.length)]!;
+function nextTurn(color: Color) {
+  return TURN_ORDER[(TURN_ORDER.indexOf(color) + 1) % TURN_ORDER.length]!;
+}
+
+function drawFromDeck(state: State): Pick<State, "card" | "deck" | "discard"> {
+  const deck = state.deck.length > 0 ? [...state.deck] : createDeck();
+  const card = deck.shift()!;
+  return {
+    card,
+    deck,
+    discard: [...state.discard, card].slice(-8),
+  };
+}
+
+function isHome(pawn: Pawn) {
+  return pawn.progress >= HOME_PROGRESS;
+}
+
+function isSafe(pawn: Pawn) {
+  return pawn.progress >= SAFETY_START && pawn.progress < HOME_PROGRESS;
 }
 
 function absoluteFor(side: Side, progress: number) {
@@ -132,12 +177,308 @@ function absoluteFor(side: Side, progress: number) {
   return (side.startIndex + progress) % TRACK_LENGTH;
 }
 
-function isSafe(pawn: Pawn) {
-  return pawn.progress >= TRACK_LENGTH && pawn.progress < HOME_PROGRESS;
+function progressForAbsolute(side: Side, absolute: number) {
+  return (absolute - side.startIndex + TRACK_LENGTH) % TRACK_LENGTH;
 }
 
-function isHome(pawn: Pawn) {
-  return pawn.progress >= HOME_PROGRESS;
+function ownPawnAt(side: Side, progress: number, exceptIndex: number) {
+  return side.pawns.some((pawn, index) => index !== exceptIndex && !isHome(pawn) && pawn.progress === progress);
+}
+
+function addProgressMove(moves: Move[], side: Side, pawnIndex: number, targetProgress: number, kind: MoveKind, label: string) {
+  if (targetProgress < 0 || targetProgress > HOME_PROGRESS) return;
+  if (targetProgress !== HOME_PROGRESS && ownPawnAt(side, targetProgress, pawnIndex)) return;
+  moves.push({ kind, side: side.color, pawnIndex, targetProgress, label });
+}
+
+function baseMovesForCard(state: State, color: Color, card: Card): Move[] {
+  const side = state.sides[color];
+  const moves: Move[] = [];
+
+  side.pawns.forEach((pawn, pawnIndex) => {
+    if (isHome(pawn)) return;
+
+    if (pawn.progress < 0) {
+      if (card === 1 || card === 2) {
+        addProgressMove(moves, side, pawnIndex, 0, "enter", `Pawn ${pawnIndex + 1}: leave Start`);
+      }
+      if (card === "sorry") {
+        for (const rivalColor of TURN_ORDER) {
+          if (rivalColor === color) continue;
+          const rival = state.sides[rivalColor];
+          rival.pawns.forEach((targetPawn, targetIndex) => {
+            const absolute = absoluteFor(rival, targetPawn.progress);
+            if (absolute === null || isSafe(targetPawn) || isHome(targetPawn)) return;
+            const targetProgress = progressForAbsolute(side, absolute);
+            if (ownPawnAt(side, targetProgress, pawnIndex)) return;
+            moves.push({
+              kind: "sorry",
+              side: color,
+              pawnIndex,
+              targetProgress,
+              target: { side: rivalColor, pawnIndex: targetIndex },
+              label: `Pawn ${pawnIndex + 1}: Sorry! ${SIDE_META[rivalColor].label} ${targetIndex + 1}`,
+            });
+          });
+        }
+      }
+      return;
+    }
+
+    if (card === "sorry") return;
+    if (card === 4) {
+      const target = pawn.progress - 4;
+      addProgressMove(moves, side, pawnIndex, target < 0 ? TRACK_LENGTH + target : target, "back", `Pawn ${pawnIndex + 1}: back 4`);
+      return;
+    }
+    if (card === 10) {
+      addProgressMove(moves, side, pawnIndex, pawn.progress + 10, "forward", `Pawn ${pawnIndex + 1}: forward 10`);
+      addProgressMove(moves, side, pawnIndex, pawn.progress - 1 < 0 ? TRACK_LENGTH - 1 : pawn.progress - 1, "minus-one", `Pawn ${pawnIndex + 1}: back 1`);
+      return;
+    }
+    if (card === 11) {
+      addProgressMove(moves, side, pawnIndex, pawn.progress + 11, "forward", `Pawn ${pawnIndex + 1}: forward 11`);
+      const fromAbsolute = absoluteFor(side, pawn.progress);
+      if (fromAbsolute !== null && !isSafe(pawn)) {
+        for (const rivalColor of TURN_ORDER) {
+          if (rivalColor === color) continue;
+          const rival = state.sides[rivalColor];
+          rival.pawns.forEach((targetPawn, targetIndex) => {
+            const absolute = absoluteFor(rival, targetPawn.progress);
+            if (absolute === null || isSafe(targetPawn) || isHome(targetPawn)) return;
+            moves.push({
+              kind: "swap",
+              side: color,
+              pawnIndex,
+              targetProgress: progressForAbsolute(side, absolute),
+              target: { side: rivalColor, pawnIndex: targetIndex },
+              label: `Pawn ${pawnIndex + 1}: swap with ${SIDE_META[rivalColor].label} ${targetIndex + 1}`,
+            });
+          });
+        }
+      }
+      return;
+    }
+    if (typeof card === "number") {
+      addProgressMove(moves, side, pawnIndex, pawn.progress + card, "forward", `Pawn ${pawnIndex + 1}: forward ${card}`);
+    }
+  });
+
+  return moves;
+}
+
+function absoluteOccupant(sides: State["sides"], absolute: number, exclude?: { side: Color; pawnIndex: number }) {
+  for (const color of TURN_ORDER) {
+    const side = sides[color];
+    for (let pawnIndex = 0; pawnIndex < side.pawns.length; pawnIndex += 1) {
+      if (exclude?.side === color && exclude.pawnIndex === pawnIndex) continue;
+      const pawn = side.pawns[pawnIndex]!;
+      if (isHome(pawn) || isSafe(pawn)) continue;
+      if (absoluteFor(side, pawn.progress) === absolute) return { side: color, pawnIndex };
+    }
+  }
+  return null;
+}
+
+function slideFor(color: Color, absolute: number) {
+  return SLIDES.find((slide) => slide.start === absolute && slide.color !== color) ?? null;
+}
+
+function applySlideAndBumps(sides: State["sides"], color: Color, pawnIndex: number) {
+  const side = sides[color];
+  const pawn = side.pawns[pawnIndex]!;
+  const absolute = absoluteFor(side, pawn.progress);
+  if (absolute === null) return "";
+
+  const slide = slideFor(color, absolute);
+  if (slide) {
+    for (let current = slide.start; ; current = (current + 1) % TRACK_LENGTH) {
+      const victim = absoluteOccupant(sides, current, { side: color, pawnIndex });
+      if (victim) sides[victim.side].pawns[victim.pawnIndex] = { progress: -1 };
+      if (current === slide.end) break;
+    }
+    side.pawns[pawnIndex] = { progress: progressForAbsolute(side, slide.end) };
+    return `${side.label} pawn took a slide to ${slide.end + 1}.`;
+  }
+
+  const victim = absoluteOccupant(sides, absolute, { side: color, pawnIndex });
+  if (victim) {
+    sides[victim.side].pawns[victim.pawnIndex] = { progress: -1 };
+    return `${side.label} bumped ${SIDE_META[victim.side].label} back to Start.`;
+  }
+
+  return "";
+}
+
+function applySingleMove(state: State, move: Move): { state: State; note: string } {
+  const sides = cloneSides(state.sides);
+  const side = sides[move.side];
+  const pawn = side.pawns[move.pawnIndex]!;
+  let note = `${side.label} ${move.label}.`;
+
+  if ((move.kind === "sorry" || move.kind === "swap") && move.target) {
+    const targetSide = sides[move.target.side];
+    const targetPawn = targetSide.pawns[move.target.pawnIndex]!;
+    if (move.kind === "swap" && pawn.progress >= 0) {
+      targetPawn.progress = progressForAbsolute(targetSide, absoluteFor(side, pawn.progress) ?? targetSide.startIndex);
+      note = `${side.label} swapped with ${targetSide.label}.`;
+    } else {
+      targetPawn.progress = -1;
+      note = `${side.label} said Sorry and sent ${targetSide.label} home.`;
+    }
+  }
+
+  side.pawns[move.pawnIndex] = { progress: move.targetProgress };
+  const slideOrBump = applySlideAndBumps(sides, move.side, move.pawnIndex);
+  if (slideOrBump) note = slideOrBump;
+
+  return { state: { ...state, sides }, note };
+}
+
+function simulateMove(state: State, move: Move) {
+  return applySingleMove(state, move).state;
+}
+
+function splitMovesForSeven(state: State, color: Color): SplitMove[] {
+  const firstMoves = baseMovesForCard(state, color, 7).filter((move) => move.kind === "forward");
+  const splitMoves: SplitMove[] = [];
+  const side = state.sides[color];
+
+  side.pawns.forEach((pawn, firstPawnIndex) => {
+    if (pawn.progress < 0 || isHome(pawn)) return;
+    for (let firstSteps = 1; firstSteps <= 6; firstSteps += 1) {
+      const firstTarget = pawn.progress + firstSteps;
+      const first: Move = {
+        kind: "forward",
+        side: color,
+        pawnIndex: firstPawnIndex,
+        targetProgress: firstTarget,
+        label: `Pawn ${firstPawnIndex + 1}: ${firstSteps}`,
+      };
+      if (firstTarget > HOME_PROGRESS || (firstTarget !== HOME_PROGRESS && ownPawnAt(side, firstTarget, firstPawnIndex))) continue;
+      const intermediate = simulateMove(state, first);
+      const remaining = 7 - firstSteps;
+      const secondSide = intermediate.sides[color];
+      secondSide.pawns.forEach((secondPawn, secondPawnIndex) => {
+        if (secondPawnIndex === firstPawnIndex || secondPawn.progress < 0 || isHome(secondPawn)) return;
+        const secondTarget = secondPawn.progress + remaining;
+        if (secondTarget > HOME_PROGRESS || (secondTarget !== HOME_PROGRESS && ownPawnAt(secondSide, secondTarget, secondPawnIndex))) return;
+        const second: Move = {
+          kind: "forward",
+          side: color,
+          pawnIndex: secondPawnIndex,
+          targetProgress: secondTarget,
+          label: `Pawn ${secondPawnIndex + 1}: ${remaining}`,
+        };
+        splitMoves.push({
+          first,
+          second,
+          label: `Split 7: pawn ${firstPawnIndex + 1} moves ${firstSteps}, pawn ${secondPawnIndex + 1} moves ${remaining}`,
+        });
+      });
+    }
+  });
+
+  return [
+    ...firstMoves.map((move) => ({ first: move, second: null, label: move.label })),
+    ...splitMoves,
+  ];
+}
+
+function legalOptions(state: State, color = state.current, card = state.card): TurnOption[] {
+  if (card === null) return [];
+  if (card === 7) return splitMovesForSeven(state, color);
+  return baseMovesForCard(state, color, card);
+}
+
+function optionLabel(option: TurnOption) {
+  return "first" in option ? option.label : option.label;
+}
+
+function optionScore(option: TurnOption) {
+  const scoreMove = (move: Move) => {
+    let score = move.targetProgress;
+    if (move.targetProgress >= SAFETY_START) score += 80;
+    if (move.targetProgress >= HOME_PROGRESS) score += 260;
+    if (move.kind === "sorry" || move.kind === "swap") score += 120;
+    if (move.kind === "back" || move.kind === "minus-one") score -= 10;
+    return score;
+  };
+
+  if ("first" in option) return scoreMove(option.first) + (option.second ? scoreMove(option.second) : 0);
+  return scoreMove(option);
+}
+
+function playerScore(state: State) {
+  const blue = state.sides.blue.pawns;
+  const homeScore = blue.filter(isHome).length * 500;
+  const safetyScore = blue.filter(isSafe).length * 130;
+  const boardScore = blue.reduce((total, pawn) => {
+    if (pawn.progress < 0 || isHome(pawn)) return total;
+    return total + Math.max(0, Math.min(pawn.progress, SAFETY_START));
+  }, 0);
+  const tempoBonus = Math.max(0, 600 - state.turns * 8);
+  return homeScore + safetyScore + boardScore + tempoBonus;
+}
+
+function applyOption(state: State, option: TurnOption): State {
+  const firstResult = applySingleMove(state, "first" in option ? option.first : option);
+  const secondResult = "first" in option && option.second ? applySingleMove(firstResult.state, option.second) : null;
+  const nextState = secondResult?.state ?? firstResult.state;
+  const notes = [firstResult.note, secondResult?.note].filter(Boolean).join(" ");
+  const winner = TURN_ORDER.find((color) => nextState.sides[color].pawns.every(isHome)) ?? null;
+  const score = winner === "blue" ? Math.max(playerScore(nextState), 2500 - state.turns * 12) : state.bestScore;
+
+  return {
+    ...nextState,
+    phase: winner ? "game-over" : "ready",
+    current: winner || state.card === 2 ? state.current : nextTurn(state.current),
+    card: null,
+    selectedMove: 0,
+    winner,
+    bestScore: Math.max(state.bestScore, score),
+    message: winner ? `${SIDE_META[winner].label} got all four pawns Home.` : `${notes}${state.card === 2 ? " Draw again." : ""}`,
+    log: [`${SIDE_META[state.current].label}: ${cardLabel(state.card)} - ${optionLabel(option)}`, ...state.log].slice(0, 5),
+  };
+}
+
+function drawForCurrent(state: State): State {
+  if (state.phase === "game-over") return createState(state.bestScore);
+  const draw = drawFromDeck(state);
+  const nextState = {
+    ...state,
+    ...draw,
+    phase: "choosing" as Phase,
+    turns: state.turns + 1,
+    selectedMove: 0,
+    message: `${SIDE_META[state.current].label} drew ${cardLabel(draw.card)}.`,
+  };
+  const options = legalOptions(nextState, state.current, draw.card);
+  if (options.length === 0) {
+    return {
+      ...nextState,
+      phase: "ready",
+      current: draw.card === 2 ? state.current : nextTurn(state.current),
+      card: null,
+      message: `${SIDE_META[state.current].label} drew ${cardLabel(draw.card)} but had no legal move.${draw.card === 2 ? " Draw again." : ""}`,
+      log: [`${SIDE_META[state.current].label}: ${cardLabel(draw.card)} - no move`, ...state.log].slice(0, 5),
+    };
+  }
+  return nextState;
+}
+
+function playCpuUntilBlue(state: State): State {
+  let nextState = state;
+  let guard = 0;
+  while (nextState.current !== "blue" && nextState.phase !== "game-over" && guard < 20) {
+    nextState = drawForCurrent(nextState);
+    if (nextState.phase === "choosing") {
+      const option = legalOptions(nextState).toSorted((a, b) => optionScore(b) - optionScore(a))[0];
+      if (option) nextState = applyOption(nextState, option);
+    }
+    guard += 1;
+  }
+  return nextState;
 }
 
 function cellForTrack(index: number) {
@@ -168,267 +509,71 @@ function homeCells(color: Color) {
   return [{ column: 7, row: 10 }, { column: 8, row: 10 }, { column: 7, row: 11 }, { column: 8, row: 11 }];
 }
 
-function ownPawnAtProgress(side: Side, progress: number, exceptIndex: number) {
-  return side.pawns.some((pawn, index) => index !== exceptIndex && pawn.progress === progress && !isHome(pawn));
-}
-
-function pawnAtAbsolute(sides: State["sides"], absolute: number, exclude?: { side: Color; pawnIndex: number }) {
-  for (const color of TURN_ORDER) {
-    const side = sides[color];
-    for (let pawnIndex = 0; pawnIndex < side.pawns.length; pawnIndex += 1) {
-      if (exclude?.side === color && exclude.pawnIndex === pawnIndex) continue;
-      const pawn = side.pawns[pawnIndex]!;
-      if (isHome(pawn) || isSafe(pawn)) continue;
-      if (absoluteFor(side, pawn.progress) === absolute) {
-        return { side: color, pawnIndex };
-      }
-    }
-  }
-  return null;
-}
-
-function slideFor(side: Color, absolute: number) {
-  return SLIDES.find((slide) => slide.start === absolute && slide.color !== side) ?? null;
-}
-
-function progressForAbsolute(side: Side, absolute: number) {
-  return (absolute - side.startIndex + TRACK_LENGTH) % TRACK_LENGTH;
-}
-
-function addMove(
-  moves: Move[],
-  side: Side,
-  pawnIndex: number,
-  card: Card,
-  targetProgress: number,
-  label: string,
-) {
-  if (targetProgress > HOME_PROGRESS || targetProgress < 0) return;
-  if (targetProgress !== HOME_PROGRESS && ownPawnAtProgress(side, targetProgress, pawnIndex)) return;
-  moves.push({
-    side: side.color,
-    pawnIndex,
-    card,
-    progress: side.pawns[pawnIndex]!.progress,
-    targetProgress,
-    targetAbsolute: absoluteFor(side, targetProgress),
-    label,
-  });
-}
-
-function legalMoves(state: State, color = state.current, card = state.card): Move[] {
-  if (card === null) return [];
-  const side = state.sides[color];
-  const moves: Move[] = [];
-
-  side.pawns.forEach((pawn, pawnIndex) => {
-    if (isHome(pawn)) return;
-    if (pawn.progress < 0) {
-      if (card === 1 || card === 2) {
-        addMove(moves, side, pawnIndex, card, 0, `pawn ${pawnIndex + 1} out of start`);
-      }
-      if (card === "sorry") {
-        for (const rivalColor of TURN_ORDER) {
-          if (rivalColor === color) continue;
-          const rival = state.sides[rivalColor];
-          rival.pawns.forEach((targetPawn, targetIndex) => {
-            const absolute = absoluteFor(rival, targetPawn.progress);
-            if (absolute === null || isSafe(targetPawn) || isHome(targetPawn)) return;
-            moves.push({
-              side: color,
-              pawnIndex,
-              card,
-              progress: pawn.progress,
-              targetProgress: progressForAbsolute(side, absolute),
-              targetAbsolute: absolute,
-              sorryTarget: { side: rivalColor, pawnIndex: targetIndex },
-              label: `SORRY! pawn ${pawnIndex + 1} bumps ${SIDE_META[rivalColor].label} ${targetIndex + 1}`,
-            });
-          });
-        }
-      }
-      return;
-    }
-
-    if (card === "sorry") return;
-    if (card === 4) {
-      addMove(moves, side, pawnIndex, card, Math.max(0, pawn.progress - 4), `pawn ${pawnIndex + 1} back 4`);
-      return;
-    }
-    if (card === 10) {
-      addMove(moves, side, pawnIndex, card, pawn.progress + 10, `pawn ${pawnIndex + 1} forward 10`);
-      addMove(moves, side, pawnIndex, card, Math.max(0, pawn.progress - 1), `pawn ${pawnIndex + 1} back 1`);
-      return;
-    }
-    if (card === 11) {
-      addMove(moves, side, pawnIndex, card, pawn.progress + 11, `pawn ${pawnIndex + 1} forward 11`);
-      const fromAbsolute = absoluteFor(side, pawn.progress);
-      if (fromAbsolute !== null && !isSafe(pawn)) {
-        for (const rivalColor of TURN_ORDER) {
-          if (rivalColor === color) continue;
-          const rival = state.sides[rivalColor];
-          rival.pawns.forEach((targetPawn, targetIndex) => {
-            const absolute = absoluteFor(rival, targetPawn.progress);
-            if (absolute === null || isSafe(targetPawn) || isHome(targetPawn)) return;
-            moves.push({
-              side: color,
-              pawnIndex,
-              card,
-              progress: pawn.progress,
-              targetProgress: progressForAbsolute(side, absolute),
-              targetAbsolute: absolute,
-              sorryTarget: { side: rivalColor, pawnIndex: targetIndex },
-              label: `swap pawn ${pawnIndex + 1} with ${SIDE_META[rivalColor].label} ${targetIndex + 1}`,
-            });
-          });
-        }
-      }
-      return;
-    }
-    if (typeof card === "number") {
-      addMove(moves, side, pawnIndex, card, pawn.progress + card, `pawn ${pawnIndex + 1} forward ${card}`);
-    }
-  });
-
-  return moves;
-}
-
-function applySlideAndBump(sides: State["sides"], color: Color, pawnIndex: number) {
-  const side = sides[color];
-  const pawn = side.pawns[pawnIndex]!;
-  const absolute = absoluteFor(side, pawn.progress);
-  if (absolute === null) return "";
-
-  let message = "";
-  const slide = slideFor(color, absolute);
-  if (slide) {
-    const slideTarget = progressForAbsolute(side, slide.end);
-    side.pawns[pawnIndex] = { progress: slideTarget };
-    message = `${side.label} pawn slid to the circle.`;
-    for (let step = slide.start; step !== (slide.end + 1) % TRACK_LENGTH; step = (step + 1) % TRACK_LENGTH) {
-      const victim = pawnAtAbsolute(sides, step, { side: color, pawnIndex });
-      if (victim) {
-        sides[victim.side].pawns[victim.pawnIndex] = { progress: -1 };
-      }
-      if (step === slide.end) break;
-    }
-    return message;
-  }
-
-  const victim = pawnAtAbsolute(sides, absolute, { side: color, pawnIndex });
-  if (victim) {
-    sides[victim.side].pawns[victim.pawnIndex] = { progress: -1 };
-    message = `${side.label} bumped ${SIDE_META[victim.side].label} back to start.`;
-  }
-  return message;
-}
-
-function applyMove(state: State, move: Move): State {
-  const sides = cloneSides(state.sides);
-  const side = sides[move.side];
-  let message = `${side.label} ${move.label}.`;
-
-  if ((move.card === "sorry" || move.card === 11) && move.sorryTarget) {
-    const target = sides[move.sorryTarget.side].pawns[move.sorryTarget.pawnIndex]!;
-    if (move.card === 11 && move.progress >= 0) {
-      target.progress = move.progress;
-    } else {
-      target.progress = -1;
-    }
-  }
-
-  side.pawns[move.pawnIndex] = { progress: move.targetProgress };
-  const slideOrBumpMessage = applySlideAndBump(sides, move.side, move.pawnIndex);
-  if (slideOrBumpMessage) message = slideOrBumpMessage;
-
-  const winner = TURN_ORDER.find((color) => sides[color].pawns.every(isHome)) ?? null;
-  const score = winner === "blue" ? Math.max(1, 2000 - state.moves * 12) : state.bestScore;
-  return {
-    ...state,
-    sides,
-    phase: winner ? (winner === "blue" ? "won" : "lost") : "animating",
-    winner,
-    bestScore: Math.max(state.bestScore, score),
-    message: winner ? `${SIDE_META[winner].label} got every pawn Home.` : message,
-  };
-}
-
-function drawForTurn(state: State, color = state.current): State {
-  if (state.phase === "won" || state.phase === "lost") return createState(state.bestScore);
-  const card = drawCard();
-  const choosingState = {
-    ...state,
-    phase: "choosing" as Phase,
-    current: color,
-    card,
-    selectedMove: 0,
-    moves: state.moves + 1,
-    message: `${SIDE_META[color].label} drew ${cardLabel(card)}.`,
-  };
-  const moves = legalMoves(choosingState, color, card);
-  if (moves.length === 0) {
-    return {
-      ...choosingState,
-      phase: "animating",
-      message: `${SIDE_META[color].label} drew ${cardLabel(card)}, but has no legal move.`,
-    };
-  }
-  return choosingState;
-}
-
-function scoreMove(move: Move) {
-  let score = move.targetProgress;
-  if (move.targetProgress >= HOME_PROGRESS) score += 300;
-  if (move.targetProgress >= TRACK_LENGTH) score += 120;
-  if (move.card === "sorry" || move.sorryTarget) score += 80;
-  return score;
-}
-
-function chooseCpuMove(state: State) {
-  const moves = legalMoves(state);
-  return moves.toSorted((a, b) => scoreMove(b) - scoreMove(a))[0] ?? null;
-}
-
-function passTurn(state: State): State {
-  return {
-    ...state,
-    phase: "ready",
-    current: nextTurn(state.current),
-    card: null,
-    selectedMove: 0,
-    message: `${SIDE_META[nextTurn(state.current)].label}'s turn. Draw a card.`,
-  };
-}
-
-function playCpuTurns(state: State): State {
-  let nextState = state;
-  let guard = 0;
-  while (nextState.current !== "blue" && nextState.phase !== "won" && nextState.phase !== "lost" && guard < 3) {
-    nextState = drawForTurn(nextState, nextState.current);
-    const move = chooseCpuMove(nextState);
-    if (move) {
-      nextState = applyMove(nextState, move);
-    }
-    if (nextState.phase === "won" || nextState.phase === "lost") return nextState;
-    nextState = passTurn(nextState);
-    guard += 1;
-  }
-  return nextState;
-}
-
 function pawnCell(side: Side, pawn: Pawn, index: number) {
   if (pawn.progress < 0) return startCells(side.color)[index]!;
   if (isHome(pawn)) return homeCells(side.color)[index]!;
-  if (isSafe(pawn)) return safetyCells(side.color)[Math.min(4, pawn.progress - TRACK_LENGTH)]!;
+  if (isSafe(pawn)) return safetyCells(side.color)[Math.min(4, pawn.progress - SAFETY_START)]!;
   const absolute = absoluteFor(side, pawn.progress);
   return cellForTrack(absolute ?? side.startIndex);
 }
 
+function moveOptionMatchesPawn(option: TurnOption, color: Color, pawnIndex: number) {
+  if ("first" in option) {
+    return (
+      (option.first.side === color && option.first.pawnIndex === pawnIndex) ||
+      (option.second?.side === color && option.second.pawnIndex === pawnIndex)
+    );
+  }
+  return option.side === color && option.pawnIndex === pawnIndex;
+}
+
+function MovePanel({
+  options,
+  selectedMove,
+  chooseMove,
+  setSelectedMove,
+}: {
+  options: TurnOption[];
+  selectedMove: number;
+  chooseMove: (index: number) => void;
+  setSelectedMove: (index: number) => void;
+}) {
+  if (options.length === 0) return null;
+
+  return (
+    <div className="mx-auto grid w-full max-w-3xl gap-2 rounded-xl border border-[#274d9d]/25 bg-[#fff8d8] p-3 text-[#172554] shadow-[0_16px_45px_rgba(0,0,0,0.22)]">
+      <div className="font-mono text-[0.68rem] font-black uppercase tracking-[0.18em] text-[#274d9d]">Choose a legal blue move</div>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {options.slice(0, 8).map((option, index) => (
+          <button
+            key={`${optionLabel(option)}-${index}`}
+            type="button"
+            onMouseEnter={() => setSelectedMove(index)}
+            onFocus={() => setSelectedMove(index)}
+            onClick={() => chooseMove(index)}
+            className={`rounded-lg border px-3 py-2 text-left text-sm font-black transition ${
+              selectedMove === index
+                ? "border-[#274d9d] bg-[#2563eb] text-white shadow-[0_0_0_3px_rgba(37,99,235,0.2)]"
+                : "border-[#274d9d]/20 bg-white text-[#172554] hover:bg-[#dbeafe]"
+            }`}
+          >
+            {optionLabel(option)}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function SorrySprintGame() {
-  const initialState = createState(readStoredNumber(STORAGE_KEY));
+  const initialState = useMemo(() => createState(readStoredNumber(STORAGE_KEY)), []);
   const [state, setState] = useState(initialState);
   const stateRef = useRef(initialState);
   const allTrackCells = useMemo(() => Array.from({ length: TRACK_LENGTH }, (_, index) => ({ index, ...cellForTrack(index) })), []);
+  const options = legalOptions(state);
+  const selectedOption = options[state.selectedMove] ?? null;
+  const blueHome = state.sides.blue.pawns.filter(isHome).length;
+  const score = playerScore(state);
 
   function sync(nextState: State) {
     stateRef.current = nextState;
@@ -440,68 +585,45 @@ export function SorrySprintGame() {
     sync(createState(stateRef.current.bestScore));
   }
 
-  function finishTurn(nextState = stateRef.current) {
-    if (nextState.phase === "won" || nextState.phase === "lost") {
-      sync(nextState);
-      return;
-    }
-    sync(playCpuTurns(passTurn(nextState)));
-  }
-
-  function drawOrContinue() {
+  function drawOrNewGame() {
     const current = stateRef.current;
-    if (current.phase === "won" || current.phase === "lost") {
+    if (current.phase === "game-over") {
       restart();
       return;
     }
     if (current.current !== "blue") return;
-    if (current.phase === "animating") {
-      finishTurn(current);
-      return;
-    }
-    const nextState = drawForTurn(current, "blue");
-    const moves = legalMoves(nextState);
-    if (moves.length === 0) {
-      finishTurn(nextState);
-      return;
-    }
-    sync(nextState);
+    const nextState = drawForCurrent(current);
+    sync(nextState.phase === "ready" && nextState.current !== "blue" ? playCpuUntilBlue(nextState) : nextState);
   }
 
   function chooseMove(index: number) {
     const current = stateRef.current;
-    const moves = legalMoves(current);
-    const move = moves[index];
-    if (!move || current.current !== "blue") return;
-    const moved = applyMove(current, move);
-    if (moved.phase === "won" || moved.phase === "lost") {
-      sync(moved);
-      return;
-    }
-    finishTurn(moved);
+    if (current.current !== "blue" || current.phase !== "choosing") return;
+    const option = legalOptions(current)[index];
+    if (!option) return;
+    const moved = applyOption(current, option);
+    sync(moved.current === "blue" || moved.phase === "game-over" ? moved : playCpuUntilBlue(moved));
   }
 
   const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
     const key = event.key.toLowerCase();
-    const moves = legalMoves(stateRef.current);
+    const currentOptions = legalOptions(stateRef.current);
     if (key === " " || key === "enter") {
       event.preventDefault();
-      if (stateRef.current.phase === "choosing" && moves.length > 0) {
+      if (stateRef.current.phase === "choosing" && currentOptions.length > 0) {
         chooseMove(stateRef.current.selectedMove);
       } else {
-        drawOrContinue();
+        drawOrNewGame();
       }
     } else if (key === "arrowright" || key === "d") {
       event.preventDefault();
-      if (moves.length > 0) {
-        const selectedMove = (stateRef.current.selectedMove + 1) % moves.length;
-        sync({ ...stateRef.current, selectedMove });
+      if (currentOptions.length > 0) {
+        sync({ ...stateRef.current, selectedMove: (stateRef.current.selectedMove + 1) % currentOptions.length });
       }
     } else if (key === "arrowleft" || key === "a") {
       event.preventDefault();
-      if (moves.length > 0) {
-        const selectedMove = (stateRef.current.selectedMove - 1 + moves.length) % moves.length;
-        sync({ ...stateRef.current, selectedMove });
+      if (currentOptions.length > 0) {
+        sync({ ...stateRef.current, selectedMove: (stateRef.current.selectedMove - 1 + currentOptions.length) % currentOptions.length });
       }
     } else if (key === "r") {
       event.preventDefault();
@@ -515,154 +637,184 @@ export function SorrySprintGame() {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  const moves = legalMoves(state);
-  const selectedMove = moves[state.selectedMove] ?? null;
-  const blueHome = state.sides.blue.pawns.filter(isHome).length;
-
   return (
     <GamePanel>
       <GameHud
         items={[
           { label: "Turn", value: SIDE_META[state.current].label },
           { label: "Card", value: cardLabel(state.card) },
-          { label: "Home", value: `${blueHome}/4` },
-          { label: "Best", value: state.bestScore },
+          { label: "Score", value: score },
+          { label: "Blue Home", value: `${blueHome}/4` },
+          { label: "Deck", value: state.deck.length },
+          { label: "Best", value: state.bestScore || "--" },
         ]}
         actions={
           <>
-            <GameButton variant="primary" onClick={drawOrContinue}>
-              {state.phase === "choosing" ? "Play" : state.phase === "won" || state.phase === "lost" ? "New Game" : "Draw"}
+            <GameButton variant="primary" onClick={drawOrNewGame} disabled={state.phase === "choosing" && state.current === "blue"}>
+              {state.phase === "game-over" ? "New Game" : "Draw Card"}
             </GameButton>
             <GameButton onClick={restart}>Restart</GameButton>
           </>
         }
       />
-      <GamePlayfield className="mx-auto aspect-square w-full max-w-[min(38rem,60dvh)] touch-none border-0 bg-[#f4d64a] p-3">
-        <div
-          className="relative grid h-full w-full overflow-hidden rounded-[1.4rem] border-4 border-[#203d86] bg-[#ffe880] shadow-[inset_0_6px_rgba(255,255,255,0.45),0_18px_50px_rgba(0,0,0,0.25)]"
-          style={{ gridTemplateColumns: `repeat(${BOARD_CELLS}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${BOARD_CELLS}, minmax(0, 1fr))` }}
-        >
-          <div className="absolute inset-[24%] grid place-items-center rounded-[1.2rem] border-4 border-[#203d86] bg-white/80 text-center shadow-inner">
-            <div>
-              <div className="text-3xl font-black uppercase tracking-[0.08em] text-[#e62e38] drop-shadow-[2px_2px_0_#203d86]">Sorry!</div>
-              <div className="mt-1 text-[0.62rem] font-black uppercase tracking-[0.2em] text-[#203d86]">draw - bump - slide - home</div>
-            </div>
-          </div>
 
-          {allTrackCells.map((cell) => {
-            const slide = SLIDES.find((candidate) => candidate.start === cell.index || candidate.end === cell.index);
-            return (
-              <div
-                key={cell.index}
-                className="relative m-[5%] rounded-md border-2 border-[#203d86] bg-white shadow-[inset_0_2px_rgba(255,255,255,0.7)]"
-                style={{ gridColumn: cell.column + 1, gridRow: cell.row + 1 }}
-              >
-                {slide ? (
-                  <span
-                    className="absolute inset-1 rounded-sm opacity-80"
-                    style={{ backgroundColor: SIDE_META[slide.color].color }}
-                  />
-                ) : null}
-                {SLIDES.some((candidate) => candidate.start === cell.index) ? (
-                  <span className="absolute inset-0 grid place-items-center text-[0.55rem] font-black text-white">SLIDE</span>
-                ) : null}
+      <div className="mx-auto grid w-full max-w-6xl gap-4 lg:grid-cols-[minmax(22rem,40rem)_18rem] lg:items-start">
+        <GamePlayfield className="aspect-square w-full touch-none border-0 bg-[#f4d64a] p-3">
+          <div
+            data-testid="sorry-board"
+            className="relative grid h-full w-full overflow-hidden rounded-[1.4rem] border-4 border-[#203d86] bg-[#ffe880] shadow-[inset_0_6px_rgba(255,255,255,0.45),0_18px_50px_rgba(0,0,0,0.25)]"
+            style={{ gridTemplateColumns: `repeat(${BOARD_CELLS}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${BOARD_CELLS}, minmax(0, 1fr))` }}
+          >
+            <div className="pointer-events-none absolute inset-[28%] z-0 grid place-items-center rounded-[1.2rem] border-4 border-[#203d86]/80 bg-white/60 text-center shadow-inner">
+              <div>
+                <div className="text-3xl font-black uppercase tracking-[0.08em] text-[#e62e38] drop-shadow-[2px_2px_0_#203d86]">Sorry!</div>
+                <div className="mt-1 text-[0.62rem] font-black uppercase tracking-[0.2em] text-[#203d86]">draw - bump - slide - home</div>
               </div>
-            );
-          })}
-
-          {TURN_ORDER.flatMap((color) =>
-            safetyCells(color).map((cell, index) => (
-              <div
-                key={`${color}-safe-${index}`}
-                className="m-[7%] rounded-md border-2 border-white/80 shadow-inner"
-                style={{
-                  gridColumn: cell.column + 1,
-                  gridRow: cell.row + 1,
-                  backgroundColor: SIDE_META[color].color,
-                  boxShadow: `0 0 12px ${SIDE_META[color].glow}`,
-                }}
-              />
-            )),
-          )}
-
-          {TURN_ORDER.map((color) => (
-            <div
-              key={`${color}-start`}
-              className="grid place-items-center rounded-full border-4 bg-white/70 text-[0.56rem] font-black uppercase tracking-[0.12em] shadow-md"
-              style={{
-                gridColumn: color === "blue" || color === "green" ? "4 / span 3" : "11 / span 3",
-                gridRow: color === "blue" || color === "yellow" ? "11 / span 3" : "4 / span 3",
-                borderColor: SIDE_META[color].color,
-                color: SIDE_META[color].dark,
-              }}
-            >
-              Start
             </div>
-          ))}
 
-          {TURN_ORDER.map((color) => (
-            <div
-              key={`${color}-home`}
-              className="grid place-items-center rounded-full border-4 bg-white/80 text-[0.6rem] font-black uppercase tracking-[0.12em] shadow-md"
-              style={{
-                gridColumn: color === "blue" ? "4 / span 3" : color === "red" ? "7 / span 3" : color === "yellow" ? "10 / span 3" : "7 / span 3",
-                gridRow: color === "blue" ? "8 / span 3" : color === "red" ? "4 / span 3" : color === "yellow" ? "7 / span 3" : "10 / span 3",
-                borderColor: SIDE_META[color].color,
-                color: SIDE_META[color].dark,
-              }}
-            >
-              Home
-            </div>
-          ))}
-
-          {TURN_ORDER.flatMap((color) =>
-            state.sides[color].pawns.map((pawn, pawnIndex) => {
-              const cell = pawnCell(state.sides[color], pawn, pawnIndex);
-              const active =
-                selectedMove?.side === color &&
-                selectedMove.pawnIndex === pawnIndex &&
-                state.current === "blue";
+            {allTrackCells.map((cell) => {
+              const slide = SLIDES.find((candidate) => candidate.start === cell.index || candidate.end === cell.index);
               return (
-                <button
-                  key={`${color}-${pawnIndex}`}
-                  type="button"
-                  aria-label={`${SIDE_META[color].label} pawn ${pawnIndex + 1}`}
-                  onClick={() => {
-                    const moveIndex = moves.findIndex((move) => move.side === color && move.pawnIndex === pawnIndex);
-                    if (moveIndex >= 0) chooseMove(moveIndex);
-                  }}
-                  className="absolute z-20 h-[6.2%] w-[6.2%] -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-white shadow-[0_4px_10px_rgba(0,0,0,0.35)] transition-transform hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                <div
+                  key={cell.index}
+                  className="relative z-10 m-[5%] rounded-md border-2 border-[#203d86] bg-white shadow-[inset_0_2px_rgba(255,255,255,0.7)]"
+                  style={{ gridColumn: cell.column + 1, gridRow: cell.row + 1 }}
+                >
+                  {slide ? (
+                    <span className="absolute inset-1 rounded-sm opacity-80" style={{ backgroundColor: SIDE_META[slide.color].color }} />
+                  ) : null}
+                  {SLIDES.some((candidate) => candidate.start === cell.index) ? (
+                    <span className="absolute inset-0 grid place-items-center text-[0.52rem] font-black text-white">SLIDE</span>
+                  ) : null}
+                </div>
+              );
+            })}
+
+            {TURN_ORDER.flatMap((color) =>
+              safetyCells(color).map((cell, index) => (
+                <div
+                  key={`${color}-safe-${index}`}
+                  className="z-10 m-[7%] rounded-md border-2 border-white/80 shadow-inner"
                   style={{
-                    left: `${((cell.column + 0.5) / BOARD_CELLS) * 100}%`,
-                    top: `${((cell.row + 0.5) / BOARD_CELLS) * 100}%`,
-                    background: `radial-gradient(circle at 34% 26%, white 0 9%, ${SIDE_META[color].color} 10% 62%, ${SIDE_META[color].dark} 63%)`,
-                    boxShadow: active ? `0 0 0 4px white, 0 0 24px ${SIDE_META[color].glow}` : `0 4px 10px rgba(0,0,0,0.35)`,
+                    gridColumn: cell.column + 1,
+                    gridRow: cell.row + 1,
+                    backgroundColor: SIDE_META[color].color,
+                    boxShadow: `0 0 12px ${SIDE_META[color].glow}`,
                   }}
                 />
-              );
-            }),
-          )}
-        </div>
-      </GamePlayfield>
+              )),
+            )}
 
-      {state.phase === "choosing" && moves.length > 0 ? (
-        <TouchControls className="max-w-[34rem]">
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {moves.slice(0, 6).map((move, index) => (
-              <GameButton
-                key={`${move.pawnIndex}-${move.label}`}
-                variant={index === state.selectedMove ? "primary" : "touch"}
-                onClick={() => chooseMove(index)}
+            {TURN_ORDER.map((color) => (
+              <div
+                key={`${color}-start`}
+                className="z-10 grid place-items-center rounded-full border-4 bg-white/70 text-[0.56rem] font-black uppercase tracking-[0.12em] shadow-md"
+                style={{
+                  gridColumn: color === "blue" || color === "green" ? "4 / span 3" : "11 / span 3",
+                  gridRow: color === "blue" || color === "yellow" ? "11 / span 3" : "4 / span 3",
+                  borderColor: SIDE_META[color].color,
+                  color: SIDE_META[color].dark,
+                }}
               >
-                {move.label}
-              </GameButton>
+                Start
+              </div>
+            ))}
+
+            {TURN_ORDER.map((color) => (
+              <div
+                key={`${color}-home`}
+                className="z-10 grid place-items-center rounded-full border-4 bg-white/80 text-[0.6rem] font-black uppercase tracking-[0.12em] shadow-md"
+                style={{
+                  gridColumn: color === "blue" ? "4 / span 3" : color === "red" ? "7 / span 3" : color === "yellow" ? "10 / span 3" : "7 / span 3",
+                  gridRow: color === "blue" ? "8 / span 3" : color === "red" ? "4 / span 3" : color === "yellow" ? "7 / span 3" : "10 / span 3",
+                  borderColor: SIDE_META[color].color,
+                  color: SIDE_META[color].dark,
+                }}
+              >
+                Home
+              </div>
+            ))}
+
+            {TURN_ORDER.flatMap((color) =>
+              state.sides[color].pawns.map((pawn, pawnIndex) => {
+                const cell = pawnCell(state.sides[color], pawn, pawnIndex);
+                const active =
+                  Boolean(selectedOption) &&
+                  moveOptionMatchesPawn(selectedOption, color, pawnIndex) &&
+                  state.current === "blue";
+                return (
+                  <button
+                    key={`${color}-${pawnIndex}`}
+                    type="button"
+                    aria-label={`${SIDE_META[color].label} pawn ${pawnIndex + 1}`}
+                    onClick={() => {
+                      const moveIndex = options.findIndex((option) => moveOptionMatchesPawn(option, color, pawnIndex));
+                      if (moveIndex >= 0) chooseMove(moveIndex);
+                    }}
+                    className="absolute z-20 h-[6.2%] w-[6.2%] -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-white shadow-[0_4px_10px_rgba(0,0,0,0.35)] outline-none transition-[left,top,transform,box-shadow] duration-500 ease-[cubic-bezier(0.18,0.9,0.2,1)] hover:scale-110 focus-visible:ring-4 focus-visible:ring-white"
+                    style={{
+                      left: `${((cell.column + 0.5) / BOARD_CELLS) * 100}%`,
+                      top: `${((cell.row + 0.5) / BOARD_CELLS) * 100}%`,
+                      background: `radial-gradient(circle at 34% 26%, white 0 9%, ${SIDE_META[color].color} 10% 62%, ${SIDE_META[color].dark} 63%)`,
+                      boxShadow: active ? `0 0 0 4px white, 0 0 24px ${SIDE_META[color].glow}` : `0 4px 10px rgba(0,0,0,0.35)`,
+                    }}
+                  />
+                );
+              }),
+            )}
+          </div>
+        </GamePlayfield>
+
+        <aside className="grid gap-3 rounded-xl border border-[#274d9d]/25 bg-[#fff8d8] p-3 text-[#172554] shadow-[0_18px_55px_rgba(0,0,0,0.22)]">
+          <div className="rounded-lg border border-[#274d9d]/20 bg-white/80 p-3">
+            <div className="font-mono text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#274d9d]">Current Card</div>
+            <div className="mt-2 grid min-h-28 place-items-center rounded-xl border-4 border-[#e62e38] bg-white text-3xl font-black text-[#203d86] shadow-inner">
+              {cardLabel(state.card)}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-lg border border-[#274d9d]/15 bg-white/75 p-2">
+              <div className="text-xs font-black uppercase text-[#274d9d]">Score</div>
+              <div className="mt-1 text-2xl font-black text-[#e62e38]">{score}</div>
+            </div>
+            <div className="rounded-lg border border-[#274d9d]/15 bg-white/75 p-2">
+              <div className="text-xs font-black uppercase text-[#274d9d]">Best</div>
+              <div className="mt-1 text-2xl font-black text-[#203d86]">{state.bestScore || "--"}</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            {TURN_ORDER.map((color) => (
+              <div key={color} className="rounded-lg border border-[#274d9d]/15 bg-white/75 p-2">
+                <div className="text-xs font-black uppercase" style={{ color: SIDE_META[color].dark }}>{SIDE_META[color].label}</div>
+                <div className="mt-1 text-sm font-black">{state.sides[color].pawns.filter(isHome).length}/4 Home</div>
+              </div>
             ))}
           </div>
-        </TouchControls>
-      ) : null}
+
+          <div className="rounded-lg border border-[#274d9d]/20 bg-white/80 p-3">
+            <div className="font-mono text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#274d9d]">Game Log</div>
+            <div className="mt-2 grid gap-2">
+              {state.log.map((item, index) => (
+                <p key={`${item}-${index}`} className="rounded-md bg-[#dbeafe]/65 px-3 py-2 text-sm font-bold leading-5">
+                  {item}
+                </p>
+              ))}
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <MovePanel
+        options={options}
+        selectedMove={state.selectedMove}
+        chooseMove={chooseMove}
+        setSelectedMove={(selectedMove) => sync({ ...stateRef.current, selectedMove })}
+      />
 
       <GameStatus>
-        {state.message} Space/Enter draws or confirms. A/D choose a move. R restarts.
+        {state.message} Draw cards, choose legal blue moves, use slides, bump rivals, and get all four pawns Home. Space/Enter confirms, A/D changes selected move, R restarts.
       </GameStatus>
     </GamePanel>
   );
