@@ -14,9 +14,9 @@ import {
 import type { FlappyBirdState, FlappyPipe } from "@/features/games/flappy-bird/types";
 import { clamp } from "@/features/games/shared/utils/math";
 
-function createPipe(id: number, x: number): FlappyPipe {
+function createPipe(id: number, x: number, pipeGap = FLAPPY_PIPE_GAP): FlappyPipe {
   const minGapY = 104;
-  const maxGapY = FLAPPY_HEIGHT - FLAPPY_GROUND_HEIGHT - FLAPPY_PIPE_GAP - 104;
+  const maxGapY = FLAPPY_HEIGHT - FLAPPY_GROUND_HEIGHT - pipeGap - 104;
   return {
     id,
     x,
@@ -25,11 +25,17 @@ function createPipe(id: number, x: number): FlappyPipe {
   };
 }
 
-function createPipes() {
-  return [createPipe(1, FLAPPY_WIDTH + 80), createPipe(2, FLAPPY_WIDTH + 80 + FLAPPY_PIPE_SPACING)];
+function createPipes(pipeGap = FLAPPY_PIPE_GAP) {
+  return [
+    createPipe(1, FLAPPY_WIDTH + 80, pipeGap),
+    createPipe(2, FLAPPY_WIDTH + 80 + FLAPPY_PIPE_SPACING, pipeGap),
+  ];
 }
 
-export function createFlappyBirdState(bestScore = 0): FlappyBirdState {
+export function createFlappyBirdState(
+  bestScore = 0,
+  pipeGap = FLAPPY_PIPE_GAP,
+): FlappyBirdState {
   return {
     phase: "idle",
     bird: {
@@ -37,7 +43,7 @@ export function createFlappyBirdState(bestScore = 0): FlappyBirdState {
       vy: 0,
       rotation: 0,
     },
-    pipes: createPipes(),
+    pipes: createPipes(pipeGap),
     score: 0,
     bestScore,
     scroll: 0,
@@ -45,12 +51,16 @@ export function createFlappyBirdState(bestScore = 0): FlappyBirdState {
   };
 }
 
-export function startFlappyBird(state: FlappyBirdState): FlappyBirdState {
+export function startFlappyBird(
+  state: FlappyBirdState,
+  pipeGap = FLAPPY_PIPE_GAP,
+): FlappyBirdState {
   if (state.phase === "game-over") {
+    const nextState = createFlappyBirdState(state.bestScore, pipeGap);
     return {
-      ...createFlappyBirdState(state.bestScore),
+      ...nextState,
       phase: "playing",
-      bird: { ...createFlappyBirdState(state.bestScore).bird, vy: FLAPPY_FLAP_VELOCITY },
+      bird: { ...nextState.bird, vy: FLAPPY_FLAP_VELOCITY },
     };
   }
 
@@ -60,9 +70,12 @@ export function startFlappyBird(state: FlappyBirdState): FlappyBirdState {
   };
 }
 
-export function flapFlappyBird(state: FlappyBirdState): FlappyBirdState {
+export function flapFlappyBird(
+  state: FlappyBirdState,
+  pipeGap = FLAPPY_PIPE_GAP,
+): FlappyBirdState {
   if (state.phase === "idle" || state.phase === "game-over") {
-    const started = startFlappyBird(state);
+    const started = startFlappyBird(state, pipeGap);
     return {
       ...started,
       bird: {
@@ -85,7 +98,11 @@ export function flapFlappyBird(state: FlappyBirdState): FlappyBirdState {
   };
 }
 
-function collidesWithPipe(birdY: number, pipe: FlappyPipe) {
+function collidesWithPipe(
+  birdY: number,
+  pipe: FlappyPipe,
+  pipeGap = FLAPPY_PIPE_GAP,
+) {
   const birdLeft = FLAPPY_BIRD_X - FLAPPY_BIRD_RADIUS + 4;
   const birdRight = FLAPPY_BIRD_X + FLAPPY_BIRD_RADIUS - 4;
   const birdTop = birdY - FLAPPY_BIRD_RADIUS + 3;
@@ -93,12 +110,16 @@ function collidesWithPipe(birdY: number, pipe: FlappyPipe) {
   const pipeLeft = pipe.x;
   const pipeRight = pipe.x + FLAPPY_PIPE_WIDTH;
   const gapTop = pipe.gapY;
-  const gapBottom = pipe.gapY + FLAPPY_PIPE_GAP;
+  const gapBottom = pipe.gapY + pipeGap;
 
   return birdRight > pipeLeft && birdLeft < pipeRight && (birdTop < gapTop || birdBottom > gapBottom);
 }
 
-export function updateFlappyBird(state: FlappyBirdState, deltaSeconds: number): FlappyBirdState {
+export function updateFlappyBird(
+  state: FlappyBirdState,
+  deltaSeconds: number,
+  pipeGap = FLAPPY_PIPE_GAP,
+): FlappyBirdState {
   if (state.phase !== "playing") {
     return state;
   }
@@ -125,11 +146,18 @@ export function updateFlappyBird(state: FlappyBirdState, deltaSeconds: number): 
 
   const furthestX = Math.max(...pipes.map((pipe) => pipe.x), FLAPPY_WIDTH);
   while (pipes.length < 3) {
-    pipes = [...pipes, createPipe(nextPipeId, furthestX + FLAPPY_PIPE_SPACING + (nextPipeId - state.nextPipeId) * FLAPPY_PIPE_SPACING)];
+    pipes = [
+      ...pipes,
+      createPipe(
+        nextPipeId,
+        furthestX + FLAPPY_PIPE_SPACING + (nextPipeId - state.nextPipeId) * FLAPPY_PIPE_SPACING,
+        pipeGap,
+      ),
+    ];
     nextPipeId += 1;
   }
 
-  const hitPipe = pipes.some((pipe) => collidesWithPipe(bird.y, pipe));
+  const hitPipe = pipes.some((pipe) => collidesWithPipe(bird.y, pipe, pipeGap));
   const hitWorld = bird.y - FLAPPY_BIRD_RADIUS < 0 || bird.y + FLAPPY_BIRD_RADIUS > FLAPPY_HEIGHT - FLAPPY_GROUND_HEIGHT;
   const nextPhase = hitPipe || hitWorld ? "game-over" : "playing";
 

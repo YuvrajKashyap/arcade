@@ -1,4 +1,5 @@
 export type FlappyBirdPhase = "idle" | "playing" | "paused" | "game-over";
+export type FlappyBirdDifficulty = "easy" | "hard";
 
 export type FlappyBirdPlayer = {
   y: number;
