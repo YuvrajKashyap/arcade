@@ -732,19 +732,19 @@ export const gameCatalog = [
     slug: "helix-jump",
     title: "Helix Jump",
     shortDescription:
-      "A colorful helix-fall arcade game with rotating platforms, gaps, danger slices, score, and high score.",
+      "A glossy helix-drop arcade game with drag rotation, bouncing physics, danger slices, combo drops, and fireball smash.",
     description:
-      "Helix Jump is an original vertical arcade dropper: rotate the stack, let the ball fall through gaps, bounce on safe slices, avoid black danger slices, and score each level you pass.",
+      "Helix Jump is a self-coded vertical arcade dropper: rotate a pseudo-3D tower, guide a glossy bouncing ball through gaps, avoid red danger slices, chain clean drops into fireball smash mode, and chase a local high score.",
     thumbnail: "/games/helix-jump/thumbnail.png?v=20260428",
     genre: "Arcade",
     tags: ["Canvas", "Reaction", "Physics", "Touch", "High Score"],
     controls: {
-      summary: "A/D or Arrow Left/Right rotate the tower. Space starts and R restarts.",
+      summary: "Drag left/right or use A/D and Arrow Left/Right to rotate the tower. Space starts and R restarts.",
       items: [
-        { label: "Rotate", action: "A/D, Arrow Left/Right, or touch buttons" },
+        { label: "Rotate", action: "Drag, A/D, Arrow Left/Right, or touch buttons" },
         { label: "Start / Restart", action: "Space or R" },
-        { label: "Avoid", action: "Black slices end the run" },
-        { label: "Goal", action: "Fall through as many gaps as possible" },
+        { label: "Avoid", action: "Red slices end the run unless fireball is active" },
+        { label: "Combo", action: "Drop through consecutive gaps to smash through layers" },
       ],
     },
     difficulty: "medium",
@@ -757,13 +757,14 @@ export const gameCatalog = [
     mobileSupport: "full",
     version: "1.0.0",
     developerNotes:
-      "Helix Jump is a self-coded canvas dropper with original visuals, rotating arcs, collision slices, and local score persistence.",
+      "Helix Jump is a self-coded canvas dropper with pseudo-3D platform rendering, drag rotation, bounce physics, danger sectors, combo/fireball state, particles, and local score persistence.",
     howToPlay: {
       summary: "Rotate the helix so the ball falls through open gaps.",
       tips: [
         "Safe slices bounce the ball upward.",
         "Gaps score and move you downward.",
-        "Black danger slices end the run.",
+        "Red danger slices end the run unless fireball smash is active.",
+        "Consecutive clean drops activate smash mode.",
       ],
     },
     libraryOrder: 20,
