@@ -341,25 +341,21 @@ function cuboidFaces(block: Block | FallingPiece, cameraY: number) {
   const halfD = block.depth / 2;
   const yTop = block.y + BLOCK_HEIGHT;
   const yBottom = block.y;
-  const top = [
-    projected({ x: block.x - halfW, z: block.z - halfD, y: yTop }, cameraY),
-    projected({ x: block.x + halfW, z: block.z - halfD, y: yTop }, cameraY),
-    projected({ x: block.x + halfW, z: block.z + halfD, y: yTop }, cameraY),
-    projected({ x: block.x - halfW, z: block.z + halfD, y: yTop }, cameraY),
-  ];
-  const front = [
-    projected({ x: block.x - halfW, z: block.z + halfD, y: yTop }, cameraY),
-    projected({ x: block.x + halfW, z: block.z + halfD, y: yTop }, cameraY),
-    projected({ x: block.x + halfW, z: block.z + halfD, y: yBottom }, cameraY),
-    projected({ x: block.x - halfW, z: block.z + halfD, y: yBottom }, cameraY),
-  ];
-  const side = [
-    projected({ x: block.x + halfW, z: block.z - halfD, y: yTop }, cameraY),
-    projected({ x: block.x + halfW, z: block.z + halfD, y: yTop }, cameraY),
-    projected({ x: block.x + halfW, z: block.z + halfD, y: yBottom }, cameraY),
-    projected({ x: block.x + halfW, z: block.z - halfD, y: yBottom }, cameraY),
-  ];
-  return { top, front, side };
+  const topBackLeft = projected({ x: block.x - halfW, z: block.z - halfD, y: yTop }, cameraY);
+  const topBackRight = projected({ x: block.x + halfW, z: block.z - halfD, y: yTop }, cameraY);
+  const topFrontRight = projected({ x: block.x + halfW, z: block.z + halfD, y: yTop }, cameraY);
+  const topFrontLeft = projected({ x: block.x - halfW, z: block.z + halfD, y: yTop }, cameraY);
+  const bottomBackLeft = projected({ x: block.x - halfW, z: block.z - halfD, y: yBottom }, cameraY);
+  const bottomBackRight = projected({ x: block.x + halfW, z: block.z - halfD, y: yBottom }, cameraY);
+  const bottomFrontRight = projected({ x: block.x + halfW, z: block.z + halfD, y: yBottom }, cameraY);
+  const bottomFrontLeft = projected({ x: block.x - halfW, z: block.z + halfD, y: yBottom }, cameraY);
+  const top = [topBackLeft, topBackRight, topFrontRight, topFrontLeft];
+  const bottom = [bottomBackLeft, bottomFrontLeft, bottomFrontRight, bottomBackRight];
+  const back = [topBackRight, topBackLeft, bottomBackLeft, bottomBackRight];
+  const left = [topBackLeft, topFrontLeft, bottomFrontLeft, bottomBackLeft];
+  const front = [topFrontLeft, topFrontRight, bottomFrontRight, bottomFrontLeft];
+  const right = [topBackRight, topFrontRight, bottomFrontRight, bottomBackRight];
+  return { top, bottom, back, left, front, right };
 }
 
 function drawPolygon(context: CanvasRenderingContext2D, points: Array<{ x: number; y: number }>, fill: string, stroke = "rgba(255,255,255,0.28)") {
@@ -383,8 +379,11 @@ function drawBlock(context: CanvasRenderingContext2D, block: Block, cameraY: num
     width: block.width + pulse * 8,
     depth: block.depth + pulse * 8,
   }, cameraY);
+  drawPolygon(context, faces.bottom, blockColor(block.hue + 10, 27), "rgba(0,0,0,0.16)");
+  drawPolygon(context, faces.back, blockColor(block.hue + 4, 32), "rgba(0,0,0,0.1)");
+  drawPolygon(context, faces.left, blockColor(block.hue + 12, 37), "rgba(255,255,255,0.18)");
   drawPolygon(context, faces.front, blockColor(block.hue, 42));
-  drawPolygon(context, faces.side, blockColor(block.hue + 8, 35));
+  drawPolygon(context, faces.right, blockColor(block.hue + 8, 35));
   drawPolygon(context, faces.top, blockColor(block.hue, 61 + pulse * 8), "rgba(255,255,255,0.54)");
   context.restore();
 }
