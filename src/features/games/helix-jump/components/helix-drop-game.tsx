@@ -1,7 +1,7 @@
 "use client";
 
 import { type PointerEvent, useEffect, useEffectEvent, useRef, useState } from "react";
-import { configureHiDPICanvas } from "@/features/games/shared/canvas/configure-canvas";
+import * as THREE from "three";
 import {
   GameButton,
   GameHud,
@@ -16,20 +16,19 @@ import {
   writeStoredNumber,
 } from "@/features/games/shared/utils/local-storage";
 
-const WIDTH = 420;
-const HEIGHT = 560;
-const CENTER_X = WIDTH / 2;
-const BALL_X = WIDTH / 2;
-const BALL_RADIUS = 15;
 const STORAGE_KEY = "arcade.helixDrop.bestScore";
-const PLATFORM_SPACING = 78;
-const START_PLATFORM_Y = 178;
-const TOWER_RADIUS = 112;
-const PERSPECTIVE_Y = 0.34;
-const DANGER_SIZE = 48;
 const FIREBALL_DROP_COUNT = 3;
+const BALL_RADIUS = 0.42;
+const TOWER_RADIUS = 2.15;
+const CORE_RADIUS = 0.38;
+const PLATFORM_THICKNESS = 0.18;
+const PLATFORM_SPACING = 1.34;
+const START_LAYER_Y = -0.9;
+const BALL_WORLD_Y = 1.55;
+const DANGER_SIZE = 42;
+const CAMERA_SCROLL_TARGET = 1.55;
 
-type Phase = "idle" | "playing" | "paused" | "game-over" | "won";
+type Phase = "idle" | "playing" | "paused" | "game-over";
 type Layer = {
   id: number;
   y: number;
@@ -40,13 +39,9 @@ type Layer = {
   hue: number;
 };
 type Particle = {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
+  mesh: THREE.Mesh;
+  velocity: THREE.Vector3;
   life: number;
-  color: string;
-  size: number;
 };
 type State = {
   phase: Phase;
@@ -54,13 +49,30 @@ type State = {
   ballY: number;
   velocityY: number;
   layers: Layer[];
-  particles: Particle[];
   score: number;
   bestScore: number;
   level: number;
   combo: number;
   fireTime: number;
   message: string;
+};
+type HudState = {
+  score: number;
+  bestScore: number;
+  combo: number;
+  phase: Phase;
+  message: string;
+};
+type ThreeRuntime = {
+  renderer: THREE.WebGLRenderer;
+  scene: THREE.Scene;
+  camera: THREE.PerspectiveCamera;
+  tower: THREE.Group;
+  ball: THREE.Mesh;
+  ballGlow: THREE.PointLight;
+  layerGroups: Map<number, THREE.Group>;
+  particles: Particle[];
+  smashMaterial: THREE.MeshStandardMaterial;
 };
 
 function normalizeAngle(angle: number) {
@@ -75,97 +87,307 @@ function inArc(angle: number, start: number, size: number) {
 }
 
 function seededLayer(index: number, y: number, level: number): Layer {
-  const gapSize = Math.max(64, 104 - level * 3 - (index % 3) * 8);
   return {
     id: index,
     y,
-    gapStart: normalizeAngle(index * 67 + level * 41),
-    gapSize,
-    dangerStart: normalizeAngle(index * 113 + level * 29 + 96),
-    dangerSize: Math.min(72, DANGER_SIZE + level * 2),
-    hue: (index * 34 + level * 21) % 360,
+    gapStart: normalizeAngle(index * 61 + level * 43),
+    gapSize: Math.max(58, 103 - level * 2.5 - (index % 3) * 8),
+    dangerStart: normalizeAngle(index * 107 + level * 31 + 84),
+    dangerSize: Math.min(70, DANGER_SIZE + level * 2),
+    hue: (index * 38 + level * 26) % 360,
   };
 }
 
 function createLayers(level = 1) {
-  return Array.from({ length: 13 }, (_, index) => seededLayer(index, START_PLATFORM_Y + index * PLATFORM_SPACING, level));
+  return Array.from({ length: 15 }, (_, index) => seededLayer(index, START_LAYER_Y - index * PLATFORM_SPACING, level));
 }
 
 function createState(bestScore = 0): State {
   return {
     phase: "idle",
     rotation: 0,
-    ballY: 112,
+    ballY: BALL_WORLD_Y,
     velocityY: 0,
     layers: createLayers(1),
-    particles: [],
     score: 0,
     bestScore,
     level: 1,
     combo: 0,
     fireTime: 0,
-    message: "Drag or use arrows to rotate the tower.",
+    message: "Drag the tower and drop through the gaps.",
   };
-}
-
-function createBurst(x: number, y: number, color: string, count = 16) {
-  return Array.from({ length: count }, (_, index) => {
-    const angle = (Math.PI * 2 * index) / count + Math.random() * 0.5;
-    const speed = 90 + Math.random() * 170;
-    return {
-      x,
-      y,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed - 80,
-      life: 0.45 + Math.random() * 0.3,
-      color,
-      size: 2 + Math.random() * 4,
-    };
-  });
-}
-
-function updateParticles(particles: Particle[], delta: number) {
-  return particles
-    .map((particle) => ({
-      ...particle,
-      x: particle.x + particle.vx * delta,
-      y: particle.y + particle.vy * delta,
-      vy: particle.vy + 420 * delta,
-      life: particle.life - delta,
-    }))
-    .filter((particle) => particle.life > 0);
 }
 
 function impactAngle(rotation: number) {
   return normalizeAngle(270 - rotation);
 }
 
-function updateState(state: State, delta: number, input: number): State {
-  if (state.phase !== "playing") {
-    return { ...state, particles: updateParticles(state.particles, delta) };
+function createSectorGeometry(startDeg: number, sizeDeg: number, innerRadius: number, outerRadius: number) {
+  const shape = new THREE.Shape();
+  const start = THREE.MathUtils.degToRad(startDeg);
+  const end = THREE.MathUtils.degToRad(startDeg + sizeDeg);
+  const stepCount = Math.max(8, Math.ceil(sizeDeg / 6));
+
+  for (let index = 0; index <= stepCount; index += 1) {
+    const angle = start + (end - start) * (index / stepCount);
+    const x = Math.cos(angle) * outerRadius;
+    const y = Math.sin(angle) * outerRadius;
+    if (index === 0) shape.moveTo(x, y);
+    else shape.lineTo(x, y);
+  }
+  for (let index = stepCount; index >= 0; index -= 1) {
+    const angle = start + (end - start) * (index / stepCount);
+    shape.lineTo(Math.cos(angle) * innerRadius, Math.sin(angle) * innerRadius);
+  }
+  shape.closePath();
+
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    depth: PLATFORM_THICKNESS,
+    bevelEnabled: true,
+    bevelSegments: 2,
+    bevelSize: 0.035,
+    bevelThickness: 0.035,
+  });
+  geometry.rotateX(-Math.PI / 2);
+  geometry.translate(0, PLATFORM_THICKNESS / -2, 0);
+  return geometry;
+}
+
+function createLayerGroup(layer: Layer) {
+  const group = new THREE.Group();
+  group.userData.layerId = layer.id;
+
+  for (let start = 0; start < 360; start += 12) {
+    const center = normalizeAngle(start + 6);
+    if (inArc(center, layer.gapStart, layer.gapSize)) continue;
+
+    const danger = inArc(center, layer.dangerStart, layer.dangerSize);
+    const material = new THREE.MeshStandardMaterial({
+      color: danger ? "#f1193f" : new THREE.Color(`hsl(${layer.hue}, 86%, ${start > 180 ? 54 : 62}%)`),
+      roughness: danger ? 0.42 : 0.31,
+      metalness: 0.08,
+      emissive: danger ? new THREE.Color("#650014") : new THREE.Color(`hsl(${layer.hue}, 88%, 22%)`),
+      emissiveIntensity: danger ? 0.12 : 0.08,
+    });
+    const mesh = new THREE.Mesh(createSectorGeometry(start + 1.1, 9.9, CORE_RADIUS + 0.12, TOWER_RADIUS), material);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    group.add(mesh);
+
+    if (!danger && start % 36 === 0) {
+      const highlight = new THREE.Mesh(
+        createSectorGeometry(start + 2.5, 5.5, TOWER_RADIUS - 0.42, TOWER_RADIUS - 0.1),
+        new THREE.MeshBasicMaterial({ color: "#ffffff", transparent: true, opacity: 0.24 }),
+      );
+      highlight.position.y = 0.102;
+      group.add(highlight);
+    }
   }
 
-  const rotation = normalizeAngle(state.rotation + input * 245 * delta);
+  return group;
+}
+
+function createRuntime(canvas: HTMLCanvasElement): ThreeRuntime {
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.08;
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color("#7b4cff");
+  scene.fog = new THREE.Fog("#7b4cff", 8, 19);
+
+  const camera = new THREE.PerspectiveCamera(34, 3 / 4, 0.1, 80);
+  camera.position.set(0, 3.85, 9.4);
+  camera.lookAt(0, -0.05, 0);
+
+  const tower = new THREE.Group();
+  scene.add(tower);
+
+  const coreMaterial = new THREE.MeshStandardMaterial({
+    color: "#fbf7ff",
+    roughness: 0.22,
+    metalness: 0.08,
+  });
+  const core = new THREE.Mesh(new THREE.CylinderGeometry(CORE_RADIUS, CORE_RADIUS, 28, 36), coreMaterial);
+  core.position.y = -9;
+  core.castShadow = true;
+  core.receiveShadow = true;
+  tower.add(core);
+
+  const base = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.05, 1.2, 0.32, 48),
+    new THREE.MeshStandardMaterial({ color: "#eee6ff", roughness: 0.28, metalness: 0.06 }),
+  );
+  base.position.y = -18.2;
+  base.castShadow = true;
+  base.receiveShadow = true;
+  tower.add(base);
+
+  const ballMaterial = new THREE.MeshPhysicalMaterial({
+    color: "#ff3cae",
+    roughness: 0.18,
+    metalness: 0.02,
+    clearcoat: 1,
+    clearcoatRoughness: 0.1,
+  });
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(BALL_RADIUS, 48, 32), ballMaterial);
+  ball.position.set(0, BALL_WORLD_Y, TOWER_RADIUS + 0.18);
+  ball.castShadow = true;
+  scene.add(ball);
+
+  const ballGlow = new THREE.PointLight("#ff4fbc", 2.4, 4.5);
+  ballGlow.position.copy(ball.position);
+  scene.add(ballGlow);
+
+  const ambient = new THREE.HemisphereLight("#ffffff", "#724cff", 2.8);
+  scene.add(ambient);
+
+  const keyLight = new THREE.DirectionalLight("#ffffff", 3.8);
+  keyLight.position.set(-3.4, 7.5, 5.2);
+  keyLight.castShadow = true;
+  keyLight.shadow.mapSize.set(1024, 1024);
+  keyLight.shadow.camera.near = 1;
+  keyLight.shadow.camera.far = 18;
+  scene.add(keyLight);
+
+  const rimLight = new THREE.DirectionalLight("#ffd25d", 2.1);
+  rimLight.position.set(4.2, 3.4, -4.8);
+  scene.add(rimLight);
+
+  const backdrop = new THREE.Mesh(
+    new THREE.PlaneGeometry(16, 24),
+    new THREE.MeshBasicMaterial({ color: "#ff7aba", transparent: true, opacity: 0.25 }),
+  );
+  backdrop.position.set(0, -2.5, -5.5);
+  scene.add(backdrop);
+
+  return {
+    renderer,
+    scene,
+    camera,
+    tower,
+    ball,
+    ballGlow,
+    layerGroups: new Map(),
+    particles: [],
+    smashMaterial: new THREE.MeshStandardMaterial({
+      color: "#fff155",
+      emissive: "#ff861f",
+      emissiveIntensity: 1.2,
+      roughness: 0.24,
+    }),
+  };
+}
+
+function resizeRuntime(runtime: ThreeRuntime, wrapper: HTMLDivElement) {
+  const { width, height } = wrapper.getBoundingClientRect();
+  const renderWidth = Math.max(1, Math.floor(width));
+  const renderHeight = Math.max(1, Math.floor(height));
+  runtime.renderer.setSize(renderWidth, renderHeight, false);
+  runtime.camera.aspect = renderWidth / renderHeight;
+  runtime.camera.updateProjectionMatrix();
+}
+
+function ensureLayerMeshes(runtime: ThreeRuntime, layers: Layer[]) {
+  const visibleIds = new Set(layers.map((layer) => layer.id));
+  runtime.layerGroups.forEach((group, id) => {
+    if (!visibleIds.has(id)) {
+      runtime.tower.remove(group);
+      group.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.geometry.dispose();
+          if (Array.isArray(child.material)) child.material.forEach((material) => material.dispose());
+          else child.material.dispose();
+        }
+      });
+      runtime.layerGroups.delete(id);
+    }
+  });
+
+  for (const layer of layers) {
+    let group = runtime.layerGroups.get(layer.id);
+    if (!group) {
+      group = createLayerGroup(layer);
+      runtime.layerGroups.set(layer.id, group);
+      runtime.tower.add(group);
+    }
+    group.position.y = layer.y;
+  }
+}
+
+function createParticleBurst(runtime: ThreeRuntime, y: number, danger = false, count = 20) {
+  const geometry = new THREE.SphereGeometry(0.055, 10, 8);
+  for (let index = 0; index < count; index += 1) {
+    const material = danger
+      ? runtime.smashMaterial.clone()
+      : new THREE.MeshStandardMaterial({
+          color: index % 2 === 0 ? "#ffffff" : "#65ffe8",
+          emissive: index % 2 === 0 ? "#ff44c7" : "#1bd8ff",
+          emissiveIntensity: 0.4,
+        });
+    const mesh = new THREE.Mesh(geometry.clone(), material);
+    const angle = Math.random() * Math.PI * 2;
+    const radius = CORE_RADIUS + 0.5 + Math.random() * 1.3;
+    mesh.position.set(Math.cos(angle) * radius, y, Math.sin(angle) * radius);
+    runtime.scene.add(mesh);
+    runtime.particles.push({
+      mesh,
+      velocity: new THREE.Vector3(
+        Math.cos(angle) * (1.2 + Math.random() * 2.2),
+        1.2 + Math.random() * 2.8,
+        Math.sin(angle) * (1.2 + Math.random() * 2.2),
+      ),
+      life: 0.45 + Math.random() * 0.35,
+    });
+  }
+}
+
+function updateParticles(runtime: ThreeRuntime, delta: number) {
+  for (let index = runtime.particles.length - 1; index >= 0; index -= 1) {
+    const particle = runtime.particles[index];
+    particle.life -= delta;
+    particle.velocity.y -= 6.6 * delta;
+    particle.mesh.position.addScaledVector(particle.velocity, delta);
+    particle.mesh.scale.setScalar(Math.max(0, particle.life * 1.9));
+    if (particle.life <= 0) {
+      runtime.scene.remove(particle.mesh);
+      particle.mesh.geometry.dispose();
+      if (Array.isArray(particle.mesh.material)) particle.mesh.material.forEach((material) => material.dispose());
+      else particle.mesh.material.dispose();
+      runtime.particles.splice(index, 1);
+    }
+  }
+}
+
+function updateState(state: State, delta: number, input: number, runtime?: ThreeRuntime): State {
+  if (state.phase !== "playing") {
+    return state;
+  }
+
+  const rotation = normalizeAngle(state.rotation + input * 285 * delta);
   let ballY = state.ballY + state.velocityY * delta;
-  let velocityY = state.velocityY + 1160 * delta;
+  let velocityY = state.velocityY - 19.6 * delta;
   let layers = state.layers.map((layer) => ({ ...layer }));
-  const particles = updateParticles(state.particles, delta);
   let score = state.score;
   let bestScore = state.bestScore;
   let combo = state.combo;
   let fireTime = Math.max(0, state.fireTime - delta);
   let message = state.message;
 
-  const cameraLift = Math.max(0, ballY - 150);
-  if (cameraLift > 0) {
-    ballY -= cameraLift;
-    layers = layers.map((layer) => ({ ...layer, y: layer.y - cameraLift }));
+  const cameraDrop = Math.min(0, ballY - CAMERA_SCROLL_TARGET);
+  if (cameraDrop < 0) {
+    ballY -= cameraDrop;
+    layers = layers.map((layer) => ({ ...layer, y: layer.y - cameraDrop }));
   }
 
   for (const layer of layers) {
-    const platformTop = layer.y - 7;
-    const platformBottom = layer.y + 9;
-    const crossing = velocityY > 0 && ballY + BALL_RADIUS >= platformTop && ballY + BALL_RADIUS <= platformBottom;
+    const platformTop = layer.y + PLATFORM_THICKNESS / 2;
+    const platformBottom = layer.y - PLATFORM_THICKNESS / 2;
+    const crossing = velocityY < 0 && ballY - BALL_RADIUS <= platformTop && ballY - BALL_RADIUS >= platformBottom;
     if (!crossing) continue;
 
     const localAngle = impactAngle(rotation);
@@ -174,15 +396,15 @@ function updateState(state: State, delta: number, input: number): State {
     const fireball = fireTime > 0 || combo >= FIREBALL_DROP_COUNT;
 
     if (gap) {
-      layer.y = -999;
+      layer.y = 999;
       score += 1 + Math.max(0, combo - 1);
       bestScore = Math.max(bestScore, score);
       combo += 1;
-      fireTime = combo >= FIREBALL_DROP_COUNT ? 1.2 : fireTime;
-      particles.push(...createBurst(BALL_X, layer.y, "#ffffff", 10));
-      message = combo >= FIREBALL_DROP_COUNT ? "Fireball active. Smash through a layer." : "Clean drop.";
+      fireTime = combo >= FIREBALL_DROP_COUNT ? 1.1 : fireTime;
+      message = combo >= FIREBALL_DROP_COUNT ? "Fireball smash is active." : "Clean drop.";
+      if (runtime) createParticleBurst(runtime, platformTop, false, 12);
     } else if (danger && !fireball) {
-      particles.push(...createBurst(BALL_X, layer.y - 5, "#ff2355", 34));
+      if (runtime) createParticleBurst(runtime, platformTop, true, 34);
       return {
         ...state,
         phase: "game-over",
@@ -190,40 +412,38 @@ function updateState(state: State, delta: number, input: number): State {
         ballY,
         velocityY: 0,
         layers,
-        particles,
         score,
         bestScore,
         combo: 0,
         fireTime: 0,
-        message: "You hit a danger slice.",
+        message: "You hit a red danger slice.",
       };
-    } else if (fireball && velocityY > 520) {
-      layer.y = -999;
-      score += danger ? 4 : 2;
+    } else if (fireball && Math.abs(velocityY) > 8.6) {
+      layer.y = 999;
+      score += danger ? 5 : 3;
       bestScore = Math.max(bestScore, score);
       combo += 1;
-      fireTime = 0.85;
-      particles.push(...createBurst(BALL_X, layer.y - 5, danger ? "#ff2355" : "#ffe15c", 30));
-      message = "Smash drop.";
+      fireTime = 0.92;
+      message = "Smash through.";
+      if (runtime) createParticleBurst(runtime, platformTop, danger, 28);
     } else {
-      ballY = platformTop - BALL_RADIUS;
-      velocityY = -475 - Math.min(90, combo * 10);
+      ballY = platformTop + BALL_RADIUS;
+      velocityY = 6.9 + Math.min(0.9, combo * 0.14);
       combo = 0;
       fireTime = 0;
-      particles.push(...createBurst(BALL_X, platformTop - 2, danger ? "#ff2355" : "#37f2aa", 14));
       message = "Bounce.";
+      if (runtime) createParticleBurst(runtime, platformTop, false, 10);
     }
   }
 
-  layers = layers.filter((layer) => layer.y > -110);
-  while (layers.length < 13) {
+  layers = layers.filter((layer) => layer.y < 4.7);
+  while (layers.length < 15) {
     const nextId = Math.max(0, ...layers.map((layer) => layer.id)) + 1;
-    const lastY = Math.max(START_PLATFORM_Y, ...layers.map((layer) => layer.y));
-    const level = Math.floor(score / 10) + 1;
-    layers.push(seededLayer(nextId, lastY + PLATFORM_SPACING, level));
+    const lowestY = Math.min(START_LAYER_Y, ...layers.map((layer) => layer.y));
+    const nextLevel = Math.floor(score / 12) + 1;
+    layers.push(seededLayer(nextId, lowestY - PLATFORM_SPACING, nextLevel));
   }
 
-  const level = Math.floor(score / 10) + 1;
   return {
     ...state,
     phase: "playing",
@@ -231,220 +451,97 @@ function updateState(state: State, delta: number, input: number): State {
     ballY,
     velocityY,
     layers,
-    particles,
     score,
     bestScore,
-    level,
+    level: Math.floor(score / 12) + 1,
     combo,
     fireTime,
     message,
   };
 }
 
-function drawSector(
-  context: CanvasRenderingContext2D,
-  start: number,
-  size: number,
-  inner: number,
-  outer: number,
-  color: string,
-) {
-  const startRad = (start * Math.PI) / 180;
-  const endRad = ((start + size) * Math.PI) / 180;
-  context.beginPath();
-  context.arc(0, 0, outer, startRad, endRad);
-  context.arc(0, 0, inner, endRad, startRad, true);
-  context.closePath();
-  context.fillStyle = color;
-  context.fill();
-}
+function renderRuntime(runtime: ThreeRuntime, state: State, elapsed: number) {
+  ensureLayerMeshes(runtime, state.layers);
+  runtime.tower.rotation.y = THREE.MathUtils.degToRad(state.rotation);
+  runtime.ball.position.set(0, state.ballY, TOWER_RADIUS + 0.18);
+  runtime.ball.rotation.x += 0.07 + Math.abs(state.velocityY) * 0.002;
+  const squash = THREE.MathUtils.clamp(state.velocityY / 44, -0.16, 0.22);
+  runtime.ball.scale.set(1 + Math.abs(squash) * 0.38, 1 - squash, 1 + Math.abs(squash) * 0.38);
+  runtime.ballGlow.position.copy(runtime.ball.position);
+  runtime.ballGlow.intensity = state.fireTime > 0 ? 5.4 : 2.4 + Math.sin(elapsed * 7) * 0.25;
 
-function drawLayer(context: CanvasRenderingContext2D, layer: Layer, rotation: number) {
-  context.save();
-  context.translate(CENTER_X, layer.y);
-  context.scale(1, PERSPECTIVE_Y);
-  context.rotate((rotation * Math.PI) / 180);
-
-  context.shadowColor = "rgba(0,0,0,0.28)";
-  context.shadowBlur = 14;
-  context.shadowOffsetY = 12;
-
-  for (let start = 0; start < 360; start += 7.5) {
-    if (inArc(start + 3, layer.gapStart, layer.gapSize)) continue;
-    const danger = inArc(start + 3, layer.dangerStart, layer.dangerSize);
-    const shade = danger ? "#ed1f4f" : `hsl(${layer.hue} 86% ${start > 180 ? 48 : 56}%)`;
-    drawSector(context, start, 7.1, 37, TOWER_RADIUS, shade);
+  const material = runtime.ball.material;
+  if (material instanceof THREE.MeshPhysicalMaterial) {
+    material.color.set(state.fireTime > 0 ? "#ff7829" : "#ff3cae");
+    material.emissive.set(state.fireTime > 0 ? "#ff3300" : "#000000");
+    material.emissiveIntensity = state.fireTime > 0 ? 0.34 : 0;
   }
 
-  context.shadowBlur = 0;
-  for (let start = 0; start < 360; start += 24) {
-    if (inArc(start + 12, layer.gapStart, layer.gapSize)) continue;
-    context.strokeStyle = "rgba(255,255,255,0.18)";
-    context.lineWidth = 2;
-    context.beginPath();
-    context.arc(0, 0, TOWER_RADIUS - 5, (start * Math.PI) / 180, ((start + 14) * Math.PI) / 180);
-    context.stroke();
-  }
-
-  context.restore();
-
-  context.save();
-  context.translate(CENTER_X, layer.y + 4);
-  context.scale(1, PERSPECTIVE_Y);
-  context.strokeStyle = "rgba(255,255,255,0.36)";
-  context.lineWidth = 2;
-  context.beginPath();
-  context.arc(0, 0, TOWER_RADIUS, 0, Math.PI * 2);
-  context.stroke();
-  context.restore();
+  const idleBob = state.phase === "idle" ? Math.sin(elapsed * 2.4) * 0.08 : 0;
+  runtime.camera.position.set(Math.sin(elapsed * 0.18) * 0.14, 3.85 + idleBob, 9.4);
+  runtime.camera.lookAt(0, -0.05, 0);
+  runtime.renderer.render(runtime.scene, runtime.camera);
 }
 
-function drawBall(context: CanvasRenderingContext2D, state: State, elapsed: number) {
-  const squash = Math.max(-0.12, Math.min(0.16, state.velocityY / 3600));
-  const fire = state.fireTime > 0 || state.combo >= FIREBALL_DROP_COUNT;
-
-  context.save();
-  context.translate(BALL_X, state.ballY);
-  context.scale(1 + squash, 1 - squash);
-  context.shadowColor = fire ? "#ffd43b" : "#ffffff";
-  context.shadowBlur = fire ? 28 : 12;
-  const gradient = context.createRadialGradient(-5, -7, 3, 0, 0, BALL_RADIUS + 5);
-  gradient.addColorStop(0, "#ffffff");
-  gradient.addColorStop(0.18, fire ? "#fff275" : "#ffe0f2");
-  gradient.addColorStop(0.58, fire ? "#ff7a1a" : "#ff3eb5");
-  gradient.addColorStop(1, fire ? "#ef233c" : "#8a2be2");
-  context.fillStyle = gradient;
-  context.beginPath();
-  context.arc(0, 0, BALL_RADIUS, 0, Math.PI * 2);
-  context.fill();
-  context.lineWidth = 3;
-  context.strokeStyle = "rgba(255,255,255,0.82)";
-  context.stroke();
-
-  if (fire) {
-    for (let i = 0; i < 3; i += 1) {
-      context.strokeStyle = `rgba(255, ${160 + i * 25}, 40, ${0.42 - i * 0.1})`;
-      context.lineWidth = 4 - i;
-      context.beginPath();
-      context.arc(0, 0, BALL_RADIUS + 5 + Math.sin(elapsed * 12 + i) * 3 + i * 5, 0, Math.PI * 2);
-      context.stroke();
-    }
-  }
-  context.restore();
-
-  context.save();
-  context.translate(BALL_X, state.ballY + 38);
-  context.scale(1, 0.24);
-  context.fillStyle = "rgba(0,0,0,0.26)";
-  context.beginPath();
-  context.arc(0, 0, 23, 0, Math.PI * 2);
-  context.fill();
-  context.restore();
-}
-
-function drawParticles(context: CanvasRenderingContext2D, particles: Particle[]) {
-  particles.forEach((particle) => {
-    context.globalAlpha = Math.max(0, Math.min(1, particle.life * 2.4));
-    context.fillStyle = particle.color;
-    context.beginPath();
-    context.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-    context.fill();
+function disposeRuntime(runtime: ThreeRuntime) {
+  runtime.layerGroups.forEach((group) => {
+    group.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.geometry.dispose();
+        if (Array.isArray(child.material)) child.material.forEach((material) => material.dispose());
+        else child.material.dispose();
+      }
+    });
   });
-  context.globalAlpha = 1;
+  runtime.scene.traverse((child) => {
+    if (child instanceof THREE.Mesh) {
+      child.geometry.dispose();
+      if (Array.isArray(child.material)) child.material.forEach((material) => material.dispose());
+      else child.material.dispose();
+    }
+  });
+  runtime.renderer.dispose();
 }
 
-function drawScene(context: CanvasRenderingContext2D, state: State, elapsed: number) {
-  context.clearRect(0, 0, WIDTH, HEIGHT);
-  const gradient = context.createLinearGradient(0, 0, WIDTH, HEIGHT);
-  gradient.addColorStop(0, "#6c45ff");
-  gradient.addColorStop(0.48, "#ff4fa7");
-  gradient.addColorStop(1, "#ffb24a");
-  context.fillStyle = gradient;
-  context.fillRect(0, 0, WIDTH, HEIGHT);
+function hudFromState(state: State): HudState {
+  return {
+    score: state.score,
+    bestScore: state.bestScore,
+    combo: state.combo,
+    phase: state.phase,
+    message: state.message,
+  };
+}
 
-  context.fillStyle = "rgba(255,255,255,0.08)";
-  for (let i = 0; i < 18; i += 1) {
-    const x = (i * 71 + elapsed * 12) % (WIDTH + 80) - 40;
-    const y = (i * 97) % HEIGHT;
-    context.beginPath();
-    context.arc(x, y, 3 + (i % 4), 0, Math.PI * 2);
-    context.fill();
-  }
-
-  context.save();
-  context.translate(CENTER_X, 0);
-  const towerGradient = context.createLinearGradient(-22, 0, 22, 0);
-  towerGradient.addColorStop(0, "#d7d4ff");
-  towerGradient.addColorStop(0.5, "#ffffff");
-  towerGradient.addColorStop(1, "#b8b2ef");
-  context.fillStyle = towerGradient;
-  context.shadowColor = "rgba(63,31,125,0.35)";
-  context.shadowBlur = 24;
-  context.beginPath();
-  context.roundRect(-20, -30, 40, HEIGHT + 90, 22);
-  context.fill();
-  context.restore();
-
-  [...state.layers]
-    .sort((a, b) => a.y - b.y)
-    .forEach((layer) => drawLayer(context, layer, state.rotation));
-
-  drawParticles(context, state.particles);
-  drawBall(context, state, elapsed);
-
-  context.fillStyle = "#ffffff";
-  context.font = "900 34px Arial, sans-serif";
-  context.fillText(String(state.score), 24, 45);
-  context.font = "800 12px Arial, sans-serif";
-  context.fillText(`LEVEL ${state.level}`, 26, 65);
-  if (state.combo > 1) {
-    context.fillStyle = state.fireTime > 0 ? "#fff275" : "#ffffff";
-    context.font = "900 18px Arial, sans-serif";
-    context.fillText(`${state.combo}x DROP`, WIDTH - 118, 45);
-  }
-
-  if (state.phase !== "playing") {
-    context.fillStyle = "rgba(31,18,64,0.48)";
-    context.fillRect(0, 0, WIDTH, HEIGHT);
-    context.textAlign = "center";
-    context.fillStyle = "#ffffff";
-    context.font = "900 38px Arial, sans-serif";
-    context.fillText(state.phase === "game-over" ? "GAME OVER" : state.phase === "paused" ? "PAUSED" : "HELIX JUMP", WIDTH / 2, HEIGHT / 2 - 12);
-    context.font = "800 15px Arial, sans-serif";
-    context.fillText(state.phase === "idle" ? "drag left or right to rotate" : "space or start to retry", WIDTH / 2, HEIGHT / 2 + 20);
-    context.textAlign = "left";
-  }
+function hudChanged(a: HudState, b: HudState) {
+  return a.score !== b.score || a.bestScore !== b.bestScore || a.combo !== b.combo || a.phase !== b.phase || a.message !== b.message;
 }
 
 export function HelixDropGame() {
   const initialState = createState(readStoredNumber(STORAGE_KEY));
+  const initialHud = hudFromState(initialState);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const contextRef = useRef<CanvasRenderingContext2D | null>(null);
+  const runtimeRef = useRef<ThreeRuntime | null>(null);
   const stateRef = useRef(initialState);
   const inputRef = useRef(0);
   const dragRef = useRef<{ x: number; pointerId: number } | null>(null);
-  const [hud, setHud] = useState({
-    score: 0,
-    bestScore: initialState.bestScore,
-    combo: 0,
-    phase: initialState.phase,
-    message: initialState.message,
-  });
+  const hudRef = useRef(initialHud);
+  const [hud, setHud] = useState(initialHud);
 
-  function sync(nextState: State) {
+  function sync(nextState: State, forceHud = false) {
     stateRef.current = nextState;
-    setHud({
-      score: nextState.score,
-      bestScore: nextState.bestScore,
-      combo: nextState.combo,
-      phase: nextState.phase,
-      message: nextState.message,
-    });
-    writeStoredNumber(STORAGE_KEY, nextState.bestScore);
+    const nextHud = hudFromState(nextState);
+    if (forceHud || hudChanged(hudRef.current, nextHud)) {
+      hudRef.current = nextHud;
+      setHud(nextHud);
+      writeStoredNumber(STORAGE_KEY, nextState.bestScore);
+    }
   }
 
   function start() {
-    sync({ ...createState(stateRef.current.bestScore), phase: "playing" });
+    const nextState = { ...createState(stateRef.current.bestScore), phase: "playing" as Phase };
+    sync(nextState, true);
   }
 
   function rotateByDrag(clientX: number) {
@@ -453,15 +550,13 @@ export function HelixDropGame() {
     const dx = clientX - drag.x;
     dragRef.current = { ...drag, x: clientX };
     const current = stateRef.current.phase === "idle" ? { ...stateRef.current, phase: "playing" as Phase } : stateRef.current;
-    sync({ ...current, rotation: normalizeAngle(current.rotation + dx * 0.86) });
+    sync({ ...current, rotation: normalizeAngle(current.rotation + dx * 0.92) });
   }
 
   function onPointerDown(event: PointerEvent<HTMLCanvasElement>) {
     event.currentTarget.setPointerCapture(event.pointerId);
     dragRef.current = { x: event.clientX, pointerId: event.pointerId };
-    if (stateRef.current.phase === "idle" || stateRef.current.phase === "game-over") {
-      start();
-    }
+    if (stateRef.current.phase === "idle" || stateRef.current.phase === "game-over") start();
   }
 
   function onPointerMove(event: PointerEvent<HTMLCanvasElement>) {
@@ -469,9 +564,7 @@ export function HelixDropGame() {
   }
 
   function onPointerEnd(event: PointerEvent<HTMLCanvasElement>) {
-    if (dragRef.current?.pointerId === event.pointerId) {
-      dragRef.current = null;
-    }
+    if (dragRef.current?.pointerId === event.pointerId) dragRef.current = null;
   }
 
   const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
@@ -479,43 +572,57 @@ export function HelixDropGame() {
     if (key === "arrowleft" || key === "a") {
       event.preventDefault();
       inputRef.current = -1;
-      if (stateRef.current.phase === "idle") sync({ ...stateRef.current, phase: "playing" });
+      if (stateRef.current.phase === "idle") sync({ ...stateRef.current, phase: "playing" }, true);
     } else if (key === "arrowright" || key === "d") {
       event.preventDefault();
       inputRef.current = 1;
-      if (stateRef.current.phase === "idle") sync({ ...stateRef.current, phase: "playing" });
+      if (stateRef.current.phase === "idle") sync({ ...stateRef.current, phase: "playing" }, true);
     } else if (key === " " || key === "r") {
       event.preventDefault();
       start();
     } else if (key === "p") {
       event.preventDefault();
       const current = stateRef.current;
-      sync({ ...current, phase: current.phase === "playing" ? "paused" : "playing" });
+      sync({ ...current, phase: current.phase === "playing" ? "paused" : "playing" }, true);
     }
   });
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (canvas) {
-      contextRef.current = configureHiDPICanvas(canvas, WIDTH, HEIGHT);
-      if (contextRef.current) drawScene(contextRef.current, stateRef.current, 0);
-    }
+    const wrapper = wrapperRef.current;
+    if (!canvas || !wrapper) return undefined;
+
+    const runtime = createRuntime(canvas);
+    runtimeRef.current = runtime;
+    resizeRuntime(runtime, wrapper);
+    renderRuntime(runtime, stateRef.current, 0);
+
+    const resizeObserver = new ResizeObserver(() => resizeRuntime(runtime, wrapper));
+    resizeObserver.observe(wrapper);
     const down = (event: KeyboardEvent) => onKeyDown(event);
     const up = (event: KeyboardEvent) => {
       if (["arrowleft", "a", "arrowright", "d"].includes(event.key.toLowerCase())) inputRef.current = 0;
     };
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
+
     return () => {
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
+      resizeObserver.disconnect();
+      disposeRuntime(runtime);
+      runtimeRef.current = null;
     };
   }, []);
 
   useAnimationFrameLoop((delta, elapsed) => {
-    const nextState = updateState(stateRef.current, Math.min(delta, 0.034), inputRef.current);
+    const runtime = runtimeRef.current;
+    if (!runtime) return;
+    const safeDelta = Math.min(delta, 0.026);
+    updateParticles(runtime, safeDelta);
+    const nextState = updateState(stateRef.current, safeDelta, inputRef.current, runtime);
     if (nextState !== stateRef.current) sync(nextState);
-    if (contextRef.current) drawScene(contextRef.current, stateRef.current, elapsed);
+    renderRuntime(runtime, stateRef.current, elapsed);
   });
 
   return (
@@ -533,18 +640,20 @@ export function HelixDropGame() {
           </GameButton>
         }
       />
-      <GamePlayfield className="mx-auto aspect-[3/4] w-full max-w-[min(24rem,58dvh)] touch-none border-0 bg-[#8b5cff]">
-        <canvas
-          ref={canvasRef}
-          className="h-full w-full cursor-grab touch-none active:cursor-grabbing"
-          aria-label="Helix Jump field"
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerEnd}
-          onPointerCancel={onPointerEnd}
-        />
+      <GamePlayfield className="mx-auto aspect-[3/4] w-full max-w-[min(24rem,58dvh)] overflow-hidden border-0 bg-gradient-to-b from-[#6f49ff] via-[#ff55b8] to-[#ffae46]">
+        <div ref={wrapperRef} className="h-full w-full touch-none">
+          <canvas
+            ref={canvasRef}
+            className="h-full w-full cursor-grab touch-none active:cursor-grabbing"
+            aria-label="Helix Jump 3D field"
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerEnd}
+            onPointerCancel={onPointerEnd}
+          />
+        </div>
       </GamePlayfield>
-      <GameStatus>{hud.message} Drag the tower, fall through gaps, avoid red slices, and chain drops for fireball smash.</GameStatus>
+      <GameStatus>{hud.message} Drag the 3D tower, drop through gaps, avoid red slices, and chain clean drops for smash mode.</GameStatus>
       <TouchControls className="max-w-[18rem]">
         <div className="grid grid-cols-2 gap-2">
           <GameButton variant="touch" onPointerDown={() => (inputRef.current = -1)} onPointerUp={() => (inputRef.current = 0)} onPointerLeave={() => (inputRef.current = 0)}>

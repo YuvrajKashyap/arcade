@@ -732,9 +732,9 @@ export const gameCatalog = [
     slug: "helix-jump",
     title: "Helix Jump",
     shortDescription:
-      "A glossy helix-drop arcade game with drag rotation, bouncing physics, danger slices, combo drops, and fireball smash.",
+      "A WebGL 3D helix-drop arcade game with drag rotation, bouncing physics, danger slices, combo drops, and fireball smash.",
     description:
-      "Helix Jump is a self-coded vertical arcade dropper: rotate a pseudo-3D tower, guide a glossy bouncing ball through gaps, avoid red danger slices, chain clean drops into fireball smash mode, and chase a local high score.",
+      "Helix Jump is a self-coded vertical arcade dropper: rotate a real 3D tower, guide a glossy bouncing ball through gaps, avoid red danger slices, chain clean drops into fireball smash mode, and chase a local high score.",
     thumbnail: "/games/helix-jump/thumbnail.png?v=20260428",
     genre: "Arcade",
     tags: ["Canvas", "Reaction", "Physics", "Touch", "High Score"],
@@ -757,7 +757,7 @@ export const gameCatalog = [
     mobileSupport: "full",
     version: "1.0.0",
     developerNotes:
-      "Helix Jump is a self-coded canvas dropper with pseudo-3D platform rendering, drag rotation, bounce physics, danger sectors, combo/fireball state, particles, and local score persistence.",
+      "Helix Jump is a self-coded WebGL/Three.js dropper with extruded 3D platform sectors, drag rotation, bounce physics, danger sectors, combo/fireball state, particles, and local score persistence.",
     howToPlay: {
       summary: "Rotate the helix so the ball falls through open gaps.",
       tips: [
