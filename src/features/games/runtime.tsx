@@ -109,6 +109,41 @@ const StackGame = dynamic(() => import("@/features/games/stack"), {
   loading: GameLoadingState,
 });
 
+const MemoryMatchGame = dynamic(() => import("@/features/games/memory-match"), {
+  ssr: false,
+  loading: GameLoadingState,
+});
+
+const WhackAMoleGame = dynamic(() => import("@/features/games/whack-a-mole"), {
+  ssr: false,
+  loading: GameLoadingState,
+});
+
+const ConnectFourGame = dynamic(() => import("@/features/games/connect-four"), {
+  ssr: false,
+  loading: GameLoadingState,
+});
+
+const HangmanGame = dynamic(() => import("@/features/games/hangman"), {
+  ssr: false,
+  loading: GameLoadingState,
+});
+
+const TypingSpeedTestGame = dynamic(() => import("@/features/games/typing-speed-test"), {
+  ssr: false,
+  loading: GameLoadingState,
+});
+
+const BubblePopGame = dynamic(() => import("@/features/games/bubble-pop"), {
+  ssr: false,
+  loading: GameLoadingState,
+});
+
+const MiniGolfGame = dynamic(() => import("@/features/games/mini-golf"), {
+  ssr: false,
+  loading: GameLoadingState,
+});
+
 export const gameComponentMap: Record<GameSlug, React.ComponentType> = {
   snake: SnakeGame,
   pong: PongGame,
@@ -131,4 +166,11 @@ export const gameComponentMap: Record<GameSlug, React.ComponentType> = {
   "street-fighter": StreetFighterGame,
   "helix-jump": HelixJumpGame,
   stack: StackGame,
+  "memory-match": MemoryMatchGame,
+  "whack-a-mole": WhackAMoleGame,
+  "connect-four": ConnectFourGame,
+  hangman: HangmanGame,
+  "typing-speed-test": TypingSpeedTestGame,
+  "bubble-pop": BubblePopGame,
+  "mini-golf": MiniGolfGame,
 };
