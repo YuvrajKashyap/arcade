@@ -811,6 +811,261 @@ export const gameCatalog = [
     libraryOrder: 21,
     relatedSlugs: ["helix-jump", "cookie-clicker"],
   },
+  {
+    slug: "memory-match",
+    title: "Memory Match",
+    shortDescription:
+      "A polished card-flip memory game with chunky cards, streaks, move tracking, timer, and local best time.",
+    description:
+      "Memory Match turns a classic pair-finding puzzle into a premium toy-card board with animated flips, colorful symbols, match feedback, timer pressure, move tracking, streaks, and local best-time persistence.",
+    thumbnail: "/games/memory-match/thumbnail.png?v=20260501",
+    genre: "Puzzle",
+    tags: ["Cards", "Memory", "DOM", "Touch", "Best Time"],
+    controls: {
+      summary: "Click, tap, or keyboard-focus cards to flip two at a time. R restarts.",
+      items: [
+        { label: "Flip", action: "Click, tap, Enter, or Space on a card" },
+        { label: "Match", action: "Find two cards with the same symbol" },
+        { label: "Restart", action: "New Board button or R" },
+      ],
+    },
+    difficulty: "easy",
+    sessionLength: "2-5 min",
+    releaseDate: "2026-05-01",
+    status: "live",
+    featured: false,
+    published: true,
+    supports: ["keyboard", "mouse", "touch"],
+    mobileSupport: "full",
+    version: "1.0.0",
+    developerNotes:
+      "Memory Match is a self-coded DOM card game with local best-time persistence and responsive viewport-fit layout.",
+    howToPlay: {
+      summary: "Flip cards and remember where each symbol is hiding.",
+      tips: ["Flip two cards per turn.", "Matched cards stay open.", "Clear the board as fast as possible."],
+    },
+    libraryOrder: 22,
+    relatedSlugs: ["minesweeper", "2048"],
+  },
+  {
+    slug: "whack-a-mole",
+    title: "Whack-a-Mole",
+    shortDescription:
+      "A fast carnival tap game with animated holes, real moles, bonus targets, decoys, combo scoring, and best score.",
+    description:
+      "Whack-a-Mole is a premium reflex game with nine animated holes, escalating mole timing, gold bonus targets, decoys that punish sloppy taps, combo scoring, a timed round, and local best-score persistence.",
+    thumbnail: "/games/whack-a-mole/thumbnail.png?v=20260501",
+    genre: "Arcade",
+    tags: ["Reflex", "Touch", "Combo", "Timing", "High Score"],
+    controls: {
+      summary: "Click or tap moles as they pop up. Keyboard numbers 1-9 hit holes.",
+      items: [
+        { label: "Hit", action: "Click, tap, or press number keys 1-9" },
+        { label: "Avoid", action: "Do not hit decoys" },
+        { label: "Start / Restart", action: "Space, R, or Start button" },
+      ],
+    },
+    difficulty: "medium",
+    sessionLength: "1 min",
+    releaseDate: "2026-05-01",
+    status: "live",
+    featured: false,
+    published: true,
+    supports: ["keyboard", "mouse", "touch"],
+    mobileSupport: "full",
+    version: "1.0.0",
+    developerNotes:
+      "Whack-a-Mole uses self-coded timed spawn logic, combo scoring, decoy state, and local best-score persistence.",
+    howToPlay: {
+      summary: "Hit moles before they duck back underground.",
+      tips: ["Gold targets are worth more.", "Decoys reset your combo.", "The round gets faster as time passes."],
+    },
+    libraryOrder: 23,
+    relatedSlugs: ["reaction-time", "bubble-pop"],
+  },
+  {
+    slug: "connect-four",
+    title: "Connect Four",
+    shortDescription:
+      "A bright plastic-disc strategy duel against CPU difficulty modes from easy through impossible.",
+    description:
+      "Connect Four brings the classic vertical disc duel into the arcade with animated column play, persistent win/loss/draw stats, readable CPU-thinking feedback, and four CPU modes: Easy, Medium, Hard, and Impossible.",
+    thumbnail: "/games/connect-four/thumbnail.png?v=20260501",
+    genre: "Strategy",
+    tags: ["Board", "CPU", "Minimax", "Keyboard", "Touch"],
+    controls: {
+      summary: "Click a column or use Arrow Left/Right and Enter/Space to drop a disc.",
+      items: [
+        { label: "Move", action: "Arrow Left/Right or A/D choose a column" },
+        { label: "Drop", action: "Enter, Space, click, or tap" },
+        { label: "Difficulty", action: "Easy, Medium, Hard, or Impossible buttons" },
+        { label: "Restart", action: "R or New Round" },
+      ],
+    },
+    difficulty: "medium",
+    sessionLength: "3-8 min",
+    releaseDate: "2026-05-01",
+    status: "live",
+    featured: false,
+    published: true,
+    supports: ["keyboard", "mouse", "touch"],
+    mobileSupport: "full",
+    version: "1.0.0",
+    developerNotes:
+      "Connect Four is self-coded with win detection, heuristic scoring, alpha-beta minimax, and persistent local stats.",
+    howToPlay: {
+      summary: "Drop discs and connect four before the CPU does.",
+      tips: ["Center columns are stronger.", "Block three-in-a-row threats.", "Impossible searches deeper with minimax."],
+    },
+    libraryOrder: 24,
+    relatedSlugs: ["tic-tac-toe", "sorry"],
+  },
+  {
+    slug: "hangman",
+    title: "Hangman",
+    shortDescription:
+      "A clean word-guessing game with difficulty word banks, on-screen keyboard, streaks, and sketchbook visuals.",
+    description:
+      "Hangman adds a polished word puzzle to the arcade with easy, medium, and hard word banks, an on-screen keyboard, physical keyboard input, animated drawing progress, win streaks, and local best-streak tracking.",
+    thumbnail: "/games/hangman/thumbnail.png?v=20260501",
+    genre: "Puzzle",
+    tags: ["Word", "Keyboard", "Puzzle", "Streak", "Touch"],
+    controls: {
+      summary: "Press letters on your keyboard or use the on-screen keyboard. R restarts.",
+      items: [
+        { label: "Guess", action: "A-Z keyboard keys or on-screen letters" },
+        { label: "Difficulty", action: "Easy, Medium, or Hard buttons" },
+        { label: "Restart", action: "Space, R, or New Word" },
+      ],
+    },
+    difficulty: "easy",
+    sessionLength: "2-5 min",
+    releaseDate: "2026-05-01",
+    status: "live",
+    featured: false,
+    published: true,
+    supports: ["keyboard", "mouse", "touch"],
+    mobileSupport: "full",
+    version: "1.0.0",
+    developerNotes:
+      "Hangman is a self-coded DOM word game with local word banks and persistent win/streak stats.",
+    howToPlay: {
+      summary: "Guess the hidden word before the drawing is complete.",
+      tips: ["Wrong guesses add drawing pieces.", "Six misses loses the round.", "Hard mode uses longer technical words."],
+    },
+    libraryOrder: 25,
+    relatedSlugs: ["typing-speed-test", "memory-match"],
+  },
+  {
+    slug: "typing-speed-test",
+    title: "Typing Speed Test",
+    shortDescription:
+      "A premium typing challenge with live WPM, accuracy, errors, timed modes, and local best WPM.",
+    description:
+      "Typing Speed Test turns keyboard practice into an arcade challenge with 30-second and 60-second modes, live WPM, accuracy, error highlighting, sentence rotation, mobile input support, and best-WPM persistence.",
+    thumbnail: "/games/typing-speed-test/thumbnail.png?v=20260501",
+    genre: "Reaction",
+    tags: ["Typing", "Keyboard", "Accuracy", "Timer", "Stats"],
+    controls: {
+      summary: "Focus the input and type the highlighted sentence as fast and accurately as possible.",
+      items: [
+        { label: "Type", action: "Use the keyboard or mobile text input" },
+        { label: "Mode", action: "Choose 30s or 60s" },
+        { label: "Restart", action: "Restart button" },
+      ],
+    },
+    difficulty: "easy",
+    sessionLength: "1-2 min",
+    releaseDate: "2026-05-01",
+    status: "live",
+    featured: false,
+    published: true,
+    supports: ["keyboard", "touch"],
+    mobileSupport: "partial",
+    version: "1.0.0",
+    developerNotes:
+      "Typing Speed Test is a self-coded text-input game with live WPM/accuracy calculation and local best-WPM persistence.",
+    howToPlay: {
+      summary: "Type the sentence before time runs out.",
+      tips: ["Green characters are correct.", "Red characters are mistakes.", "WPM rewards speed and accuracy."],
+    },
+    libraryOrder: 26,
+    relatedSlugs: ["hangman", "reaction-time"],
+  },
+  {
+    slug: "bubble-pop",
+    title: "Bubble Pop",
+    shortDescription:
+      "A bright underwater bubble arcade game with combos, bonus bubbles, hazards, lives, and high score.",
+    description:
+      "Bubble Pop is a self-coded canvas arcade game where bubbles float upward, taps create particle rings, gold bubbles award bonuses, red hazards punish reckless play, and combo scoring pushes short sessions.",
+    thumbnail: "/games/bubble-pop/thumbnail.png?v=20260501",
+    genre: "Arcade",
+    tags: ["Canvas", "Touch", "Combo", "High Score", "Reflex"],
+    controls: {
+      summary: "Click or tap bubbles before they escape. Space or R starts a new run.",
+      items: [
+        { label: "Pop", action: "Click or tap bubbles" },
+        { label: "Avoid", action: "Red hazard bubbles cost lives" },
+        { label: "Bonus", action: "Gold bubbles are worth extra" },
+        { label: "Restart", action: "Space or R" },
+      ],
+    },
+    difficulty: "medium",
+    sessionLength: "1-4 min",
+    releaseDate: "2026-05-01",
+    status: "live",
+    featured: false,
+    published: true,
+    supports: ["keyboard", "mouse", "touch"],
+    mobileSupport: "full",
+    version: "1.0.0",
+    developerNotes:
+      "Bubble Pop uses a self-coded canvas loop with spawn timing, hit detection, hazards, particle rings, and local best-score persistence.",
+    howToPlay: {
+      summary: "Pop bubbles for points before they float away.",
+      tips: ["Missing bubbles costs lives.", "Gold bubbles are bonuses.", "Red bubbles are hazards."],
+    },
+    libraryOrder: 27,
+    relatedSlugs: ["whack-a-mole", "flappy-bird"],
+  },
+  {
+    slug: "mini-golf",
+    title: "Mini Golf",
+    shortDescription:
+      "A premium 2D mini golf course with drag aiming, ball physics, nine holes, hazards, par, and best total.",
+    description:
+      "Mini Golf adds a polished top-down golf experience with drag-to-aim physics, nine handcrafted holes, walls, sand, water hazards, stroke totals, par tracking, course completion, and local best-total persistence.",
+    thumbnail: "/games/mini-golf/thumbnail.png?v=20260501",
+    genre: "Arcade",
+    tags: ["Canvas", "Physics", "Touch", "Course", "Best Score"],
+    controls: {
+      summary: "Drag away from the ball to aim and set power, then release to shoot.",
+      items: [
+        { label: "Aim", action: "Click/touch and drag away from the ball" },
+        { label: "Shoot", action: "Release to strike the ball" },
+        { label: "Hazards", action: "Sand slows the ball, water resets the shot" },
+        { label: "Restart", action: "Space, R, or New Course" },
+      ],
+    },
+    difficulty: "medium",
+    sessionLength: "5-10 min",
+    releaseDate: "2026-05-01",
+    status: "live",
+    featured: false,
+    published: true,
+    supports: ["keyboard", "mouse", "touch"],
+    mobileSupport: "full",
+    version: "1.0.0",
+    developerNotes:
+      "Mini Golf is a self-coded canvas physics game with handcrafted holes, collision response, hazard behavior, and persistent best total.",
+    howToPlay: {
+      summary: "Finish all nine holes in the fewest strokes.",
+      tips: ["Drag farther for more power.", "Bounce shots off walls.", "Water adds a penalty and resets the ball."],
+    },
+    libraryOrder: 28,
+    relatedSlugs: ["breakout", "stack"],
+  },
 ] satisfies readonly GameCatalogEntry[];
 
 export type GameSlug = (typeof gameCatalog)[number]["slug"];
