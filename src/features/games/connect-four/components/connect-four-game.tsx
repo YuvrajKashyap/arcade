@@ -166,6 +166,11 @@ function phaseFromWinner(value: Cell | 3): Phase {
   return "playing";
 }
 
+function keepMobileViewportLocked() {
+  if (typeof window === "undefined" || window.innerWidth > 760) return;
+  window.scrollTo({ top: window.scrollY, left: 0, behavior: "instant" });
+}
+
 export function ConnectFourGame() {
   const [board, setBoard] = useState(createBoard);
   const [difficulty, setDifficulty] = useState<Difficulty>("sharp");
@@ -175,6 +180,7 @@ export function ConnectFourGame() {
   const [wins, setWins] = useState(() => readStoredNumber(WIN_KEY));
   const [losses, setLosses] = useState(() => readStoredNumber(LOSS_KEY));
   const [draws, setDraws] = useState(() => readStoredNumber(DRAW_KEY));
+  const shellRef = useRef<HTMLDivElement>(null);
   const moveIdRef = useRef(0);
   const result = useMemo(() => winner(board), [board]);
   const openMoves = useMemo(() => validMoves(board), [board]);
@@ -214,6 +220,7 @@ export function ConnectFourGame() {
 
   function applyPlayerMove(column: number) {
     if (!canPlay || !openMoves.includes(column)) return;
+    keepMobileViewportLocked();
     const { board: nextBoard, row } = drop(board, column, 1);
     if (row < 0) return;
     animateMove(row, column, 1);
@@ -249,6 +256,12 @@ export function ConnectFourGame() {
     }, 520);
     return () => window.clearTimeout(timer);
   }, [phase, result.winner, difficulty]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth <= 760) {
+      shellRef.current?.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }
+  }, [board, phase, fallingDisc]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -298,7 +311,7 @@ export function ConnectFourGame() {
         actions={<GameButton variant="primary" onClick={restart}>New Round</GameButton>}
       />
       <GamePlayfield className="mx-auto w-full max-w-[min(48rem,70dvh)] border-0 bg-[#071a78] p-0 shadow-[0_28px_90px_rgba(0,35,190,0.32)]">
-        <div className="connect-four-shell">
+        <div ref={shellRef} className="connect-four-shell">
           <div className="connect-four-rays" />
           <div className="connect-four-top">
             <div>
@@ -741,7 +754,17 @@ export function ConnectFourGame() {
           }
 
           .connect-four-stage {
-            grid-template-columns: 1fr;
+            display: block;
+            overflow: hidden;
+          }
+
+          .connect-four-board-wrap {
+            width: 100%;
+            max-width: 100%;
+          }
+
+          .connect-four-board {
+            transform: none;
           }
 
           .connect-four-tray {
