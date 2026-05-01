@@ -815,17 +815,19 @@ export const gameCatalog = [
     slug: "memory-match",
     title: "Memory Match",
     shortDescription:
-      "A polished card-flip memory game with chunky cards, streaks, move tracking, timer, and local best time.",
+      "A polished card-flip memory game with Solo Run, vs CPU, 2 Player, board sizes, streaks, and local best time.",
     description:
-      "Memory Match turns a classic pair-finding puzzle into a premium toy-card board with animated flips, colorful symbols, match feedback, timer pressure, move tracking, streaks, and local best-time persistence.",
+      "Memory Match turns a classic pair-finding puzzle into a premium toy-card board with Solo Run, a medium partial-memory CPU opponent, same-screen Blue vs Red play, 4x4/4x5/6x6 board sizes, match feedback, timer pressure, and local best-time persistence.",
     thumbnail: "/games/memory-match/thumbnail.png?v=20260501",
     genre: "Puzzle",
     tags: ["Cards", "Memory", "DOM", "Touch", "Best Time"],
     controls: {
-      summary: "Click, tap, or keyboard-focus cards to flip two at a time. R restarts.",
+      summary: "Choose Solo Run, vs CPU, or 2 Player, then click, tap, or keyboard-focus cards to flip two at a time.",
       items: [
         { label: "Flip", action: "Click, tap, Enter, or Space on a card" },
-        { label: "Match", action: "Find two cards with the same symbol" },
+        { label: "Modes", action: "Solo Run, vs CPU, or 2 Player" },
+        { label: "Sizes", action: "4x4, 4x5, or 6x6 boards" },
+        { label: "Turn Rule", action: "Matches keep the turn, misses pass the turn" },
         { label: "Restart", action: "New Board button or R" },
       ],
     },
@@ -839,10 +841,15 @@ export const gameCatalog = [
     mobileSupport: "full",
     version: "1.0.0",
     developerNotes:
-      "Memory Match is a self-coded DOM card game with local best-time persistence and responsive viewport-fit layout.",
+      "Memory Match is a self-coded DOM card game with mode-aware turn logic, partial-memory CPU play, board-size generation, local best-time persistence, and responsive viewport-fit layout.",
     howToPlay: {
       summary: "Flip cards and remember where each symbol is hiding.",
-      tips: ["Flip two cards per turn.", "Matched cards stay open.", "Clear the board as fast as possible."],
+      tips: [
+        "Solo Run is the classic timer challenge.",
+        "vs CPU uses a medium opponent that remembers some seen cards.",
+        "2 Player is Blue vs Red on the same screen.",
+        "Matches keep your turn; misses pass it.",
+      ],
     },
     libraryOrder: 22,
     relatedSlugs: ["minesweeper", "2048"],
