@@ -2,7 +2,6 @@
 
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import {
-  GameButton,
   GameHud,
   GamePanel,
   GamePlayfield,
@@ -313,6 +312,23 @@ export function WhackAMoleGame() {
     }, 90);
   }
 
+  function stopRound() {
+    stopTimers();
+    phaseRef.current = "ready";
+    setPhase("ready");
+    setTargets([]);
+    setPops([]);
+    setMessage("Game stopped. Hit the red mallet button when you are ready for a fresh round.");
+  }
+
+  function toggleRound() {
+    if (phaseRef.current === "playing") {
+      stopRound();
+      return;
+    }
+    startRound();
+  }
+
   function handleMiss(hole: number) {
     addPop(hole, "MISS", "miss");
     syncStreak(0);
@@ -379,7 +395,7 @@ export function WhackAMoleGame() {
     const key = event.key.toLowerCase();
     if (key === " " || key === "enter") {
       event.preventDefault();
-      startRound();
+      toggleRound();
       return;
     }
     if (key === "r") {
@@ -412,42 +428,39 @@ export function WhackAMoleGame() {
 
   return (
     <GamePanel>
-      <GameHud
-        items={hudItems}
-        actions={
-          <>
-            <GameButton variant="primary" onClick={startRound}>
-              {phase === "playing" ? "Restart" : "Start Round"}
-            </GameButton>
-          </>
-        }
-      />
+      <GameHud items={hudItems} />
 
-      <div className="mx-auto grid w-full max-w-6xl gap-4 lg:grid-cols-[minmax(22rem,44rem)_19rem] lg:items-stretch">
+      <div className="mx-auto grid w-full max-w-6xl gap-3 lg:grid-cols-[minmax(22rem,42rem)_18rem] lg:items-stretch">
         <GamePlayfield className="relative border-0 bg-[#65d2ff] p-0">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(255,255,255,0.72),transparent_22%),radial-gradient(circle_at_80%_14%,rgba(255,242,122,0.55),transparent_20%),linear-gradient(180deg,#36a9ff_0%,#59caff_42%,#7cc843_43%,#389d30_100%)]" />
-          <div className="absolute inset-x-0 top-0 h-32 bg-[repeating-conic-gradient(from_0deg_at_50%_100%,rgba(255,255,255,0.28)_0deg,rgba(255,255,255,0.28)_8deg,transparent_9deg,transparent_18deg)] opacity-80" />
-          <div className="relative flex flex-col gap-4 p-3 sm:p-5">
+          <div className="absolute inset-x-0 top-0 h-24 bg-[repeating-conic-gradient(from_0deg_at_50%_100%,rgba(255,255,255,0.28)_0deg,rgba(255,255,255,0.28)_8deg,transparent_9deg,transparent_18deg)] opacity-80" />
+          <div className="relative mx-auto flex h-full max-h-[calc(100dvh-12.5rem)] min-h-[27rem] max-w-[42rem] flex-col gap-3 p-3 sm:max-h-[calc(100dvh-11.5rem)] lg:min-h-[29rem]">
             <div className="grid grid-cols-[1fr_auto] items-start gap-3">
-              <div className="rounded-[1rem] border-4 border-white bg-[#251069] px-3 py-2 shadow-[0_7px_0_#080225,0_12px_20px_rgba(0,0,0,0.28)] sm:rounded-[1.2rem] sm:px-4 sm:py-3">
-                <div className="whitespace-nowrap text-[clamp(1rem,6vw,2.45rem)] font-black uppercase leading-none text-[#ffe24d] drop-shadow-[2px_3px_0_#d9481e]">
+              <div className="rounded-[1rem] border-4 border-white bg-[#251069] px-3 py-2 shadow-[0_7px_0_#080225,0_12px_20px_rgba(0,0,0,0.28)] sm:rounded-[1.15rem]">
+                <div className="whitespace-nowrap text-[clamp(1rem,5.4vw,2.25rem)] font-black uppercase leading-none text-[#ffe24d] drop-shadow-[2px_3px_0_#d9481e]">
                   Whack-a-Mole
                 </div>
-                <div className="mt-1 text-xs font-black uppercase tracking-[0.22em] text-[#8de7ff]">
-                  premium cabinet
-                </div>
               </div>
 
-              <div className="w-24 rounded-xl border-4 border-white bg-[#e92929] p-1.5 shadow-[0_7px_0_#8d1010,0_12px_20px_rgba(0,0,0,0.2)] sm:w-40 sm:rounded-2xl sm:p-2">
-                <div className="mx-auto h-10 w-20 rounded-full border-4 border-[#ff9b8b] bg-[radial-gradient(circle_at_38%_24%,#ff8b78_0_18%,#f23028_19%_64%,#9d1010_65%)] shadow-[inset_0_-8px_0_rgba(0,0,0,0.22)] sm:h-14 sm:w-32" />
-                <div className="mx-auto mt-1 h-3 w-14 rounded-b-full bg-[#7c2f14] sm:h-4 sm:w-20" />
-              </div>
+              <button
+                type="button"
+                aria-label={phase === "playing" ? "Stop game" : "Start game"}
+                aria-pressed={phase === "playing"}
+                onClick={toggleRound}
+                className="w-24 rounded-xl border-4 border-white bg-[#e92929] p-1.5 shadow-[0_7px_0_#8d1010,0_12px_20px_rgba(0,0,0,0.2)] outline-none transition hover:-translate-y-0.5 hover:brightness-105 active:translate-y-1 active:shadow-[0_3px_0_#8d1010,0_8px_16px_rgba(0,0,0,0.18)] focus-visible:ring-4 focus-visible:ring-white sm:w-32"
+              >
+                <span className="mx-auto block h-9 w-20 rounded-full border-4 border-[#ff9b8b] bg-[radial-gradient(circle_at_38%_24%,#ff8b78_0_18%,#f23028_19%_64%,#9d1010_65%)] shadow-[inset_0_-8px_0_rgba(0,0,0,0.22)] sm:h-11 sm:w-24" />
+                <span className="mx-auto mt-1 block h-3 w-14 rounded-b-full bg-[#7c2f14] sm:w-16" />
+                <span className="mt-1 block text-[0.62rem] font-black uppercase tracking-[0.14em] text-white">
+                  {phase === "playing" ? "Stop" : "Start"}
+                </span>
+              </button>
             </div>
 
-            <div className="mx-auto w-full max-w-[39rem] rounded-[1.5rem] border-[6px] border-[#0c70ce] bg-[#72c933] p-2.5 shadow-[inset_0_7px_0_rgba(255,255,255,0.35),0_14px_0_#07569e,0_24px_42px_rgba(0,0,0,0.28)] sm:rounded-[2rem] sm:p-4">
+            <div className="mx-auto w-full max-w-[37rem] flex-1 rounded-[1.35rem] border-[6px] border-[#0c70ce] bg-[#72c933] p-2.5 shadow-[inset_0_7px_0_rgba(255,255,255,0.35),0_10px_0_#07569e,0_20px_34px_rgba(0,0,0,0.26)] sm:rounded-[1.75rem]">
               <div
                 data-testid="whack-board"
-                className="grid aspect-[1.32] grid-cols-3 gap-2 rounded-[1.2rem] border-4 border-[#2c8a2d] bg-[radial-gradient(circle_at_18%_16%,rgba(255,255,255,0.24),transparent_12%),linear-gradient(145deg,#a8ee6b,#5bbb3d)] p-2.5 sm:gap-3 sm:rounded-[1.4rem] sm:p-4"
+                className="grid h-full max-h-[calc(100dvh-18.8rem)] min-h-[18rem] grid-cols-3 gap-2 rounded-[1.05rem] border-4 border-[#2c8a2d] bg-[radial-gradient(circle_at_18%_16%,rgba(255,255,255,0.24),transparent_12%),linear-gradient(145deg,#a8ee6b,#5bbb3d)] p-2 sm:max-h-none sm:min-h-[22rem] sm:gap-2.5 sm:rounded-[1.35rem] lg:min-h-0"
               >
                 {Array.from({ length: HOLES }, (_, hole) => {
                   const target = activeTargets.find((item) => item.hole === hole);
@@ -493,12 +506,12 @@ export function WhackAMoleGame() {
           </div>
         </GamePlayfield>
 
-        <aside className="grid gap-3 rounded-[1.4rem] border border-[#1b6cb4]/25 bg-[#f7fbff] p-4 text-[#0a2250] shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
-          <div className="rounded-2xl border border-[#0c70ce]/20 bg-white p-3 shadow-sm">
+        <aside className="hidden gap-2.5 rounded-[1.2rem] border border-[#1b6cb4]/25 bg-[#f7fbff] p-3 text-[#0a2250] shadow-[0_20px_60px_rgba(0,0,0,0.22)] lg:grid">
+          <div className="rounded-xl border border-[#0c70ce]/20 bg-white p-3 shadow-sm">
             <div className="font-mono text-[0.68rem] font-black uppercase tracking-[0.18em] text-[#1267ba]">Round</div>
             <div className="mt-2 flex items-end justify-between gap-3">
               <div>
-                <div className="text-4xl font-black text-[#e92929]">{timeLeft}</div>
+                <div className="text-3xl font-black text-[#e92929]">{timeLeft}</div>
                 <div className="text-xs font-black uppercase tracking-[0.14em] text-[#53657f]">seconds</div>
               </div>
               <div className="rounded-full border border-[#1267ba]/20 bg-[#e9f6ff] px-3 py-1 text-sm font-black text-[#1267ba]">
@@ -507,7 +520,7 @@ export function WhackAMoleGame() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[#0c70ce]/20 bg-white p-3 shadow-sm">
+          <div className="rounded-xl border border-[#0c70ce]/20 bg-white p-3 shadow-sm">
             <div className="flex items-center justify-between text-xs font-black uppercase tracking-[0.14em] text-[#1267ba]">
               <span>Fever</span>
               <span>{fever}%</span>
@@ -518,9 +531,6 @@ export function WhackAMoleGame() {
                 style={{ width: `${fever}%` }}
               />
             </div>
-            <p className="mt-2 text-xs font-bold leading-5 text-[#53657f]">
-              Full fever adds bonus points and speeds the table up.
-            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
@@ -530,21 +540,12 @@ export function WhackAMoleGame() {
             <StatTile label="Best Streak" value={stats.longestStreak} />
           </div>
 
-          <div className="rounded-2xl border border-[#0c70ce]/20 bg-white p-3 shadow-sm">
-            <div className="font-mono text-[0.68rem] font-black uppercase tracking-[0.18em] text-[#1267ba]">Targets</div>
-            <div className="mt-3 grid gap-2">
-              <LegendRow color="#9a5a2e" label="Brown mole" value="+100 plus streak" />
-              <LegendRow color="#d1762e" label="Boss mole" value="+250 and big fever" />
-              <LegendRow color="#2c93d8" label="Blue clock" value="+2 seconds" />
-              <LegendRow color="#6fb958" label="Green decoy" value="-150 and reset" />
-            </div>
-          </div>
         </aside>
       </div>
 
       <GameStatus>
         {phase === "round-over" ? "Round over. " : ""}
-        {message} Use numpad-style keys 1-9 or click/tap holes. Space/Enter starts, R restarts.
+        {message} Use numpad-style keys 1-9 or click/tap holes. Space/Enter toggles start and stop, R restarts.
       </GameStatus>
     </GamePanel>
   );
@@ -602,18 +603,6 @@ function StatTile({ label, value }: { label: string; value: number | string }) {
     <div className="rounded-xl border border-[#0c70ce]/15 bg-white p-3 shadow-sm">
       <div className="text-xs font-black uppercase tracking-[0.12em] text-[#1267ba]">{label}</div>
       <div className="mt-1 text-2xl font-black text-[#0a2250]">{value}</div>
-    </div>
-  );
-}
-
-function LegendRow({ color, label, value }: { color: string; label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-lg bg-[#e9f6ff] px-3 py-2">
-      <div className="flex items-center gap-2">
-        <span className="h-3 w-3 rounded-full border border-white shadow-sm" style={{ backgroundColor: color }} />
-        <span className="text-sm font-black">{label}</span>
-      </div>
-      <span className="text-right text-xs font-bold text-[#53657f]">{value}</span>
     </div>
   );
 }
