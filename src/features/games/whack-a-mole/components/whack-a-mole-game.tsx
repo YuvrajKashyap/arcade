@@ -430,11 +430,11 @@ export function WhackAMoleGame() {
     <GamePanel>
       <GameHud items={hudItems} />
 
-      <div className="mx-auto grid w-full max-w-6xl gap-3 lg:grid-cols-[minmax(22rem,42rem)_18rem] lg:items-stretch">
-        <GamePlayfield className="relative border-0 bg-[#65d2ff] p-0">
+      <div className="mx-auto grid w-full max-w-5xl gap-3 lg:grid-cols-[minmax(22rem,36rem)_17rem] lg:items-start">
+        <GamePlayfield className="relative overflow-visible border-0 bg-[#65d2ff] p-0">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(255,255,255,0.72),transparent_22%),radial-gradient(circle_at_80%_14%,rgba(255,242,122,0.55),transparent_20%),linear-gradient(180deg,#36a9ff_0%,#59caff_42%,#7cc843_43%,#389d30_100%)]" />
           <div className="absolute inset-x-0 top-0 h-24 bg-[repeating-conic-gradient(from_0deg_at_50%_100%,rgba(255,255,255,0.28)_0deg,rgba(255,255,255,0.28)_8deg,transparent_9deg,transparent_18deg)] opacity-80" />
-          <div className="relative mx-auto flex h-full max-h-[calc(100dvh-12.5rem)] min-h-[27rem] max-w-[42rem] flex-col gap-3 p-3 sm:max-h-[calc(100dvh-11.5rem)] lg:min-h-[29rem]">
+          <div className="relative mx-auto flex max-h-[calc(100dvh-12.5rem)] max-w-[36rem] flex-col gap-3 p-3 sm:max-h-[calc(100dvh-11.5rem)]">
             <div className="grid grid-cols-[1fr_auto] items-start gap-3">
               <div className="rounded-[1rem] border-4 border-white bg-[#251069] px-3 py-2 shadow-[0_7px_0_#080225,0_12px_20px_rgba(0,0,0,0.28)] sm:rounded-[1.15rem]">
                 <div className="whitespace-nowrap text-[clamp(1rem,5.4vw,2.25rem)] font-black uppercase leading-none text-[#ffe24d] drop-shadow-[2px_3px_0_#d9481e]">
@@ -457,10 +457,10 @@ export function WhackAMoleGame() {
               </button>
             </div>
 
-            <div className="mx-auto w-full max-w-[37rem] flex-1 rounded-[1.35rem] border-[6px] border-[#0c70ce] bg-[#72c933] p-2.5 shadow-[inset_0_7px_0_rgba(255,255,255,0.35),0_10px_0_#07569e,0_20px_34px_rgba(0,0,0,0.26)] sm:rounded-[1.75rem]">
+            <div className="mx-auto w-full max-w-[33.5rem] rounded-[1.35rem] border-[6px] border-[#0c70ce] bg-[#72c933] p-2.5 shadow-[inset_0_7px_0_rgba(255,255,255,0.35),0_10px_0_#07569e,0_20px_34px_rgba(0,0,0,0.26)] sm:rounded-[1.75rem]">
               <div
                 data-testid="whack-board"
-                className="grid h-full max-h-[calc(100dvh-18.8rem)] min-h-[18rem] grid-cols-3 gap-2 rounded-[1.05rem] border-4 border-[#2c8a2d] bg-[radial-gradient(circle_at_18%_16%,rgba(255,255,255,0.24),transparent_12%),linear-gradient(145deg,#a8ee6b,#5bbb3d)] p-2 sm:max-h-none sm:min-h-[22rem] sm:gap-2.5 sm:rounded-[1.35rem] lg:min-h-0"
+                className="grid aspect-[1.05] max-h-[calc(100dvh-18.8rem)] w-full grid-cols-3 gap-2 rounded-[1.05rem] border-4 border-[#2c8a2d] bg-[radial-gradient(circle_at_18%_16%,rgba(255,255,255,0.24),transparent_12%),linear-gradient(145deg,#a8ee6b,#5bbb3d)] p-2 sm:gap-2.5 sm:rounded-[1.35rem]"
               >
                 {Array.from({ length: HOLES }, (_, hole) => {
                   const target = activeTargets.find((item) => item.hole === hole);
