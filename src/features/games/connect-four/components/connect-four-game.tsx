@@ -315,7 +315,6 @@ export function ConnectFourGame() {
           <div className="connect-four-rays" />
           <div className="connect-four-top">
             <div>
-              <p className="connect-four-kicker">Premium arcade</p>
               <h2>Connect Four</h2>
             </div>
             <div className="connect-four-status" data-phase={phase}>{status}</div>
@@ -439,17 +438,8 @@ export function ConnectFourGame() {
           margin-bottom: 0.8rem;
         }
 
-        .connect-four-kicker {
-          margin: 0 0 0.1rem;
-          color: #aeeaff;
-          font-size: 0.68rem;
-          font-weight: 950;
-          letter-spacing: 0.16em;
-          text-transform: uppercase;
-        }
-
         .connect-four-top h2 {
-          margin: 0;
+          margin: -0.15rem 0 0;
           color: #fff;
           font-size: clamp(1.75rem, 4.5vw, 3.25rem);
           font-weight: 1000;
@@ -731,10 +721,7 @@ export function ConnectFourGame() {
 
           .connect-four-top h2 {
             font-size: 1.55rem;
-          }
-
-          .connect-four-kicker {
-            font-size: 0.55rem;
+            margin-top: -0.05rem;
           }
 
           .connect-four-status {
