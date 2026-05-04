@@ -1073,6 +1073,49 @@ export const gameCatalog = [
     libraryOrder: 28,
     relatedSlugs: ["breakout", "stack"],
   },
+  {
+    slug: "dunk-hit",
+    title: "Dunk Hit",
+    shortDescription:
+      "A tap-to-bounce basketball scorer with alternating hoops, timer pressure, perfect swishes, fire streaks, and ball skins.",
+    description:
+      "Dunk Hit brings the mobile one-tap basketball loop into the arcade: bounce the ball upward, guide it into alternating hoops, beat the shrinking timer, chain perfect swishes, trigger fire scoring, unlock ball skins with high scores, and restart instantly after a miss.",
+    thumbnail: "/games/dunk-hit/thumbnail.png?v=20260504",
+    genre: "Arcade",
+    tags: ["Basketball", "Tap", "Physics", "Touch", "High Score"],
+    controls: {
+      summary:
+        "Tap, click, Space, Enter, or W to bounce the ball toward the hoop. R restarts and P pauses.",
+      items: [
+        { label: "Bounce", action: "Tap, click, Space, Enter, W, or Arrow Up" },
+        { label: "Score", action: "Drop the ball through the rim before time runs out" },
+        { label: "Perfect", action: "Swish without touching the rim to build streaks" },
+        { label: "Fire", action: "Three perfects starts double-score fire mode" },
+        { label: "Restart", action: "R or Restart button" },
+      ],
+    },
+    difficulty: "medium",
+    sessionLength: "1-4 min",
+    releaseDate: "2026-05-04",
+    status: "live",
+    featured: false,
+    published: true,
+    supports: ["keyboard", "mouse", "touch"],
+    mobileSupport: "full",
+    version: "1.0.0",
+    developerNotes:
+      "Dunk Hit is a self-coded canvas tap-physics game based on the App Store reference: saturated mobile presentation, single-tap bounce control, alternating hoops, timer pressure, swish streaks, skin unlocks, and persistent best score.",
+    howToPlay: {
+      summary: "Keep bouncing and score before the timer drains.",
+      tips: [
+        "Each basket moves the next hoop to the other side.",
+        "Perfect swishes reset the clock and build toward fire mode.",
+        "Higher scores shorten the timer, so early clean shots matter.",
+      ],
+    },
+    libraryOrder: 29,
+    relatedSlugs: ["stack", "flappy-bird"],
+  },
 ] satisfies readonly GameCatalogEntry[];
 
 export type GameSlug = (typeof gameCatalog)[number]["slug"];
