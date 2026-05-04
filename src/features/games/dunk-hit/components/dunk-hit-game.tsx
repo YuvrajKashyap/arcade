@@ -19,8 +19,8 @@ import {
 const WIDTH = 430;
 const HEIGHT = 720;
 const BALL_RADIUS = 22;
-const HOOP_WIDTH = 120;
-const RIM_HEIGHT = 12;
+const HOOP_WIDTH = 116;
+const RIM_RADIUS = 7;
 const STORAGE_KEY = "arcade.dunkHit.bestScore";
 const SKIN_KEY = "arcade.dunkHit.skin";
 
@@ -32,6 +32,7 @@ type Skin = {
   label: string;
   unlockAt: number;
   base: string;
+  dark: string;
   seam: string;
   glow: string;
 };
@@ -62,6 +63,7 @@ type Particle = {
   life: number;
   maxLife: number;
   color: string;
+  kind?: "spark" | "ring";
 };
 
 type State = {
@@ -76,41 +78,51 @@ type State = {
   fire: number;
   shake: number;
   particles: Particle[];
+  scorePop: number;
   message: string;
 };
+
+type HudState = Pick<
+  State,
+  "score" | "bestScore" | "timeLeft" | "phase" | "streak" | "message"
+>;
 
 const SKINS: readonly Skin[] = [
   {
     id: "classic",
     label: "Classic",
     unlockAt: 0,
-    base: "#f08322",
-    seam: "#5f2a12",
-    glow: "#ffcf4a",
+    base: "#f38122",
+    dark: "#b84d16",
+    seam: "#5a2a12",
+    glow: "#ffd35a",
   },
   {
     id: "ice",
     label: "Ice",
     unlockAt: 12,
-    base: "#67d9ff",
-    seam: "#135d8b",
-    glow: "#c8f6ff",
+    base: "#6ddfff",
+    dark: "#248cc7",
+    seam: "#104f84",
+    glow: "#d6fbff",
   },
   {
     id: "lime",
     label: "Lime",
     unlockAt: 24,
-    base: "#a9f23f",
-    seam: "#356717",
-    glow: "#e5ff72",
+    base: "#acf13e",
+    dark: "#5fad1f",
+    seam: "#336416",
+    glow: "#ecff73",
   },
   {
     id: "void",
     label: "Void",
     unlockAt: 40,
-    base: "#7047ff",
-    seam: "#21145c",
-    glow: "#ff73d5",
+    base: "#764bff",
+    dark: "#38208f",
+    seam: "#180d55",
+    glow: "#ff79dd",
   },
 ];
 
@@ -118,13 +130,18 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
+function easeOutCubic(value: number) {
+  return 1 - Math.pow(1 - clamp(value, 0, 1), 3);
+}
+
 function getTimerMax(score: number) {
-  return clamp(4.2 - score * 0.045, 2.05, 4.2);
+  return clamp(4.85 - score * 0.044, 2.35, 4.85);
 }
 
 function createHoop(side: Side, score: number): Hoop {
-  const x = side === "left" ? 94 : WIDTH - 94;
-  const y = clamp(250 + Math.sin(score * 1.7) * 54, 184, 332);
+  const x = side === "left" ? 100 : WIDTH - 100;
+  const rhythm = Math.sin(score * 1.45) * 46 + Math.cos(score * 0.68) * 18;
+  const y = clamp(258 + rhythm, 178, 338);
   return { side, x, y, flash: 0 };
 }
 
@@ -134,42 +151,53 @@ function createBall(x = WIDTH / 2, y = HEIGHT - 118): Ball {
     y,
     previousY: y,
     vx: 0,
-    vy: -210,
+    vy: -185,
     rotation: 0,
     rimTouched: false,
   };
 }
 
 function createState(bestScore = 0): State {
+  const timeMax = getTimerMax(0);
   return {
     phase: "idle",
     ball: createBall(),
     hoop: createHoop("right", 0),
     score: 0,
     bestScore,
-    timeLeft: getTimerMax(0),
-    timeMax: getTimerMax(0),
+    timeLeft: timeMax,
+    timeMax,
     streak: 0,
     fire: 0,
     shake: 0,
     particles: [],
+    scorePop: 0,
     message: "Tap to bounce.",
   };
 }
 
-function spawnBurst(x: number, y: number, color: string, count: number, power = 1): Particle[] {
+function spawnBurst(
+  x: number,
+  y: number,
+  color: string,
+  count: number,
+  power = 1,
+  kind: Particle["kind"] = "spark",
+): Particle[] {
   return Array.from({ length: count }, (_, index) => {
-    const angle = (Math.PI * 2 * index) / count + Math.random() * 0.35;
-    const speed = (90 + Math.random() * 190) * power;
+    const angle = (Math.PI * 2 * index) / count + Math.random() * 0.42;
+    const speed = (95 + Math.random() * 205) * power;
+    const life = 0.38 + Math.random() * 0.34;
     return {
       x,
       y,
       vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed - 70,
-      radius: 3 + Math.random() * 6,
-      life: 0.45 + Math.random() * 0.34,
-      maxLife: 0.8,
+      vy: Math.sin(angle) * speed - 76,
+      radius: kind === "ring" ? 12 + Math.random() * 9 : 3 + Math.random() * 6,
+      life,
+      maxLife: life,
       color,
+      kind,
     };
   });
 }
@@ -178,7 +206,7 @@ function startState(state: State): State {
   return {
     ...createState(state.bestScore),
     phase: "playing",
-    message: "Dunk before the clock drains.",
+    message: "Swish before the clock drains.",
   };
 }
 
@@ -193,29 +221,33 @@ function tapBall(state: State, skin: Skin): State {
   }
 
   const targetX = state.hoop.x;
-  const horizontalPull = clamp((targetX - state.ball.x) * 2.25, -280, 280);
-  const lift = state.ball.vy > 0 ? -485 : -390;
+  const distance = targetX - state.ball.x;
+  const urgency = clamp((HEIGHT - state.ball.y) / HEIGHT, 0.25, 1);
+  const horizontalPull = clamp(distance * (2.12 + urgency * 0.78), -385, 385);
+  const upwardKick = state.ball.vy > 90 ? -630 : -545;
+
   return {
     ...state,
     ball: {
       ...state.ball,
-      vx: clamp(state.ball.vx * 0.38 + horizontalPull, -430, 430),
-      vy: lift,
+      vx: clamp(state.ball.vx * 0.28 + horizontalPull, -455, 455),
+      vy: upwardKick,
     },
     particles: [
       ...state.particles,
-      ...spawnBurst(state.ball.x, state.ball.y + 18, skin.glow, 7, 0.48),
-    ].slice(-80),
+      ...spawnBurst(state.ball.x, state.ball.y + 20, skin.glow, 8, 0.42),
+    ].slice(-100),
   };
 }
 
 function scoreDunk(state: State, skin: Skin): State {
-  const nextScore = state.score + (state.fire > 0 ? 2 : 1);
+  const perfect = !state.ball.rimTouched && Math.abs(state.ball.x - state.hoop.x) < 16;
+  const nextStreak = perfect ? state.streak + 1 : 0;
+  const fireReward = state.fire > 0 ? 2 : 1;
+  const nextScore = state.score + fireReward;
   const nextTimer = getTimerMax(nextScore);
   const nextSide: Side = state.hoop.side === "left" ? "right" : "left";
-  const perfect = !state.ball.rimTouched && Math.abs(state.ball.x - state.hoop.x) < 18;
-  const nextStreak = perfect ? state.streak + 1 : 0;
-  const nextFire = nextStreak >= 3 ? 3.8 : Math.max(0, state.fire - 0.4);
+  const nextFire = nextStreak >= 3 ? 4.25 : Math.max(0, state.fire - 0.3);
   const hoop = createHoop(nextSide, nextScore);
 
   return {
@@ -223,10 +255,10 @@ function scoreDunk(state: State, skin: Skin): State {
     ball: {
       ...state.ball,
       x: state.hoop.x,
-      y: state.hoop.y + 48,
-      previousY: state.hoop.y + 48,
-      vx: state.hoop.side === "left" ? 170 : -170,
-      vy: -305,
+      y: state.hoop.y + 56,
+      previousY: state.hoop.y + 56,
+      vx: state.hoop.side === "left" ? 188 : -188,
+      vy: -340,
       rimTouched: false,
     },
     hoop: { ...hoop, flash: 1 },
@@ -236,12 +268,20 @@ function scoreDunk(state: State, skin: Skin): State {
     timeMax: nextTimer,
     streak: nextStreak,
     fire: nextFire,
-    shake: perfect ? 7 : 4,
+    shake: perfect ? 6 : 3,
     particles: [
       ...state.particles,
-      ...spawnBurst(state.hoop.x, state.hoop.y + 4, perfect ? "#ffffff" : skin.glow, perfect ? 24 : 15, perfect ? 1.15 : 0.82),
-    ].slice(-110),
-    message: perfect ? "Perfect swish." : "Clean dunk.",
+      ...spawnBurst(
+        state.hoop.x,
+        state.hoop.y + 6,
+        perfect ? "#ffffff" : skin.glow,
+        perfect ? 28 : 18,
+        perfect ? 1.08 : 0.84,
+      ),
+      ...spawnBurst(state.hoop.x, state.hoop.y + 24, "#ffffff", perfect ? 3 : 2, 0.1, "ring"),
+    ].slice(-130),
+    scorePop: 0.52,
+    message: perfect ? "Perfect swish." : "Dunk.",
   };
 }
 
@@ -249,55 +289,89 @@ function updateState(state: State, delta: number, skin: Skin): State {
   let next = state;
 
   if (state.phase === "playing") {
-    const gravity = 1025;
+    const gravity = 980;
     const ball = {
       ...state.ball,
       previousY: state.ball.y,
       x: state.ball.x + state.ball.vx * delta,
       y: state.ball.y + state.ball.vy * delta,
       vy: state.ball.vy + gravity * delta,
-      vx: state.ball.vx * Math.pow(0.994, delta * 60),
-      rotation: state.ball.rotation + state.ball.vx * delta * 0.035,
+      vx: state.ball.vx * Math.pow(0.991, delta * 60),
+      rotation: state.ball.rotation + state.ball.vx * delta * 0.032,
     };
 
-    if (ball.x < BALL_RADIUS + 12) {
-      ball.x = BALL_RADIUS + 12;
-      ball.vx = Math.abs(ball.vx) * 0.74;
+    if (ball.x < BALL_RADIUS + 10) {
+      ball.x = BALL_RADIUS + 10;
+      ball.vx = Math.abs(ball.vx) * 0.72;
       ball.rimTouched = true;
     }
 
-    if (ball.x > WIDTH - BALL_RADIUS - 12) {
-      ball.x = WIDTH - BALL_RADIUS - 12;
-      ball.vx = -Math.abs(ball.vx) * 0.74;
+    if (ball.x > WIDTH - BALL_RADIUS - 10) {
+      ball.x = WIDTH - BALL_RADIUS - 10;
+      ball.vx = -Math.abs(ball.vx) * 0.72;
+      ball.rimTouched = true;
+    }
+
+    if (ball.y < BALL_RADIUS + 44) {
+      ball.y = BALL_RADIUS + 44;
+      ball.vy = Math.abs(ball.vy) * 0.38;
       ball.rimTouched = true;
     }
 
     const rimY = state.hoop.y;
     const leftRim = state.hoop.x - HOOP_WIDTH / 2;
     const rightRim = state.hoop.x + HOOP_WIDTH / 2;
-    const crossedRim = ball.previousY < rimY && ball.y >= rimY && ball.vy > 0;
-    const insideHoop = ball.x > leftRim + 18 && ball.x < rightRim - 18;
+    const crossedRim = ball.previousY < rimY + 30 && ball.y >= rimY + 16 && ball.vy > 0;
+    const insideHoop = ball.x > leftRim + 20 && ball.x < rightRim - 20;
 
     if (crossedRim && insideHoop) {
       next = scoreDunk({ ...state, ball }, skin);
     } else {
-      const hitLeftRim = Math.hypot(ball.x - leftRim, ball.y - rimY) < BALL_RADIUS + 8;
-      const hitRightRim = Math.hypot(ball.x - rightRim, ball.y - rimY) < BALL_RADIUS + 8;
+      const hitLeftRim = Math.hypot(ball.x - leftRim, ball.y - rimY) < BALL_RADIUS + RIM_RADIUS;
+      const hitRightRim = Math.hypot(ball.x - rightRim, ball.y - rimY) < BALL_RADIUS + RIM_RADIUS;
+      const hitBackboard =
+        Math.abs(ball.x - (state.hoop.side === "left" ? leftRim - 24 : rightRim + 24)) < BALL_RADIUS + 7 &&
+        ball.y > rimY - 82 &&
+        ball.y < rimY + 12;
+
       if (hitLeftRim || hitRightRim) {
         const rimX = hitLeftRim ? leftRim : rightRim;
         const direction = ball.x < rimX ? -1 : 1;
-        ball.vx = direction * Math.max(205, Math.abs(ball.vx) * 0.82);
-        ball.vy = -Math.abs(ball.vy) * 0.38;
+        ball.vx = direction * Math.max(215, Math.abs(ball.vx) * 0.78);
+        ball.vy = -Math.abs(ball.vy) * 0.34 - 24;
         ball.rimTouched = true;
+        next = {
+          ...state,
+          particles: [
+            ...state.particles,
+            ...spawnBurst(rimX, rimY, "#ffdd62", 8, 0.48),
+          ].slice(-110),
+          shake: 3,
+        };
       }
 
+      if (hitBackboard) {
+        ball.vx = state.hoop.side === "left" ? Math.abs(ball.vx) * 0.72 + 110 : -Math.abs(ball.vx) * 0.72 - 110;
+        ball.vy = Math.min(ball.vy, -80);
+        ball.rimTouched = true;
+        next = {
+          ...state,
+          particles: [
+            ...state.particles,
+            ...spawnBurst(ball.x, ball.y, "#ffffff", 6, 0.34),
+          ].slice(-110),
+          shake: 2,
+        };
+      }
+
+      const base = next === state ? state : next;
       const timeLeft = state.timeLeft - delta;
       next = {
-        ...state,
+        ...base,
         ball,
         timeLeft,
         fire: Math.max(0, state.fire - delta),
-        message: timeLeft < 1.2 ? "Hurry." : state.message,
+        message: timeLeft < 1.15 ? "Hurry." : base.message,
       };
 
       if (ball.y > HEIGHT + 74 || timeLeft <= 0) {
@@ -326,19 +400,154 @@ function updateState(state: State, delta: number, skin: Skin): State {
 
   return {
     ...next,
-    hoop: { ...next.hoop, flash: Math.max(0, next.hoop.flash - delta * 3.2) },
-    shake: Math.max(0, next.shake - delta * 24),
+    hoop: { ...next.hoop, flash: Math.max(0, next.hoop.flash - delta * 3.4) },
+    shake: Math.max(0, next.shake - delta * 25),
+    scorePop: Math.max(0, next.scorePop - delta),
     particles,
   };
+}
+
+function drawBackground(context: CanvasRenderingContext2D, elapsed: number) {
+  const gradient = context.createLinearGradient(0, 0, 0, HEIGHT);
+  gradient.addColorStop(0, "#3658ff");
+  gradient.addColorStop(0.46, "#fb496e");
+  gradient.addColorStop(1, "#ffb33e");
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, WIDTH, HEIGHT);
+
+  context.save();
+  context.globalAlpha = 0.28;
+  context.fillStyle = "#ffffff";
+  for (let index = 0; index < 10; index += 1) {
+    const x = ((index * 74 - elapsed * 16) % (WIDTH + 120)) - 70;
+    const y = 88 + ((index * 67) % 410);
+    context.beginPath();
+    context.roundRect(x, y, 54 + (index % 3) * 22, 7, 5);
+    context.fill();
+  }
+  context.restore();
+
+  context.save();
+  context.globalAlpha = 0.16;
+  context.strokeStyle = "#ffffff";
+  context.lineWidth = 4;
+  for (let index = 0; index < 8; index += 1) {
+    context.beginPath();
+    context.arc(WIDTH / 2, HEIGHT + 16, 104 + index * 52, Math.PI * 1.07, Math.PI * 1.93);
+    context.stroke();
+  }
+  context.restore();
+
+  context.save();
+  context.fillStyle = "rgba(71,40,126,0.2)";
+  context.beginPath();
+  context.moveTo(0, HEIGHT);
+  for (let x = 0; x <= WIDTH; x += 44) {
+    context.lineTo(x, HEIGHT - 32 - Math.sin(x * 0.04) * 12);
+  }
+  context.lineTo(WIDTH, HEIGHT);
+  context.closePath();
+  context.fill();
+  context.restore();
+}
+
+function drawHoopBack(context: CanvasRenderingContext2D, hoop: Hoop) {
+  const left = hoop.x - HOOP_WIDTH / 2;
+  const right = hoop.x + HOOP_WIDTH / 2;
+  const rimY = hoop.y;
+  const backboardX = hoop.side === "left" ? left - 27 : right + 27;
+
+  context.save();
+  context.shadowBlur = 14 + hoop.flash * 18;
+  context.shadowColor = "rgba(255,255,255,0.72)";
+  context.fillStyle = "rgba(255,255,255,0.9)";
+  context.strokeStyle = "#21306d";
+  context.lineWidth = 5;
+  context.beginPath();
+  context.roundRect(backboardX - 15, rimY - 78, 30, 94, 7);
+  context.fill();
+  context.stroke();
+
+  context.strokeStyle = "rgba(33,48,109,0.42)";
+  context.lineWidth = 3;
+  context.beginPath();
+  context.roundRect(backboardX - 9, rimY - 52, 18, 33, 3);
+  context.stroke();
+
+  context.strokeStyle = "rgba(255,255,255,0.75)";
+  context.lineWidth = 3;
+  for (let index = 0; index <= 5; index += 1) {
+    const x = left + (HOOP_WIDTH / 5) * index;
+    context.beginPath();
+    context.moveTo(x, rimY + 10);
+    context.lineTo(hoop.x + (index - 2.5) * 12, rimY + 78);
+    context.stroke();
+  }
+  context.beginPath();
+  context.moveTo(left + 8, rimY + 34);
+  context.quadraticCurveTo(hoop.x, rimY + 53, right - 8, rimY + 34);
+  context.stroke();
+  context.restore();
+}
+
+function drawHoopFront(context: CanvasRenderingContext2D, hoop: Hoop) {
+  const left = hoop.x - HOOP_WIDTH / 2;
+  const right = hoop.x + HOOP_WIDTH / 2;
+  const rimY = hoop.y;
+
+  context.save();
+  context.shadowBlur = 10 + hoop.flash * 12;
+  context.shadowColor = "#ffdf6e";
+  context.strokeStyle = "#fa602d";
+  context.lineWidth = 8;
+  context.lineCap = "round";
+  context.beginPath();
+  context.moveTo(left, rimY);
+  context.lineTo(right, rimY);
+  context.stroke();
+
+  context.strokeStyle = "#c83f20";
+  context.lineWidth = 3;
+  context.beginPath();
+  context.moveTo(left + 8, rimY + 5);
+  context.lineTo(right - 8, rimY + 5);
+  context.stroke();
+
+  context.fillStyle = "#ff6a32";
+  context.strokeStyle = "#a92d1b";
+  context.lineWidth = 2;
+  for (const x of [left, right]) {
+    context.beginPath();
+    context.arc(x, rimY, RIM_RADIUS + 1, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+  }
+  context.restore();
 }
 
 function drawBall(context: CanvasRenderingContext2D, ball: Ball, skin: Skin, fire: number) {
   context.save();
   context.translate(ball.x, ball.y);
   context.rotate(ball.rotation);
-  context.shadowBlur = fire > 0 ? 30 : 14;
-  context.shadowColor = fire > 0 ? "#ffdc3f" : "rgba(0,0,0,0.34)";
-  context.fillStyle = skin.base;
+
+  if (fire > 0) {
+    const flame = context.createRadialGradient(0, 0, 8, 0, 0, 44);
+    flame.addColorStop(0, "rgba(255,240,98,0.52)");
+    flame.addColorStop(0.58, "rgba(255,102,35,0.24)");
+    flame.addColorStop(1, "rgba(255,102,35,0)");
+    context.fillStyle = flame;
+    context.beginPath();
+    context.arc(0, 0, 44, 0, Math.PI * 2);
+    context.fill();
+  }
+
+  context.shadowBlur = fire > 0 ? 28 : 12;
+  context.shadowColor = fire > 0 ? "#ffdc3f" : "rgba(0,0,0,0.38)";
+  const gradient = context.createRadialGradient(-8, -10, 4, 0, 0, BALL_RADIUS);
+  gradient.addColorStop(0, "#ffd28a");
+  gradient.addColorStop(0.22, skin.base);
+  gradient.addColorStop(1, skin.dark);
+  context.fillStyle = gradient;
   context.strokeStyle = skin.seam;
   context.lineWidth = 4;
   context.beginPath();
@@ -347,99 +556,20 @@ function drawBall(context: CanvasRenderingContext2D, ball: Ball, skin: Skin, fir
   context.stroke();
 
   context.strokeStyle = skin.seam;
-  context.lineWidth = 3;
+  context.lineWidth = 2.8;
   context.beginPath();
-  context.arc(0, 0, BALL_RADIUS * 0.72, -Math.PI / 2, Math.PI / 2);
-  context.arc(0, 0, BALL_RADIUS * 0.72, Math.PI / 2, Math.PI * 1.5);
+  context.arc(0, 0, BALL_RADIUS * 0.78, -Math.PI / 2, Math.PI / 2);
+  context.arc(0, 0, BALL_RADIUS * 0.78, Math.PI / 2, Math.PI * 1.5);
   context.moveTo(-BALL_RADIUS, 0);
   context.quadraticCurveTo(0, -7, BALL_RADIUS, 0);
   context.moveTo(-BALL_RADIUS, 0);
   context.quadraticCurveTo(0, 7, BALL_RADIUS, 0);
   context.stroke();
 
-  context.fillStyle = "rgba(255,255,255,0.34)";
+  context.fillStyle = "rgba(255,255,255,0.38)";
   context.beginPath();
-  context.ellipse(-7, -10, 6, 4, -0.6, 0, Math.PI * 2);
+  context.ellipse(-7, -10, 6, 4, -0.62, 0, Math.PI * 2);
   context.fill();
-  context.restore();
-}
-
-function drawHoop(context: CanvasRenderingContext2D, hoop: Hoop) {
-  const left = hoop.x - HOOP_WIDTH / 2;
-  const right = hoop.x + HOOP_WIDTH / 2;
-  const rimY = hoop.y;
-  const backboardX = hoop.side === "left" ? left - 31 : right + 31;
-
-  context.save();
-  context.shadowBlur = 14 + hoop.flash * 18;
-  context.shadowColor = "rgba(255,255,255,0.65)";
-  context.fillStyle = "rgba(255,255,255,0.92)";
-  context.strokeStyle = "#26376d";
-  context.lineWidth = 5;
-  context.beginPath();
-  context.roundRect(backboardX - 14, rimY - 72, 28, 86, 7);
-  context.fill();
-  context.stroke();
-
-  context.strokeStyle = "#f45b2b";
-  context.lineWidth = 8;
-  context.lineCap = "round";
-  context.beginPath();
-  context.moveTo(left, rimY);
-  context.lineTo(right, rimY);
-  context.stroke();
-
-  context.strokeStyle = "rgba(255,255,255,0.78)";
-  context.lineWidth = 3;
-  for (let index = 0; index <= 5; index += 1) {
-    const x = left + (HOOP_WIDTH / 5) * index;
-    context.beginPath();
-    context.moveTo(x, rimY + RIM_HEIGHT);
-    context.lineTo(hoop.x + (index - 2.5) * 12, rimY + 76);
-    context.stroke();
-  }
-  context.beginPath();
-  context.moveTo(left + 8, rimY + 33);
-  context.quadraticCurveTo(hoop.x, rimY + 48, right - 8, rimY + 33);
-  context.stroke();
-
-  context.fillStyle = "#f45b2b";
-  context.beginPath();
-  context.arc(left, rimY, 8, 0, Math.PI * 2);
-  context.arc(right, rimY, 8, 0, Math.PI * 2);
-  context.fill();
-  context.restore();
-}
-
-function drawBackground(context: CanvasRenderingContext2D, elapsed: number) {
-  const gradient = context.createLinearGradient(0, 0, 0, HEIGHT);
-  gradient.addColorStop(0, "#2f44f1");
-  gradient.addColorStop(0.52, "#fa466f");
-  gradient.addColorStop(1, "#ffb347");
-  context.fillStyle = gradient;
-  context.fillRect(0, 0, WIDTH, HEIGHT);
-
-  context.save();
-  context.globalAlpha = 0.18;
-  context.fillStyle = "#fff";
-  for (let index = 0; index < 11; index += 1) {
-    const x = ((index * 58 + elapsed * 18) % (WIDTH + 90)) - 45;
-    const y = 94 + ((index * 83) % 420);
-    context.beginPath();
-    context.roundRect(x, y, 58, 8, 4);
-    context.fill();
-  }
-  context.restore();
-
-  context.save();
-  context.globalAlpha = 0.18;
-  context.strokeStyle = "#ffffff";
-  context.lineWidth = 4;
-  for (let index = 0; index < 8; index += 1) {
-    context.beginPath();
-    context.arc(WIDTH / 2, HEIGHT + 12, 105 + index * 52, Math.PI * 1.08, Math.PI * 1.92);
-    context.stroke();
-  }
   context.restore();
 }
 
@@ -448,10 +578,18 @@ function drawParticles(context: CanvasRenderingContext2D, particles: Particle[])
     const alpha = clamp(particle.life / particle.maxLife, 0, 1);
     context.save();
     context.globalAlpha = alpha;
+    context.strokeStyle = particle.color;
     context.fillStyle = particle.color;
-    context.beginPath();
-    context.arc(particle.x, particle.y, particle.radius * alpha, 0, Math.PI * 2);
-    context.fill();
+    if (particle.kind === "ring") {
+      context.lineWidth = 4 * alpha;
+      context.beginPath();
+      context.arc(particle.x, particle.y, particle.radius * (1 + (1 - alpha) * 1.6), 0, Math.PI * 2);
+      context.stroke();
+    } else {
+      context.beginPath();
+      context.arc(particle.x, particle.y, particle.radius * alpha, 0, Math.PI * 2);
+      context.fill();
+    }
     context.restore();
   }
 }
@@ -459,13 +597,16 @@ function drawParticles(context: CanvasRenderingContext2D, particles: Particle[])
 function drawTimer(context: CanvasRenderingContext2D, state: State) {
   const progress = clamp(state.timeLeft / state.timeMax, 0, 1);
   context.save();
-  context.fillStyle = "rgba(255,255,255,0.28)";
+  context.fillStyle = "rgba(255,255,255,0.25)";
   context.beginPath();
-  context.roundRect(50, 26, WIDTH - 100, 12, 8);
+  context.roundRect(42, 24, WIDTH - 84, 13, 9);
   context.fill();
-  context.fillStyle = progress < 0.28 ? "#ffe04a" : "#ffffff";
+  const timerGradient = context.createLinearGradient(42, 0, WIDTH - 42, 0);
+  timerGradient.addColorStop(0, progress < 0.26 ? "#ffdf45" : "#ffffff");
+  timerGradient.addColorStop(1, progress < 0.26 ? "#ff7a37" : "#dff5ff");
+  context.fillStyle = timerGradient;
   context.beginPath();
-  context.roundRect(50, 26, (WIDTH - 100) * progress, 12, 8);
+  context.roundRect(42, 24, (WIDTH - 84) * progress, 13, 9);
   context.fill();
   context.restore();
 }
@@ -473,20 +614,27 @@ function drawTimer(context: CanvasRenderingContext2D, state: State) {
 function drawScore(context: CanvasRenderingContext2D, state: State) {
   context.save();
   context.textAlign = "center";
-  context.lineWidth = 8;
-  context.strokeStyle = "rgba(29,20,76,0.28)";
+  const pop = easeOutCubic(state.scorePop / 0.52);
+  const scale = 1 + pop * 0.13;
+  context.translate(WIDTH / 2, 112);
+  context.scale(scale, scale);
+  context.lineWidth = 9;
+  context.strokeStyle = "rgba(29,20,76,0.26)";
   context.fillStyle = "#ffffff";
-  context.font = "900 82px sans-serif";
-  context.strokeText(String(state.score), WIDTH / 2, 118);
-  context.fillText(String(state.score), WIDTH / 2, 118);
+  context.font = "900 82px Arial, sans-serif";
+  context.strokeText(String(state.score), 0, 0);
+  context.fillText(String(state.score), 0, 0);
+  context.restore();
 
+  context.save();
+  context.textAlign = "center";
   if (state.fire > 0) {
-    context.font = "900 18px sans-serif";
-    context.fillStyle = "#fff2a5";
-    context.fillText("ON FIRE", WIDTH / 2, 148);
+    context.font = "900 18px Arial, sans-serif";
+    context.fillStyle = "#fff1a6";
+    context.fillText("FIRE x2", WIDTH / 2, 148);
   } else if (state.streak > 0) {
-    context.font = "900 16px sans-serif";
-    context.fillStyle = "rgba(255,255,255,0.86)";
+    context.font = "900 16px Arial, sans-serif";
+    context.fillStyle = "rgba(255,255,255,0.9)";
     context.fillText(`${state.streak} PERFECT`, WIDTH / 2, 146);
   }
   context.restore();
@@ -497,33 +645,52 @@ function drawOverlay(context: CanvasRenderingContext2D, state: State) {
     return;
   }
 
-  context.fillStyle = "rgba(23,20,56,0.3)";
+  context.fillStyle = "rgba(22,18,55,0.34)";
   context.fillRect(0, 0, WIDTH, HEIGHT);
+
   context.save();
+  context.translate(WIDTH / 2, HEIGHT / 2 - 8);
+  context.fillStyle = "rgba(255,255,255,0.16)";
+  context.beginPath();
+  context.roundRect(-158, -88, 316, 166, 26);
+  context.fill();
+  context.strokeStyle = "rgba(255,255,255,0.34)";
+  context.lineWidth = 2;
+  context.stroke();
+
   context.textAlign = "center";
   context.fillStyle = "#ffffff";
-  context.font = "900 48px sans-serif";
+  context.font = "900 47px Arial, sans-serif";
   const title = state.phase === "paused" ? "PAUSED" : state.phase === "game-over" ? "GAME OVER" : "DUNK HIT";
-  context.fillText(title, WIDTH / 2, HEIGHT / 2 - 18);
-  context.font = "800 18px sans-serif";
-  context.fillText(state.phase === "game-over" ? state.message : "Tap to bounce. Swish before time runs out.", WIDTH / 2, HEIGHT / 2 + 22);
+  context.fillText(title, 0, -18);
+  context.font = "800 17px Arial, sans-serif";
+  context.fillText(
+    state.phase === "game-over" ? `${state.message} Tap to restart.` : "Tap to bounce. Drop through the rim.",
+    0,
+    22,
+  );
+  if (state.phase === "game-over") {
+    context.font = "900 15px Arial, sans-serif";
+    context.fillStyle = "#fff0a0";
+    context.fillText(`Score ${state.score}  ·  Best ${state.bestScore}`, 0, 52);
+  }
   context.restore();
 }
 
 function drawScene(context: CanvasRenderingContext2D, state: State, skin: Skin, elapsed: number) {
   context.clearRect(0, 0, WIDTH, HEIGHT);
   drawBackground(context, elapsed);
+
   context.save();
   if (state.shake > 0) {
     context.translate((Math.random() - 0.5) * state.shake, (Math.random() - 0.5) * state.shake);
   }
-  drawHoop(context, state.hoop);
+  drawHoopBack(context, state.hoop);
   drawParticles(context, state.particles);
-  if (state.fire > 0) {
-    drawParticles(context, spawnBurst(state.ball.x, state.ball.y + 10, "#ffdf42", 5, 0.2));
-  }
   drawBall(context, state.ball, skin, state.fire);
+  drawHoopFront(context, state.hoop);
   context.restore();
+
   drawTimer(context, state);
   drawScore(context, state);
   drawOverlay(context, state);
@@ -540,6 +707,28 @@ function readStoredSkin(bestScore: number): string {
     : "classic";
 }
 
+function hudFromState(state: State): HudState {
+  return {
+    score: state.score,
+    bestScore: state.bestScore,
+    timeLeft: state.timeLeft,
+    phase: state.phase,
+    streak: state.streak,
+    message: state.message,
+  };
+}
+
+function shouldPublishHud(previous: HudState, next: State) {
+  return (
+    previous.score !== next.score ||
+    previous.bestScore !== next.bestScore ||
+    previous.phase !== next.phase ||
+    previous.streak !== next.streak ||
+    previous.message !== next.message ||
+    Math.abs(previous.timeLeft - next.timeLeft) >= 0.08
+  );
+}
+
 export function DunkHitGame() {
   const initialBest = readStoredNumber(STORAGE_KEY);
   const initialState = createState(initialBest);
@@ -547,55 +736,52 @@ export function DunkHitGame() {
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
   const stateRef = useRef(initialState);
   const elapsedRef = useRef(0);
+  const hudRef = useRef<HudState>(hudFromState(initialState));
+  const bestStoredRef = useRef(initialBest);
   const [skinId, setSkinId] = useState(() => readStoredSkin(initialBest));
-  const [hud, setHud] = useState({
-    score: initialState.score,
-    bestScore: initialState.bestScore,
-    timeLeft: initialState.timeLeft,
-    phase: initialState.phase,
-    streak: initialState.streak,
-    message: initialState.message,
-  });
+  const skinRef = useRef<Skin>(SKINS.find((skin) => skin.id === skinId) ?? SKINS[0]!);
+  const [hud, setHud] = useState<HudState>(hudFromState(initialState));
 
   const selectedSkin = SKINS.find((skin) => skin.id === skinId) ?? SKINS[0]!;
 
-  function sync(nextState: State) {
+  function publish(nextState: State, force = false) {
     stateRef.current = nextState;
-    setHud({
-      score: nextState.score,
-      bestScore: nextState.bestScore,
-      timeLeft: nextState.timeLeft,
-      phase: nextState.phase,
-      streak: nextState.streak,
-      message: nextState.message,
-    });
-    writeStoredNumber(STORAGE_KEY, nextState.bestScore);
+
+    if (nextState.bestScore > bestStoredRef.current) {
+      bestStoredRef.current = nextState.bestScore;
+      writeStoredNumber(STORAGE_KEY, nextState.bestScore);
+    }
+
+    if (force || shouldPublishHud(hudRef.current, nextState)) {
+      const nextHud = hudFromState(nextState);
+      hudRef.current = nextHud;
+      setHud(nextHud);
+    }
   }
 
   function render() {
     const context = contextRef.current;
     if (context) {
-      const skin = SKINS.find((item) => item.id === skinId) ?? SKINS[0]!;
-      drawScene(context, stateRef.current, skin, elapsedRef.current);
+      drawScene(context, stateRef.current, skinRef.current, elapsedRef.current);
     }
   }
 
   function bounce() {
-    sync(tapBall(stateRef.current, selectedSkin));
+    publish(tapBall(stateRef.current, skinRef.current), true);
     render();
   }
 
   function restart() {
-    sync(startState(stateRef.current));
+    publish(startState(stateRef.current), true);
     render();
   }
 
   function togglePause() {
     const current = stateRef.current;
     if (current.phase === "playing") {
-      sync({ ...current, phase: "paused", message: "Paused." });
+      publish({ ...current, phase: "paused", message: "Paused." }, true);
     } else if (current.phase === "paused") {
-      sync({ ...current, phase: "playing", message: "Back in rhythm." });
+      publish({ ...current, phase: "playing", message: "Back in rhythm." }, true);
     }
   }
 
@@ -605,10 +791,17 @@ export function DunkHitGame() {
     }
 
     setSkinId(nextSkin.id);
+    skinRef.current = nextSkin;
     if (typeof window !== "undefined") {
       window.localStorage.setItem(SKIN_KEY, nextSkin.id);
     }
+    render();
   }
+
+  useEffect(() => {
+    skinRef.current = selectedSkin;
+    render();
+  }, [selectedSkin]);
 
   const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
     const key = event.key.toLowerCase();
@@ -628,9 +821,7 @@ export function DunkHitGame() {
     const canvas = canvasRef.current;
     if (canvas) {
       contextRef.current = configureHiDPICanvas(canvas, WIDTH, HEIGHT);
-      if (contextRef.current) {
-        drawScene(contextRef.current, stateRef.current, SKINS[0]!, elapsedRef.current);
-      }
+      render();
     }
 
     const handler = (event: KeyboardEvent) => onKeyDown(event);
@@ -640,10 +831,8 @@ export function DunkHitGame() {
 
   useAnimationFrameLoop((delta, elapsed) => {
     elapsedRef.current = elapsed;
-    const next = updateState(stateRef.current, delta, selectedSkin);
-    if (next !== stateRef.current) {
-      sync(next);
-    }
+    const next = updateState(stateRef.current, Math.min(delta, 0.032), skinRef.current);
+    publish(next);
     render();
   });
 
@@ -683,7 +872,7 @@ export function DunkHitGame() {
           />
         </GamePlayfield>
 
-        <div className="grid w-full max-w-[25rem] grid-cols-4 gap-2 rounded-[1.1rem] border border-line bg-surface px-3 py-2 shadow-[0_18px_60px_rgba(0,0,0,0.2)] md:w-32 md:grid-cols-1">
+        <div className="grid w-full max-w-[25rem] grid-cols-4 gap-2 rounded-[1.1rem] border border-white/20 bg-[#151638]/80 px-3 py-2 shadow-[0_18px_60px_rgba(0,0,0,0.24)] backdrop-blur md:w-32 md:grid-cols-1">
           {SKINS.map((skin) => {
             const locked = hud.bestScore < skin.unlockAt;
             return (
@@ -702,7 +891,7 @@ export function DunkHitGame() {
       </div>
 
       <GameStatus>
-        {hud.message} Tap, click, Space, Enter, or W to bounce toward the next hoop. R restarts and P pauses.
+        {hud.message} Tap, click, Space, Enter, W, or Arrow Up to bounce. R restarts and P pauses.
       </GameStatus>
 
       <TouchControls className="max-w-[18rem]">
