@@ -1116,6 +1116,49 @@ export const gameCatalog = [
     libraryOrder: 29,
     relatedSlugs: ["stack", "flappy-bird"],
   },
+  {
+    slug: "geometry-dash",
+    title: "Geometry Dash",
+    shortDescription:
+      "A neon one-button rhythm runner with spikes, blocks, pads, jump orbs, gravity portals, secret coins, and practice checkpoints.",
+    description:
+      "Geometry Dash brings a self-coded, soundless browser take on the cube-runner formula into the arcade: auto-scroll through a handcrafted level, jump over spikes, land on blocks, hit jump pads and orbs, flip gravity through portals, grab three secret coins, practice from checkpoints, and chase a clean level-complete run.",
+    thumbnail: "/games/geometry-dash/thumbnail.svg?v=20260504",
+    genre: "Arcade",
+    tags: ["Canvas", "Platformer", "One Button", "Rhythm", "High Score"],
+    controls: {
+      summary:
+        "The cube runs automatically. Press Space, W, Arrow Up, Enter, click, or tap to jump and trigger nearby orbs.",
+      items: [
+        { label: "Jump", action: "Space, W, Arrow Up, Enter, click, or tap" },
+        { label: "Orbs", action: "Tap while touching an orb to launch again" },
+        { label: "Portals", action: "Pass through portals to flip or restore gravity" },
+        { label: "Practice", action: "Enable checkpoint respawns during the level" },
+        { label: "Restart", action: "R or Restart button" },
+      ],
+    },
+    difficulty: "hard",
+    sessionLength: "1-4 min",
+    releaseDate: "2026-05-04",
+    status: "live",
+    featured: false,
+    published: true,
+    supports: ["keyboard", "mouse", "touch"],
+    mobileSupport: "full",
+    version: "1.0.0",
+    developerNotes:
+      "Geometry Dash is an original self-coded canvas runner inspired by the genre: deterministic level layout, auto-run physics, jump timing, block and spike collision, jump pads, input-triggered orbs, gravity portals, secret coins, practice checkpoints, particle feedback, progress persistence, and mobile controls.",
+    howToPlay: {
+      summary: "Time each jump and orb hit while the cube auto-runs through the level.",
+      tips: [
+        "Hold a steady rhythm through spike pairs and block platforms.",
+        "Tap again when the cube reaches glowing orbs.",
+        "Practice mode sets checkpoints but normal mode is the clean run.",
+      ],
+    },
+    libraryOrder: 30,
+    relatedSlugs: ["chrome-dino", "doodle-jump"],
+  },
 ] satisfies readonly GameCatalogEntry[];
 
 export type GameSlug = (typeof gameCatalog)[number]["slug"];

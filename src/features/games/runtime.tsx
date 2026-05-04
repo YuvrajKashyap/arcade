@@ -149,6 +149,11 @@ const DunkHitGame = dynamic(() => import("@/features/games/dunk-hit"), {
   loading: GameLoadingState,
 });
 
+const GeometryDashGame = dynamic(() => import("@/features/games/geometry-dash"), {
+  ssr: false,
+  loading: GameLoadingState,
+});
+
 export const gameComponentMap: Record<GameSlug, React.ComponentType> = {
   snake: SnakeGame,
   pong: PongGame,
@@ -179,4 +184,5 @@ export const gameComponentMap: Record<GameSlug, React.ComponentType> = {
   "bubble-pop": BubblePopGame,
   "mini-golf": MiniGolfGame,
   "dunk-hit": DunkHitGame,
+  "geometry-dash": GeometryDashGame,
 };
