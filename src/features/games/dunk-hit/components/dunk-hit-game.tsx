@@ -573,6 +573,48 @@ function drawBall(context: CanvasRenderingContext2D, ball: Ball, skin: Skin, fir
   context.restore();
 }
 
+function drawShotGuide(context: CanvasRenderingContext2D, state: State) {
+  if (state.phase !== "idle" && state.phase !== "playing") {
+    return;
+  }
+
+  const { ball, hoop } = state;
+  const distance = Math.hypot(hoop.x - ball.x, hoop.y - ball.y);
+  if (distance < 72) {
+    return;
+  }
+
+  const verticalGap = ball.y - hoop.y;
+  const alpha =
+    state.phase === "idle"
+      ? 0.5
+      : clamp((verticalGap - 18) / 380, 0.12, 0.34);
+  const controlX = ball.x + (hoop.x - ball.x) * 0.58;
+  const controlY = Math.min(ball.y, hoop.y) - 92 - clamp(Math.abs(hoop.x - ball.x) * 0.15, 0, 42);
+
+  context.save();
+  context.globalAlpha = alpha;
+  context.setLineDash([9, 13]);
+  context.lineDashOffset = -state.scorePop * 16;
+  context.lineWidth = 3;
+  context.lineCap = "round";
+  context.strokeStyle = "#ffffff";
+  context.shadowBlur = 12;
+  context.shadowColor = "rgba(255,255,255,0.62)";
+  context.beginPath();
+  context.moveTo(ball.x, ball.y - BALL_RADIUS - 7);
+  context.quadraticCurveTo(controlX, controlY, hoop.x, hoop.y - 8);
+  context.stroke();
+
+  context.setLineDash([]);
+  context.lineWidth = 2;
+  context.strokeStyle = "#fff0a8";
+  context.beginPath();
+  context.arc(hoop.x, hoop.y + 12, 20, 0, Math.PI * 2);
+  context.stroke();
+  context.restore();
+}
+
 function drawParticles(context: CanvasRenderingContext2D, particles: Particle[]) {
   for (const particle of particles) {
     const alpha = clamp(particle.life / particle.maxLife, 0, 1);
@@ -686,6 +728,7 @@ function drawScene(context: CanvasRenderingContext2D, state: State, skin: Skin, 
     context.translate((Math.random() - 0.5) * state.shake, (Math.random() - 0.5) * state.shake);
   }
   drawHoopBack(context, state.hoop);
+  drawShotGuide(context, state);
   drawParticles(context, state.particles);
   drawBall(context, state.ball, skin, state.fire);
   drawHoopFront(context, state.hoop);
