@@ -74,6 +74,7 @@ type State = {
   hoop: Hoop;
   score: number;
   bestScore: number;
+  bankShots: number;
   timeLeft: number;
   timeMax: number;
   streak: number;
@@ -168,6 +169,7 @@ function createState(bestScore = 0): State {
     hoop: createHoop("right", 0),
     score: 0,
     bestScore,
+    bankShots: 0,
     timeLeft: timeMax,
     timeMax,
     streak: 0,
