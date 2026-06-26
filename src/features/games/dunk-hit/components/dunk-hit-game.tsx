@@ -290,7 +290,7 @@ function scoreDunk(state: State, skin: Skin): State {
       ...spawnBurst(state.hoop.x, state.hoop.y + 24, "#ffffff", perfect ? 3 : 2, 0.1, "ring"),
     ].slice(-130),
     scorePop: 0.52,
-    message: perfect ? "Perfect swish." : "Dunk.",
+    message: banked ? "Bank shot +1." : perfect ? "Perfect swish." : "Dunk.",
   };
 }
 
