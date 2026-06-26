@@ -245,9 +245,11 @@ function tapBall(state: State, skin: Skin): State {
 
 function scoreDunk(state: State, skin: Skin): State {
   const perfect = !state.ball.rimTouched && Math.abs(state.ball.x - state.hoop.x) < 16;
+  const banked = state.ball.bankTouched;
   const nextStreak = perfect ? state.streak + 1 : 0;
   const fireReward = state.fire > 0 ? 2 : 1;
-  const nextScore = state.score + fireReward;
+  const bankReward = banked ? BANK_REWARD : 0;
+  const nextScore = state.score + fireReward + bankReward;
   const nextTimer = getTimerMax(nextScore);
   const nextSide: Side = state.hoop.side === "left" ? "right" : "left";
   const nextFire = nextStreak >= 3 ? 4.25 : Math.max(0, state.fire - 0.3);
