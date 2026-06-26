@@ -45,6 +45,7 @@ type Ball = {
   vy: number;
   rotation: number;
   rimTouched: boolean;
+  bankTouched: boolean;
 };
 
 type Hoop = {
@@ -154,6 +155,7 @@ function createBall(x = WIDTH / 2, y = HEIGHT - 118): Ball {
     vy: -185,
     rotation: 0,
     rimTouched: false,
+    bankTouched: false,
   };
 }
 
