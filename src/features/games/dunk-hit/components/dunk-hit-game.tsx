@@ -897,6 +897,7 @@ export function DunkHitGame() {
         items={[
           { label: "Score", value: hud.score },
           { label: "Best", value: hud.bestScore },
+          { label: "Banks", value: hud.bankShots },
           { label: "Timer", value: `${Math.max(0, hud.timeLeft).toFixed(1)}s` },
           { label: "Perfect", value: hud.streak },
           { label: "Status", value: hud.phase },
