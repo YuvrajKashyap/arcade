@@ -776,6 +776,7 @@ function shouldPublishHud(previous: HudState, next: State) {
   return (
     previous.score !== next.score ||
     previous.bestScore !== next.bestScore ||
+    previous.bankShots !== next.bankShots ||
     previous.phase !== next.phase ||
     previous.streak !== next.streak ||
     previous.message !== next.message ||
