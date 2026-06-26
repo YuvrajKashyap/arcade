@@ -265,6 +265,7 @@ function scoreDunk(state: State, skin: Skin): State {
       vx: state.hoop.side === "left" ? 188 : -188,
       vy: -340,
       rimTouched: false,
+      bankTouched: false,
     },
     hoop: { ...hoop, flash: 1 },
     score: nextScore,
