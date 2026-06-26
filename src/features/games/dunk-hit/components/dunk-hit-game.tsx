@@ -82,6 +82,7 @@ type State = {
   shake: number;
   particles: Particle[];
   scorePop: number;
+  bankPop: number;
   message: string;
 };
 
@@ -177,6 +178,7 @@ function createState(bestScore = 0): State {
     shake: 0,
     particles: [],
     scorePop: 0,
+    bankPop: 0,
     message: "Tap to bounce.",
   };
 }
@@ -290,6 +292,7 @@ function scoreDunk(state: State, skin: Skin): State {
       ...spawnBurst(state.hoop.x, state.hoop.y + 24, "#ffffff", perfect ? 3 : 2, 0.1, "ring"),
     ].slice(-130),
     scorePop: 0.52,
+    bankPop: banked ? 0.7 : 0,
     message: banked ? "Bank shot +1." : perfect ? "Perfect swish." : "Dunk.",
   };
 }
@@ -413,6 +416,7 @@ function updateState(state: State, delta: number, skin: Skin): State {
     hoop: { ...next.hoop, flash: Math.max(0, next.hoop.flash - delta * 3.4) },
     shake: Math.max(0, next.shake - delta * 25),
     scorePop: Math.max(0, next.scorePop - delta),
+    bankPop: Math.max(0, next.bankPop - delta),
     particles,
   };
 }
