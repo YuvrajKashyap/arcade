@@ -356,6 +356,7 @@ function updateState(state: State, delta: number, skin: Skin): State {
         ball.vx = state.hoop.side === "left" ? Math.abs(ball.vx) * 0.72 + 110 : -Math.abs(ball.vx) * 0.72 - 110;
         ball.vy = Math.min(ball.vy, -80);
         ball.rimTouched = true;
+        ball.bankTouched = true;
         next = {
           ...state,
           particles: [
