@@ -272,6 +272,7 @@ function scoreDunk(state: State, skin: Skin): State {
     hoop: { ...hoop, flash: 1 },
     score: nextScore,
     bestScore: Math.max(state.bestScore, nextScore),
+    bankShots: state.bankShots + (banked ? 1 : 0),
     timeLeft: nextTimer,
     timeMax: nextTimer,
     streak: nextStreak,
