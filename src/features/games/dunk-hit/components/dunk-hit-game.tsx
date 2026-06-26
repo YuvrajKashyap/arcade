@@ -87,7 +87,7 @@ type State = {
 
 type HudState = Pick<
   State,
-  "score" | "bestScore" | "timeLeft" | "phase" | "streak" | "message"
+  "score" | "bestScore" | "bankShots" | "timeLeft" | "phase" | "streak" | "message"
 >;
 
 const SKINS: readonly Skin[] = [
@@ -764,6 +764,7 @@ function hudFromState(state: State): HudState {
   return {
     score: state.score,
     bestScore: state.bestScore,
+    bankShots: state.bankShots,
     timeLeft: state.timeLeft,
     phase: state.phase,
     streak: state.streak,
