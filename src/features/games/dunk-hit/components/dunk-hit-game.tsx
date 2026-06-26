@@ -21,6 +21,7 @@ const HEIGHT = 720;
 const BALL_RADIUS = 22;
 const HOOP_WIDTH = 116;
 const RIM_RADIUS = 7;
+const BANK_REWARD = 1;
 const STORAGE_KEY = "arcade.dunkHit.bestScore";
 const SKIN_KEY = "arcade.dunkHit.skin";
 
