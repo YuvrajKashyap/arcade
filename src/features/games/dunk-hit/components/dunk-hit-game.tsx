@@ -693,6 +693,14 @@ function drawScore(context: CanvasRenderingContext2D, state: State) {
     context.fillStyle = "rgba(255,255,255,0.9)";
     context.fillText(`${state.streak} PERFECT`, WIDTH / 2, 146);
   }
+
+  if (state.bankPop > 0) {
+    const bank = easeOutCubic(state.bankPop / 0.7);
+    context.globalAlpha = bank;
+    context.font = "900 18px Arial, sans-serif";
+    context.fillStyle = "#d6fbff";
+    context.fillText("BANK +1", WIDTH / 2, 176 - (1 - bank) * 16);
+  }
   context.restore();
 }
 
