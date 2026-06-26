@@ -8,6 +8,7 @@ type GameHudProps = {
     value: ReactNode;
   }>;
   actions?: ReactNode;
+  className?: string;
 };
 
 type GameButtonProps = {
@@ -30,9 +31,9 @@ export function GamePanel({ children }: { children: ReactNode }) {
   );
 }
 
-export function GameHud({ items, actions }: GameHudProps) {
+export function GameHud({ items, actions, className = "" }: GameHudProps) {
   return (
-    <div className="arcade-game-hud rounded-[1.35rem] border border-line bg-surface px-4 py-3 shadow-[0_18px_60px_rgba(0,0,0,0.24)]">
+    <div className={`arcade-game-hud rounded-[1.35rem] border border-line bg-surface px-4 py-3 shadow-[0_18px_60px_rgba(0,0,0,0.24)] ${className}`}>
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-wrap items-center gap-2">
           {items.map((item) => (

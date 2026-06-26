@@ -285,9 +285,9 @@ function scoreDunk(state: State, skin: Skin): State {
       ...spawnBurst(
         state.hoop.x,
         state.hoop.y + 6,
-        perfect ? "#ffffff" : skin.glow,
-        perfect ? 28 : 18,
-        perfect ? 1.08 : 0.84,
+        banked ? "#d6fbff" : perfect ? "#ffffff" : skin.glow,
+        banked ? 24 : perfect ? 28 : 18,
+        banked ? 1 : perfect ? 1.08 : 0.84,
       ),
       ...spawnBurst(state.hoop.x, state.hoop.y + 24, "#ffffff", perfect ? 3 : 2, 0.1, "ring"),
     ].slice(-130),
@@ -906,24 +906,16 @@ export function DunkHitGame() {
   return (
     <GamePanel>
       <GameHud
+        className="mx-auto mt-6 w-full max-w-[34rem] md:mt-7"
         items={[
-          { label: "Score", value: hud.score },
           { label: "Best", value: hud.bestScore },
           { label: "Banks", value: hud.bankShots },
           { label: "Timer", value: `${Math.max(0, hud.timeLeft).toFixed(1)}s` },
-          { label: "Perfect", value: hud.streak },
-          { label: "Status", value: hud.phase },
         ]}
         actions={
-          <>
-            <GameButton variant="primary" onClick={bounce}>
-              Bounce
-            </GameButton>
-            <GameButton onClick={restart}>Restart</GameButton>
-            <GameButton onClick={togglePause}>
-              {hud.phase === "paused" ? "Resume" : "Pause"}
-            </GameButton>
-          </>
+          <GameButton variant="primary" onClick={bounce}>
+            Bounce
+          </GameButton>
         }
       />
 
