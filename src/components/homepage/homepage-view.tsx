@@ -14,6 +14,7 @@ export function HomepageView({ collections }: HomepageViewProps) {
         featuredGame={collections.heroGame}
         totalGames={collections.allGames.length}
         newReleaseCount={collections.newReleaseGames.length}
+        randomGameSlugs={collections.allGames.map((game) => game.slug)}
       />
       <GameGridSection
         id="featured"
