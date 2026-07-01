@@ -1,4 +1,5 @@
 import { ButtonLink } from "@/components/ui/button-link";
+import { RandomGameButton } from "@/components/homepage/random-game-button";
 import { SectionReveal } from "@/components/ui/section-reveal";
 import { siteConfig } from "@/lib/constants/site";
 import { formatReleaseDate } from "@/lib/utils/date";
@@ -9,12 +10,14 @@ type HeroSectionProps = {
   featuredGame?: GameCatalogEntry;
   totalGames: number;
   newReleaseCount: number;
+  randomGameSlugs: readonly string[];
 };
 
 export function HeroSection({
   featuredGame,
   totalGames,
   newReleaseCount,
+  randomGameSlugs,
 }: HeroSectionProps) {
   return (
     <section className="section-anchor mx-auto w-full max-w-7xl px-4 pt-8 pb-8 sm:px-6 lg:px-8 lg:pt-12 lg:pb-12">
@@ -36,6 +39,7 @@ export function HeroSection({
                 <ButtonLink href={featuredGame ? `/games/${featuredGame.slug}` : "/#featured"}>
                   Play Featured Game
                 </ButtonLink>
+                <RandomGameButton gameSlugs={randomGameSlugs} />
                 <ButtonLink href="/#all-games" variant="secondary">
                   Browse All Games
                 </ButtonLink>
