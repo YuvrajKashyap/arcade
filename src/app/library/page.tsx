@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: "Library",
   description:
     "Browse the full arcade.yuvrajkashyap.com catalog across featured titles, new releases, categories, and the complete library.",
+  alternates: {
+    canonical: "/library",
+  },
 };
 
 export default function LibraryPage() {

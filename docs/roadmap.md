@@ -1,19 +1,21 @@
 # Roadmap
 
-## V1 Scope
+## Current Release
 
-Current V1 includes:
+The shipped platform includes:
 
 - standalone Next.js platform shell
-- homepage with Hero, Featured, New Releases, Categories, and All Games
+- dashboard and Library discovery surfaces
 - typed game registry and catalog selectors
-- dynamic game routes
+- 30 statically generated game pages
 - lazy runtime mounting
-- three initial games
+- shared keyboard, touch, Canvas, storage, and viewport mechanics
 - lightweight analytics
-- documentation and public-repo setup
+- automated lint, typecheck, production build, and visual capture workflows
+- complete desktop and mobile recruiter showcase
+- explicit third-party attribution for the vendored Flutter Pinball integration
 
-V1 intentionally does not include:
+The current release intentionally does not include:
 
 - auth
 - accounts
@@ -23,7 +25,7 @@ V1 intentionally does not include:
 - achievements
 - multiplayer
 
-## V1.5 Ideas
+## Near-Term Ideas
 
 Pragmatic near-term additions after the foundation is stable:
 
@@ -32,7 +34,8 @@ Pragmatic near-term additions after the foundation is stable:
 - local favorites
 - changelog blocks for selected games
 - sound/settings refinement
-- more polished media assets and screenshots
+- accessibility regression checks for the shared platform shell
+- targeted gameplay-state screenshots for the most technically complex runtimes
 
 ## Later Expansion Path
 
