@@ -49,6 +49,22 @@ async function settle(page) {
   await page.waitForLoadState("domcontentloaded");
   await page.waitForLoadState("networkidle").catch(() => undefined);
   await page.waitForTimeout(1400);
+
+  // Trigger intersection-based reveals and lazy media before taking a full-page image.
+  await page.evaluate(async () => {
+    const step = Math.max(500, Math.floor(window.innerHeight * 0.8));
+
+    for (let offset = 0; offset < document.documentElement.scrollHeight; offset += step) {
+      window.scrollTo(0, offset);
+      await new Promise((resolve) => window.setTimeout(resolve, 120));
+    }
+
+    window.scrollTo(0, document.documentElement.scrollHeight);
+    await new Promise((resolve) => window.setTimeout(resolve, 240));
+    window.scrollTo(0, 0);
+  });
+
+  await page.waitForTimeout(400);
 }
 
 async function captureRoute(page, route, destination) {
