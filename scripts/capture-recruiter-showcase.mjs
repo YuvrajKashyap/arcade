@@ -1,3 +1,4 @@
+// Captures the deployed product for recruiter-facing documentation.
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { chromium, devices } from "playwright";
