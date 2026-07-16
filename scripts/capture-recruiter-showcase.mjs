@@ -64,7 +64,10 @@ async function settle(page) {
     window.scrollTo(0, 0);
   });
 
-  await page.waitForTimeout(400);
+  const hasLongRevealSequence = await page.evaluate(
+    () => document.documentElement.scrollHeight > window.innerHeight * 3,
+  );
+  await page.waitForTimeout(hasLongRevealSequence ? 2400 : 500);
 }
 
 async function captureRoute(page, route, destination) {
