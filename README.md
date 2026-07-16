@@ -8,7 +8,7 @@
 
 [**Play Arcade**](https://arcade.yuvrajkashyap.com) · [Complete visual showcase](./docs/recruiter-showcase.md) · [Architecture](./docs/architecture.md) · [Adding a game](./docs/adding-a-game.md)
 
-![Arcade dashboard with the playable catalog](./public/brand/readme-home.png)
+![Arcade dashboard with the playable catalog](./public/brand/recruiter/desktop/dashboard.jpg)
 
 Arcade is a browser-game platform built as a cohesive product rather than a folder of unrelated demos. A single dashboard, typed catalog, dynamic route model, shared game theater, lazy runtime map, input system, responsive framing, and local persistence support **30 published games** across Canvas, DOM, board, word, timing, physics, and incremental interaction models.
 
@@ -24,8 +24,9 @@ The games provide the content. The engineering signal is the platform around the
 | Full mobile support | **24** |
 | Partial / desktop-best mobile support | **4 / 2** |
 | Keyboard and touch metadata | **30 / 30 games** |
-| Public route model | Dashboard, About, and 30 statically generated game pages |
+| Public route model | Dashboard, Library, About, and 30 statically generated game pages |
 | Verification gate | ESLint, TypeScript, Next.js production build |
+| Recruiter showcase | **67** desktop, mobile, and interaction-state captures |
 | Deployment | Vercel at [arcade.yuvrajkashyap.com](https://arcade.yuvrajkashyap.com) |
 
 These counts are derived from [the typed registry](./src/content/games/registry.ts), the product's source of truth.
@@ -42,26 +43,26 @@ These counts are derived from [the typed registry](./src/content/games/registry.
 
 ## Complete visual evidence
 
-The showcase system captures the real deployed product rather than mockups:
+The showcase system captures a production build of the current branch rather than mockups:
 
-- dashboard and About page at desktop and mobile sizes
+- dashboard, Library, and About at desktop and mobile sizes
 - all **30 game routes** at desktop and mobile sizes
 - the shared How to Play interaction state
-- 65 total recruiter-showcase captures when the full capture run completes
+- **67 verified recruiter-showcase captures** in total
 
 [**Open the complete route-by-route visual catalog →**](./docs/recruiter-showcase.md)
 
 ### Platform
 
-![Arcade dashboard game catalog](./public/brand/readme-home.png)
+![Arcade dashboard game catalog](./public/brand/recruiter/desktop/dashboard.jpg)
 
 ### Representative advanced runtimes
 
 | Tetris | Snakes and Ladders |
 | --- | --- |
-| ![Tetris runtime](./public/brand/readme-tetris.png) | ![Snakes and Ladders runtime](./public/brand/readme-snakes-and-ladders.png) |
+| ![Tetris runtime](./public/brand/recruiter/desktop/games/tetris.jpg) | ![Snakes and Ladders runtime](./public/brand/recruiter/desktop/games/snakes-and-ladders.jpg) |
 
-The repository includes an automated [Playwright capture script](./scripts/capture-recruiter-showcase.mjs) and [showcase workflow](./.github/workflows/capture-recruiter-showcase.yml) so the evidence can be refreshed whenever the live interface changes.
+The repository includes an automated [Playwright capture script](./scripts/capture-recruiter-showcase.mjs) and [showcase workflow](./.github/workflows/capture-recruiter-showcase.yml) so the evidence can be refreshed whenever the interface changes.
 
 ## Complete game catalog
 
@@ -148,7 +149,7 @@ Requirements: Node.js 20.9 or newer and npm.
 ```bash
 git clone https://github.com/YuvrajKashyap/arcade.git
 cd arcade
-npm install
+npm ci
 npm run dev
 ```
 
@@ -210,6 +211,7 @@ No open-source license has been selected for the original Arcade repository code
 - Reaction Time Test remains marked beta; the other 29 catalog entries are live.
 - Pinball is a vendored open-source integration rather than a self-coded runtime.
 - Automated screenshots capture default public states; deeper gameplay behavior is best evaluated through the live site.
+- Internal interface explorations remain in source for engineering context but are omitted from the sitemap and marked `noindex`.
 
 ## Documentation
 
