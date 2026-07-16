@@ -73,6 +73,19 @@ async function settle(page) {
 async function captureRoute(page, route, destination) {
   await page.goto(`${baseUrl}${route}`, { waitUntil: "domcontentloaded", timeout: 45_000 });
   await settle(page);
+
+  if (route === "/library") {
+    await page.evaluate(() => {
+      for (const element of document.querySelectorAll("#content [style]")) {
+        if (window.getComputedStyle(element).opacity === "0") {
+          element.style.setProperty("opacity", "1", "important");
+          element.style.setProperty("transform", "none", "important");
+        }
+      }
+    });
+    await page.waitForTimeout(300);
+  }
+
   await page.screenshot({
     path: destination,
     fullPage: true,
