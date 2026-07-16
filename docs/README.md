@@ -1,6 +1,7 @@
 # Docs Index
 
 - [Architecture](./architecture.md): product structure, catalog flow, runtime model, rendering choices, and backend boundaries.
+- [Recruiter Showcase](./recruiter-showcase.md): desktop and mobile evidence for every recruiter-facing route and shared interaction state.
 - [Adding a Game](./adding-a-game.md): exact integration steps for a new game module.
 - [Design System](./design-system.md): current visual direction, theme foundations, and future design guidance.
 - [Roadmap](./roadmap.md): V1 scope, near-term additions, and later expansion path.

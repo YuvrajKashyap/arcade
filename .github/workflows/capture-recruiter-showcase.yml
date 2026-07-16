@@ -7,12 +7,11 @@ on:
     paths:
       - .github/workflows/capture-recruiter-showcase.yml
       - scripts/capture-recruiter-showcase.mjs
+      - src/**
+      - public/games/**
+      - package.json
+      - package-lock.json
   workflow_dispatch:
-    inputs:
-      capture_url:
-        description: Public Arcade URL to capture
-        required: false
-        default: https://arcade.yuvrajkashyap.com
 
 permissions:
   contents: write
@@ -38,15 +37,32 @@ jobs:
         with:
           node-version: 22
 
+      - name: Install application dependencies
+        run: npm ci
+
       - name: Install capture runtime
         run: |
           npm install --no-save --no-package-lock playwright@1.55.0
           npx playwright install --with-deps chromium
 
+      - name: Build current branch
+        run: npm run build
+
       - name: Capture desktop, mobile, and interaction states
-        run: node scripts/capture-recruiter-showcase.mjs
-        env:
-          ARCADE_CAPTURE_URL: ${{ inputs.capture_url || 'https://arcade.yuvrajkashyap.com' }}
+        run: |
+          npm run start -- --hostname 127.0.0.1 > /tmp/arcade-showcase.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+
+          for attempt in {1..60}; do
+            if curl --fail --silent http://127.0.0.1:3000 > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+
+          curl --fail --silent http://127.0.0.1:3000 > /dev/null
+          ARCADE_CAPTURE_URL=http://127.0.0.1:3000 node scripts/capture-recruiter-showcase.mjs
 
       - name: Commit refreshed showcase assets
         run: |

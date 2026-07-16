@@ -31,10 +31,13 @@ flowchart LR
 Public routes:
 
 - `/` — catalog dashboard
+- `/library` — navigation-visible catalog and discovery view
 - `/about` — product and authorship context
 - `/games/[slug]` — one generic statically generated route model for all 30 games
 
 Framework surfaces also include route-level loading, error, not-found, robots, sitemap, icons, canonical metadata, and Open Graph metadata.
+
+The repository also retains `/design`, `/play-design`, and `/concept` explorations used during interface development. These routes are intentionally omitted from the sitemap, marked `noindex`, and excluded from recruiter-facing route counts.
 
 The dynamic game page stays generic. The registry provides the content model, catalog selectors validate and derive page data, and the runtime map loads the corresponding client component only when a visitor opens that game.
 
@@ -121,7 +124,7 @@ The remaining published runtimes are self-coded implementations with original re
 
 - `npm run check` runs lint, typecheck, and a production build.
 - [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs that gate on pushes and pull requests.
-- [`scripts/capture-recruiter-showcase.mjs`](../scripts/capture-recruiter-showcase.mjs) captures every game route at desktop and mobile sizes.
+- [`scripts/capture-recruiter-showcase.mjs`](../scripts/capture-recruiter-showcase.mjs) captures every recruiter-facing route from a production build of the current branch at desktop and mobile sizes.
 - [`docs/recruiter-showcase.md`](recruiter-showcase.md) catalogs the resulting product evidence.
 
 ## Best review path

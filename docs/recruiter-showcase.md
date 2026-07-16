@@ -1,6 +1,8 @@
 # Recruiter Showcase
 
-This catalog documents every meaningful public Arcade route at desktop and mobile sizes. Screenshots are captured automatically from the deployed product by [`scripts/capture-recruiter-showcase.mjs`](../scripts/capture-recruiter-showcase.mjs); they are not mockups or generated replacements for the application.
+This catalog documents every recruiter-facing Arcade route at desktop and mobile sizes. Screenshots are captured automatically from a production build of the current branch by [`scripts/capture-recruiter-showcase.mjs`](../scripts/capture-recruiter-showcase.mjs); they are not mockups or generated replacements for the application.
+
+The public showcase covers the dashboard, Library, About, all 30 published game pages, and a shared interaction state. Internal `/design`, `/play-design`, and `/concept` explorations are intentionally excluded and marked `noindex`; they are implementation experiments rather than product surfaces.
 
 ## Platform surfaces
 
@@ -9,6 +11,12 @@ This catalog documents every meaningful public Arcade route at desktop and mobil
 | Desktop | Mobile |
 | --- | --- |
 | ![Arcade dashboard on desktop](../public/brand/recruiter/desktop/dashboard.jpg) | ![Arcade dashboard on mobile](../public/brand/recruiter/mobile/dashboard.jpg) |
+
+### Library
+
+| Desktop | Mobile |
+| --- | --- |
+| ![Arcade Library on desktop](../public/brand/recruiter/desktop/library.jpg) | ![Arcade Library on mobile](../public/brand/recruiter/mobile/library.jpg) |
 
 ### About
 
@@ -264,7 +272,7 @@ This catalog documents every meaningful public Arcade route at desktop and mobil
 
 ## Capture policy
 
-- Capture the real deployed route after the page has settled.
+- Capture the current branch's production build after each route has settled.
 - Preserve both desktop and mobile views.
 - Do not add mock screenshots or fabricate game state.
 - Do not expose browser data, credentials, or private information.

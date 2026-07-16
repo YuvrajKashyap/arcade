@@ -2,7 +2,7 @@
 
 ## Current Direction
 
-The current UI foundation is intentionally restrained. It is not the final visual pass, but it establishes a coherent base for future refinement.
+The production UI is intentionally restrained so a 30-game catalog can feel cohesive without competing with the games themselves.
 
 Target feel:
 
@@ -69,13 +69,13 @@ Guideline:
 
 - motion should support structure, not compete with gameplay
 
-## Future Design Iteration Guidance
+## Design Iteration Guidance
 
-When doing a later design pass:
+When evolving the interface:
 
 - keep the current token system and refine it instead of scattering one-off colors
 - preserve the separation between page-view components and catalog logic
 - avoid turning metadata back into visual clutter
 - treat the shell and the games as separate styling layers
 
-The architecture is intentionally ready for a stronger visual pass without needing a structural rewrite.
+Historical `/design` and `/play-design` experiments remain in the repository as non-indexed implementation references. The recruiter-facing product uses the current production shell and does not present those experiments as separate shipped experiences.

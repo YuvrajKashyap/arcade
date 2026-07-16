@@ -1,10 +1,16 @@
-// Captures the deployed product for recruiter-facing documentation.
+// Captures a production build for recruiter-facing documentation.
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { chromium, devices } from "playwright";
 
 const baseUrl = process.env.ARCADE_CAPTURE_URL ?? "https://arcade.yuvrajkashyap.com";
 const outputRoot = path.resolve("public/brand/recruiter");
+
+const platformRoutes = [
+  { slug: "dashboard", route: "/" },
+  { slug: "library", route: "/library" },
+  { slug: "about", route: "/about" },
+];
 
 const games = [
   "snake",
@@ -69,8 +75,13 @@ const desktop = await browser.newContext({
 });
 const desktopPage = await desktop.newPage();
 
-await captureRoute(desktopPage, "/", path.join(outputRoot, "desktop", "dashboard.jpg"));
-await captureRoute(desktopPage, "/about", path.join(outputRoot, "desktop", "about.jpg"));
+for (const { slug, route } of platformRoutes) {
+  await captureRoute(
+    desktopPage,
+    route,
+    path.join(outputRoot, "desktop", `${slug}.jpg`),
+  );
+}
 
 for (const slug of games) {
   await captureRoute(
@@ -101,8 +112,13 @@ const mobile = await browser.newContext({
 });
 const mobilePage = await mobile.newPage();
 
-await captureRoute(mobilePage, "/", path.join(outputRoot, "mobile", "dashboard.jpg"));
-await captureRoute(mobilePage, "/about", path.join(outputRoot, "mobile", "about.jpg"));
+for (const { slug, route } of platformRoutes) {
+  await captureRoute(
+    mobilePage,
+    route,
+    path.join(outputRoot, "mobile", `${slug}.jpg`),
+  );
+}
 
 for (const slug of games) {
   await captureRoute(
@@ -115,4 +131,5 @@ for (const slug of games) {
 await mobile.close();
 await browser.close();
 
-console.log(`Captured ${games.length * 2 + 5} recruiter-showcase images from ${baseUrl}.`);
+const captureCount = games.length * 2 + platformRoutes.length * 2 + 1;
+console.log(`Captured ${captureCount} recruiter-showcase images from ${baseUrl}.`);
