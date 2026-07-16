@@ -1,188 +1,176 @@
 # Arcade
 
-![Arcade dashboard](./public/brand/readme-home.png)
+**A production-style browser arcade with 30 playable games, one typed platform model, and multiple runtime architectures.**
 
-**Arcade** is a production-style browser arcade built as a real web platform, not a folder of isolated demos. The app opens on a single dashboard where users can browse the published catalog, jump into a game, read controls, play inside a focused game theater, and come back for another run.
+[![Arcade CI](https://github.com/YuvrajKashyap/arcade/actions/workflows/ci.yml/badge.svg)](https://github.com/YuvrajKashyap/arcade/actions/workflows/ci.yml)
+[![Live Site](https://img.shields.io/badge/play-live-22c55e)](https://arcade.yuvrajkashyap.com)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
 
-The portfolio goal is direct: prove that I can ship a polished interactive product, not just static pages.
+[**Play Arcade**](https://arcade.yuvrajkashyap.com) · [Complete visual showcase](./docs/recruiter-showcase.md) · [Architecture](./docs/architecture.md) · [Adding a game](./docs/adding-a-game.md)
 
-## Live Site
+![Arcade dashboard with the playable catalog](./public/brand/readme-home.png)
 
-```txt
-https://arcade.yuvrajkashyap.com
+Arcade is a browser-game platform built as a cohesive product rather than a folder of unrelated demos. A single dashboard, typed catalog, dynamic route model, shared game theater, lazy runtime map, input system, responsive framing, and local persistence support **30 published games** across Canvas, DOM, board, word, timing, physics, and incremental interaction models.
+
+The games provide the content. The engineering signal is the platform around them: scalable routing, isolated runtimes, reusable browser mechanics, deterministic rules, collision and physics systems, CPU opponents, input capture, state persistence, product consistency, and deployment discipline.
+
+## At a glance
+
+| Signal | Current implementation |
+| --- | ---: |
+| Published games | **30** |
+| Live / beta | **29 / 1** |
+| Canvas-tagged runtimes | **16** |
+| Full mobile support | **24** |
+| Partial / desktop-best mobile support | **4 / 2** |
+| Keyboard and touch metadata | **30 / 30 games** |
+| Public route model | Dashboard, About, and 30 statically generated game pages |
+| Verification gate | ESLint, TypeScript, Next.js production build |
+| Deployment | Vercel at [arcade.yuvrajkashyap.com](https://arcade.yuvrajkashyap.com) |
+
+These counts are derived from [the typed registry](./src/content/games/registry.ts), the product's source of truth.
+
+## What recruiters should notice
+
+- **Platform design:** one registry powers discovery cards, categories, related games, controls, metadata, routing, static generation, and mobile-support labels.
+- **Runtime isolation:** client-only games load lazily behind a shared theater and error boundary instead of inflating every route.
+- **Multiple application models:** Canvas loops, DOM grids, deterministic board state, legal-move generation, minimax, timing systems, local persistence, physics, and touch-specific controls coexist under one product.
+- **Rules-heavy implementations:** Tetris includes 7-bag generation, hold, ghost pieces, SRS wall kicks, lock delay, and combos; Sorry! generates legal moves across cards, pawns, safety lanes, slides, and bumps.
+- **Responsive interaction:** all catalog entries declare keyboard and touch support, with viewport and control strategies tailored to the game.
+- **Production presentation:** SEO metadata, sitemap, analytics, app icons, CI, source attribution, documentation, and deployment are part of the repository.
+- **Honest ownership:** Flutter Pinball is clearly isolated and attributed as a vendored open-source integration; the other published runtimes are self-coded implementations using familiar gameplay patterns.
+
+## Complete visual evidence
+
+The showcase system captures the real deployed product rather than mockups:
+
+- dashboard and About page at desktop and mobile sizes
+- all **30 game routes** at desktop and mobile sizes
+- the shared How to Play interaction state
+- 65 total recruiter-showcase captures when the full capture run completes
+
+[**Open the complete route-by-route visual catalog →**](./docs/recruiter-showcase.md)
+
+### Platform
+
+![Arcade dashboard game catalog](./public/brand/readme-home.png)
+
+### Representative advanced runtimes
+
+| Tetris | Snakes and Ladders |
+| --- | --- |
+| ![Tetris runtime](./public/brand/readme-tetris.png) | ![Snakes and Ladders runtime](./public/brand/readme-snakes-and-ladders.png) |
+
+The repository includes an automated [Playwright capture script](./scripts/capture-recruiter-showcase.mjs) and [showcase workflow](./.github/workflows/capture-recruiter-showcase.yml) so the evidence can be refreshed whenever the live interface changes.
+
+## Complete game catalog
+
+| | | | | |
+| --- | --- | --- | --- | --- |
+| [![Snake](./public/games/snake/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/snake)<br>**Snake** | [![Pong](./public/games/pong/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/pong)<br>**Pong** | [![Reaction Time](./public/games/reaction-time/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/reaction-time)<br>**Reaction Time** | [![Tic Tac Toe](./public/games/tic-tac-toe/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/tic-tac-toe)<br>**Tic Tac Toe** | [![Pinball](./public/games/pinball/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/pinball)<br>**Pinball** |
+| [![Breakout](./public/games/breakout/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/breakout)<br>**Breakout** | [![Asteroids](./public/games/asteroids/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/asteroids)<br>**Asteroids** | [![Minesweeper](./public/games/minesweeper/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/minesweeper)<br>**Minesweeper** | [![2048](./public/games/2048/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/2048)<br>**2048** | [![Doodle Jump](./public/games/doodle-jump/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/doodle-jump)<br>**Doodle Jump** |
+| [![Flappy Bird](./public/games/flappy-bird/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/flappy-bird)<br>**Flappy Bird** | [![Crossy Roads](./public/games/crossy-roads/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/crossy-roads)<br>**Crossy Roads** | [![Chrome Dino](./public/games/chrome-dino/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/chrome-dino)<br>**Chrome Dino** | [![Pac-Man](./public/games/pacman/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/pacman)<br>**Pac-Man** | [![Tetris](./public/games/tetris/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/tetris)<br>**Tetris** |
+| [![Cookie Clicker](./public/games/cookie-clicker/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/cookie-clicker)<br>**Cookie Clicker** | [![Snakes & Ladders](./public/games/snakes-and-ladders/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/snakes-and-ladders)<br>**Snakes & Ladders** | [![Sorry!](./public/games/sorry/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/sorry)<br>**Sorry!** | [![Street Fighter](./public/games/street-fighter/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/street-fighter)<br>**Street Fighter** | [![Helix Jump](./public/games/helix-jump/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/helix-jump)<br>**Helix Jump** |
+| [![Stack](./public/games/stack/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/stack)<br>**Stack** | [![Memory Match](./public/games/memory-match/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/memory-match)<br>**Memory Match** | [![Whack-a-Mole](./public/games/whack-a-mole/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/whack-a-mole)<br>**Whack-a-Mole** | [![Connect Four](./public/games/connect-four/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/connect-four)<br>**Connect Four** | [![Hangman](./public/games/hangman/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/hangman)<br>**Hangman** |
+| [![Typing Speed](./public/games/typing-speed-test/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/typing-speed-test)<br>**Typing Speed** | [![Bubble Pop](./public/games/bubble-pop/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/bubble-pop)<br>**Bubble Pop** | [![Mini Golf](./public/games/mini-golf/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/mini-golf)<br>**Mini Golf** | [![Dunk Hit](./public/games/dunk-hit/thumbnail.png)](https://arcade.yuvrajkashyap.com/games/dunk-hit)<br>**Dunk Hit** | [![Geometry Dash](./public/games/geometry-dash/thumbnail.svg)](https://arcade.yuvrajkashyap.com/games/geometry-dash)<br>**Geometry Dash** |
+
+
+## Engineering coverage
+
+| Area | Representative games | Engineering focus |
+| --- | --- | --- |
+| Continuous Canvas loops | Snake, Pong, Asteroids, Pac-Man | frame timing, movement, collision, particles, camera and score loops |
+| Physics and timing | Breakout, Flappy Bird, Mini Golf, Dunk Hit | velocity, gravity, collision response, hazards and input timing |
+| Rule-heavy board systems | Tetris, Sorry!, Snakes and Ladders, Connect Four | legal transitions, turn flow, CPU decisions, special rules and win conditions |
+| Grid and puzzle state | Minesweeper, 2048, Memory Match, Tic Tac Toe | deterministic board state, protected starts, merge semantics, matching and minimax |
+| Incremental and persistent state | Cookie Clicker, Typing Speed, Reaction Time | derived metrics, upgrades, timers, records and browser persistence |
+| Mobile-first interactions | Bubble Pop, Helix Jump, Stack, Geometry Dash | tap, swipe, drag, one-button timing and responsive controls |
+| Third-party integration | Pinball | isolated static embed, disabled external services, explicit attribution and licensing |
+
+## Architecture
+
+```mermaid
+flowchart LR
+  Visitor["Visitor"] --> Dashboard["Dashboard"]
+  Registry["Typed registry"] --> Dashboard
+  Registry --> Route["/games/[slug]"]
+  Route --> Theater["Shared game theater"]
+  RuntimeMap["Lazy runtime map"] --> Theater
+  Theater --> Runtime["Isolated game runtime"]
+  Shared["Input, Canvas, storage helpers"] --> Runtime
 ```
 
-Local development:
+The registry contains metadata but never imports runtime code. Catalog selectors derive platform collections and static slugs. The generic game page renders product context and controls, then the runtime map lazy-loads the selected game behind a shared boundary.
 
-```txt
+That separation allows the catalog to grow without duplicating page logic or loading every game on the dashboard.
+
+Read the [complete architecture walkthrough](./docs/architecture.md).
+
+## Key technical decisions
+
+### Registry-driven product model
+
+Every game declares its slug, descriptions, genre, tags, controls, How to Play content, release state, supported inputs, mobile behavior, related games, thumbnail, and version in one typed contract. Dashboard sections and routes are derived rather than maintained independently.
+
+### Shared mechanics without pretending to be an engine
+
+Arcade shares low-level browser mechanics—animation scheduling, keyboard state, HiDPI Canvas setup, math, storage, and theater controls. Game rules and rendering stay local. This avoids both copy-paste infrastructure and an oversized custom-engine abstraction.
+
+### Runtime and failure isolation
+
+Game modules are lazy-loaded only after a visitor opens their route. A runtime boundary prevents a game-specific failure from taking down the platform shell or unrelated pages.
+
+### Input and viewport control
+
+The theater captures gameplay keys so Space, arrows, and WASD do not scroll the page during play. Games add touch or mobile-specific controls where the interaction model requires them.
+
+### Local-first V1 scope
+
+High scores, records, progress, and preferences persist locally where useful. Auth, cloud saves, multiplayer, and global leaderboards remain explicitly future work rather than placeholder systems.
+
+## Where to start in the code
+
+| Area | File | Why inspect it |
+| --- | --- | --- |
+| Product model | [`src/content/games/registry.ts`](./src/content/games/registry.ts) | typed source of truth for all 30 games |
+| Catalog derivation | [`src/lib/games/catalog.ts`](./src/lib/games/catalog.ts) | homepage collections, relationships and route data |
+| Runtime loading | [`src/features/games/runtime.tsx`](./src/features/games/runtime.tsx) | lazy slug-to-runtime mapping |
+| Shared theater | [`src/components/games/game-page-view.tsx`](./src/components/games/game-page-view.tsx) | keyboard capture, controls, help and responsive framing |
+| Advanced puzzle runtime | [`src/features/games/tetris/components/block-drop-game.tsx`](./src/features/games/tetris/components/block-drop-game.tsx) | modern falling-block rules and interaction |
+| Maze runtime | [`src/features/games/pacman/components/pac-maze-game.tsx`](./src/features/games/pacman/components/pac-maze-game.tsx) | maze movement, pellets, ghosts and level flow |
+| Board-game runtime | [`src/features/games/sorry/components/sorry-sprint-game.tsx`](./src/features/games/sorry/components/sorry-sprint-game.tsx) | card/pawn rules and legal-move generation |
+| Shared browser utilities | [`src/features/games/shared`](./src/features/games/shared) | animation, Canvas, input, math and persistence helpers |
+
+## Quick start
+
+Requirements: Node.js 20.9 or newer and npm.
+
+```bash
+git clone https://github.com/YuvrajKashyap/arcade.git
+cd arcade
 npm install
 npm run dev
 ```
 
-Then open:
+Open [http://localhost:3000](http://localhost:3000).
 
-```txt
-http://localhost:3000
+No database, account, or private API key is required. The only optional public environment value is:
+
+```bash
+NEXT_PUBLIC_SITE_URL=https://arcade.yuvrajkashyap.com
 ```
 
-## What Recruiters Should Notice
-
-Arcade is designed to show product engineering depth across a large interactive surface area:
-
-- 21 published games on a single dashboard-driven product experience.
-- Self-coded games using Canvas, DOM grids, animation loops, collision logic, board-game state machines, and local persistence.
-- A typed game registry that powers cards, metadata, controls, related games, routing, and static generation.
-- Client-only game runtimes mounted behind a shared game theater with keyboard capture, restart/fullscreen controls, and How to Play overlays.
-- Mobile support added where it makes gameplay better, without compromising desktop-first keyboard play.
-- Honest third-party integration for Pinball through vendored Flutter web assets with license and attribution files.
-- Production checks: linting, typechecking, static build, SEO metadata, sitemap, app icons, and Vercel deployment.
-
-The games are the content. The engineering signal is the platform around them: typed data, scalable routing, isolated runtimes, input handling, state persistence, and consistent product polish.
-
-## Screenshots
-
-### Dashboard
-
-![Arcade dashboard game catalog](./public/brand/readme-home.png)
-
-### Tetris Runtime
-
-![Tetris game screen](./public/brand/readme-tetris.png)
-
-### Snakes and Ladders Runtime
-
-![Snakes and Ladders game screen](./public/brand/readme-snakes-and-ladders.png)
-
-## Current Product Scope
-
-| Area | Status |
-| --- | --- |
-| Single dashboard catalog | Live |
-| Dynamic `/games/[slug]` routes | Live |
-| Lazy client-only game runtimes | Live |
-| Shared game theater and keyboard capture | Live |
-| Per-game How to Play overlay | Live |
-| Local best-score/progress persistence | Live where useful |
-| Desktop keyboard controls | Live |
-| Touch/mobile controls | Live for supported games |
-| Vendored open-source Pinball integration | Live |
-| Auth, cloud saves, global leaderboards | Future platform work |
-
-## Game Catalog
-
-The published catalog currently includes:
-
-| Game | Engineering Focus |
-| --- | --- |
-| Snake | Smooth animated movement over deterministic grid rules, touch controls, best score |
-| Pong | Paddle physics, AI opponent, neon rendering, difficulty tuning |
-| Reaction Time Test | Timing state machine, early-click handling, average calculation |
-| Tic Tac Toe | CPU difficulties, keyboard focus movement, local record |
-| Pinball | Vendored Flutter Pinball build embedded through a local iframe wrapper |
-| Breakout | Paddle/ball collision, bricks, levels, lives, powerups |
-| Asteroids | Momentum, shooting, wrapping, asteroid splitting, waves |
-| Minesweeper | Protected first reveal, flags, timer, board sizes, best times |
-| 2048 | Merge semantics, slide/merge/spawn animation, keyboard and swipe input |
-| Doodle Jump | Camera tracking, platform generation, breakable platforms, score loop |
-| Flappy Bird | Gravity/flap physics, pipes, collision, tap input |
-| Crossy Roads | Lane traffic, hop movement, camera advancement, collision |
-| Chrome Dino | Runner loop, speed ramp, jump/duck, obstacle timing |
-| Pac-Man | Maze movement, pellets, power pellets, frightened ghosts, three-level run |
-| Tetris | 7-bag queue, hold, ghost piece, SRS wall kicks, lock delay, combos |
-| Cookie Clicker | Incremental economy, upgrades, passive production, saved progress |
-| Snakes and Ladders | Dice flow, exact finish, CPU pacing, snakes, ladders, mobile roll button |
-| Sorry! | Card/pawn rules, legal move generation, safety lanes, slides, bumps, CPU turns |
-| Street Fighter | Health, timer, jump, punch/kick, CPU pressure |
-| Helix Jump | Rotating stack, danger slices, gap detection, scoring |
-| Stack | Timing-based placement, overlap trimming, speed ramp |
-
-The source of truth is [src/content/games/registry.ts](./src/content/games/registry.ts).
-
-## Architecture
-
-```txt
-src/
-  app/
-    page.tsx                Dashboard route
-    games/[slug]/page.tsx   Dynamic playable game route
-    layout.tsx              App metadata, analytics, shell
-  components/
-    homepage/               Dashboard sections
-    games/                  Game theater, runtime boundary, player wrapper
-    layout/                 Site shell
-  content/games/
-    registry.ts             Typed game metadata
-  features/games/
-    runtime.tsx             Lazy runtime map
-    shared/                 Shared game UI, animation loop, storage helpers
-    <game>/                 Self-contained game implementation
-  lib/games/
-    catalog.ts              Derived catalog selectors
-  types/
-    game.ts                 Shared metadata contracts
-public/
-  games/                    Game thumbnails
-  vendor/flutter-pinball/   Vendored static Pinball build plus attribution
-  brand/                    README and brand screenshots
-docs/                       Architecture/design/roadmap notes
-```
-
-The key design choice is separation:
-
-- The registry knows metadata, but not runtime code.
-- The runtime map lazy-loads playable modules by slug.
-- Game pages stay generic and catalog-driven.
-- Individual games own their state machines, rendering, and controls.
-
-That keeps the platform maintainable as the catalog grows.
-
-## Technical Highlights
-
-### Registry-Driven Product Model
-
-Every game has typed metadata: slug, title, descriptions, thumbnail, genre, tags, controls, release status, supported inputs, mobile support, related games, and How to Play content. That one contract powers the dashboard, routes, metadata, and player help.
-
-### Runtime Isolation
-
-Games are mounted through [src/features/games/runtime.tsx](./src/features/games/runtime.tsx) and [src/components/games/game-player.tsx](./src/components/games/game-player.tsx). This keeps heavy client-only games out of the dashboard bundle until a user opens them.
-
-### Multiple Interaction Models
-
-The codebase intentionally supports different game architectures:
-
-- Canvas-style loops for arcade/action games.
-- DOM grids for board and puzzle games.
-- Deterministic state transitions for rules-heavy games.
-- Touch-specific controls where phone play needs a different input layer.
-- A local iframe wrapper for the open-source Pinball integration.
-
-### Input and Viewport Work
-
-Game routes capture gameplay keys so arrow keys, WASD, Space, and similar controls do not scroll the page. Game pages also use viewport-fit constraints so the play surface, HUD, status, and mobile controls fit inside the arcade theater.
-
-### Attribution and Licensing
-
-Pinball is treated as a third-party integration, not claimed as original work. The vendored build includes attribution and license files under:
-
-```txt
-public/vendor/flutter-pinball/
-```
-
-The rest of the playable games are self-coded implementations with original rendered art, using familiar public gameplay patterns rather than copied proprietary assets.
-
-## Tech Stack
-
-| Layer | Tools |
-| --- | --- |
-| Framework | Next.js 16 App Router |
-| UI | React 19 |
-| Language | TypeScript |
-| Styling | Tailwind CSS v4 |
-| Motion | Framer Motion and CSS transitions |
-| Analytics | Vercel Analytics |
-| Deployment | Vercel |
+See [`.env.example`](./.env.example).
 
 ## Verification
+
+Run the complete local gate:
+
+```bash
+npm run check
+```
+
+That executes:
 
 ```bash
 npm run lint
@@ -190,68 +178,44 @@ npm run typecheck
 npm run build
 ```
 
-Or run all checks:
+The same gate runs in [GitHub Actions](./.github/workflows/ci.yml) for pushes and pull requests.
 
-```bash
-npm run check
-```
+## Adding a game
 
-## Environment
+A normal addition follows one repeatable path:
 
-```bash
-NEXT_PUBLIC_SITE_URL=https://arcade.yuvrajkashyap.com
-```
-
-This is used for canonical metadata, sitemap URLs, and Open Graph URLs. See [.env.example](./.env.example).
-
-## Adding a Game
-
-The platform is designed so new games follow a repeatable path:
-
-1. Add a feature folder under `src/features/games/<slug>/`.
-2. Export the runtime from `src/features/games/<slug>/index.ts`.
-3. Add assets under `public/games/<slug>/`.
-4. Add metadata in `src/content/games/registry.ts`.
-5. Register the lazy runtime in `src/features/games/runtime.tsx`.
+1. Create `src/features/games/<slug>/`.
+2. Export the runtime from the feature folder.
+3. Add its thumbnail under `public/games/<slug>/`.
+4. Add one typed registry entry.
+5. Register the lazy runtime.
 6. Run `npm run check`.
 
-Full guide: [docs/adding-a-game.md](./docs/adding-a-game.md)
+See the [full adding-a-game guide](./docs/adding-a-game.md).
 
-## Best Files to Review
+## Attribution and licensing
 
-Start here if you are evaluating the engineering:
+The Flutter Pinball web build is a third-party integration and is not claimed as original work:
 
-- [src/content/games/registry.ts](./src/content/games/registry.ts) - typed product catalog.
-- [src/lib/games/catalog.ts](./src/lib/games/catalog.ts) - derived dashboard collections and route data.
-- [src/features/games/runtime.tsx](./src/features/games/runtime.tsx) - lazy runtime mapping.
-- [src/components/games/game-page-view.tsx](./src/components/games/game-page-view.tsx) - arcade theater, keyboard capture, help overlay.
-- [src/features/games/tetris/components/block-drop-game.tsx](./src/features/games/tetris/components/block-drop-game.tsx) - advanced falling-block runtime.
-- [src/features/games/pacman/components/pac-maze-game.tsx](./src/features/games/pacman/components/pac-maze-game.tsx) - maze chase runtime.
-- [src/features/games/sorry/components/sorry-sprint-game.tsx](./src/features/games/sorry/components/sorry-sprint-game.tsx) - board-game rules and legal move generation.
+- [Attribution and pinned upstream commit](./public/vendor/flutter-pinball/ATTRIBUTION.txt)
+- [Preserved upstream MIT license](./public/vendor/flutter-pinball/LICENSE.original.txt)
 
-## Roadmap
+No open-source license has been selected for the original Arcade repository code. Unless that changes, treat it as all rights reserved. Third-party code and assets retain their original licenses.
 
-The strongest next product upgrades are platform features, not just more games:
+## Current limitations
 
-- user accounts and cloud saves
-- global and per-game leaderboards
-- achievements
-- sound settings and per-game audio polish
-- a credits/licenses screen for third-party integrations
-- automated screenshot capture for the catalog
-- analytics-informed dashboard ordering
-- multiplayer for selected games
+- Saves and records are browser-local.
+- There are no accounts, cloud saves, global leaderboards, or multiplayer systems.
+- Mobile support varies by game and is labeled in the registry.
+- Reaction Time Test remains marked beta; the other 29 catalog entries are live.
+- Pinball is a vendored open-source integration rather than a self-coded runtime.
+- Automated screenshots capture default public states; deeper gameplay behavior is best evaluated through the live site.
 
 ## Documentation
 
 - [Architecture](./docs/architecture.md)
-- [Adding a Game](./docs/adding-a-game.md)
-- [Design System](./docs/design-system.md)
+- [Complete recruiter showcase](./docs/recruiter-showcase.md)
+- [Adding a game](./docs/adding-a-game.md)
+- [Design system](./docs/design-system.md)
 - [Roadmap](./docs/roadmap.md)
 - [Contributing](./CONTRIBUTING.md)
-
-## License
-
-No open-source license has been selected for this repository. Until that changes, treat the project code as all rights reserved.
-
-Third-party assets/builds retain their own licenses and attribution, including the vendored Flutter Pinball build under `public/vendor/flutter-pinball/`.
