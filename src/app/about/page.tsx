@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import { SectionReveal } from "@/components/ui/section-reveal";
+import { getPublishedGames } from "@/lib/games/catalog";
 
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Learn how the arcade.yuvrajkashyap.com platform is structured, how games are added, and how the arcade is intended to grow.",
+    "See how Yuvraj Kashyap built a 30-game browser arcade around a typed catalog, isolated runtimes, shared interaction systems, and production-grade delivery.",
+  alternates: {
+    canonical: "/about",
+  },
 };
 
 const pillars = [
@@ -26,6 +30,18 @@ const pillars = [
 ];
 
 export default function AboutPage() {
+  const games = getPublishedGames();
+  const liveGames = games.filter((game) => game.status === "live").length;
+  const canvasGames = games.filter((game) => game.tags.includes("Canvas")).length;
+  const fullMobileGames = games.filter((game) => game.mobileSupport === "full").length;
+
+  const platformSignals = [
+    { value: games.length, label: "Published games" },
+    { value: liveGames, label: "Live releases" },
+    { value: canvasGames, label: "Canvas-tagged runtimes" },
+    { value: fullMobileGames, label: "Full mobile support" },
+  ];
+
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-10 px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
       <SectionReveal>
@@ -34,13 +50,13 @@ export default function AboutPage() {
             About the platform
           </p>
           <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
-            A standalone browser arcade designed as a real product, not a side folder.
+            Thirty games, one cohesive browser platform.
           </h1>
           <p className="mt-5 max-w-3xl text-base leading-8 text-foreground-soft sm:text-lg">
-            arcade.yuvrajkashyap.com combines a premium arcade shell with modular game modules,
-            typed metadata, and a clean route-based structure. The current version focuses on a
-            tight V1: instant play, strong browsing, polished presentation, and clean expansion
-            paths for future systems like saves, profiles, and leaderboards.
+            Yuvraj Kashyap built arcade.yuvrajkashyap.com as a production-style game platform,
+            not a folder of disconnected demos. A typed catalog, static route generation, lazy
+            runtime loading, shared controls, responsive framing, and local persistence keep a
+            wide range of game architectures consistent without flattening their individual rules.
           </p>
         </section>
       </SectionReveal>
@@ -61,24 +77,40 @@ export default function AboutPage() {
         </section>
       </SectionReveal>
 
+      <SectionReveal delay={0.1}>
+        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {platformSignals.map((signal) => (
+            <article
+              key={signal.label}
+              className="surface-panel rounded-[1.5rem] px-6 py-6"
+            >
+              <p className="text-4xl font-semibold tracking-tight text-foreground">
+                {signal.value}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-foreground-soft">{signal.label}</p>
+            </article>
+          ))}
+        </section>
+      </SectionReveal>
+
       <SectionReveal delay={0.12}>
         <section className="surface-panel rounded-[2rem] px-6 py-8 sm:px-8">
           <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
             <div>
-              <h2 className="text-2xl font-semibold text-foreground">What ships in V1</h2>
+              <h2 className="text-2xl font-semibold text-foreground">What ships today</h2>
               <ul className="mt-4 space-y-3 text-sm leading-7 text-foreground-soft sm:text-base">
-                <li>Registry-driven homepage discovery across featured, new, categories, and full library.</li>
-                <li>Metadata-rich game pages with an intentional play surface, controls, and supporting details.</li>
-                <li>Three initial games that validate Canvas loops, collision systems, timing systems, and lighter DOM interaction.</li>
-                <li>Lightweight shared utilities instead of a rigid engine abstraction.</li>
+                <li>Thirty published game pages derived from one typed source of truth.</li>
+                <li>Canvas, DOM, board, word, timing, physics, and incremental interaction models.</li>
+                <li>Keyboard and touch metadata for every game, with honest mobile-support labels.</li>
+                <li>CI, analytics, SEO metadata, a sitemap, source attribution, and automated visual evidence.</li>
               </ul>
             </div>
             <div>
-              <h2 className="text-2xl font-semibold text-foreground">What intentionally waits</h2>
+              <h2 className="text-2xl font-semibold text-foreground">Intentional boundaries</h2>
               <ul className="mt-4 space-y-3 text-sm leading-7 text-foreground-soft sm:text-base">
-                <li>Accounts, auth, leaderboards, multiplayer, database-backed saves, and custom analytics pipelines.</li>
-                <li>Heavy platform gamification without real user data to justify it.</li>
-                <li>Overbuilt abstractions that would slow down adding the next game.</li>
+                <li>Records and progress stay local; there is no account or cloud-save backend yet.</li>
+                <li>Multiplayer and global leaderboards wait until real product demand justifies them.</li>
+                <li>Shared browser mechanics remain lightweight instead of becoming a premature custom engine.</li>
               </ul>
             </div>
           </div>

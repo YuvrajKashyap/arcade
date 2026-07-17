@@ -1,0 +1,77 @@
+name: Capture recruiter showcase
+
+on:
+  push:
+    branches:
+      - codex/recruiter-readiness-arcade
+    paths:
+      - .github/workflows/capture-recruiter-showcase.yml
+      - scripts/capture-recruiter-showcase.mjs
+      - src/**
+      - public/games/**
+      - package.json
+      - package-lock.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: arcade-recruiter-showcase
+  cancel-in-progress: true
+
+jobs:
+  capture:
+    name: Capture all routes
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out review branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install application dependencies
+        run: npm ci
+
+      - name: Install capture runtime
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Build current branch
+        run: npm run build
+
+      - name: Capture desktop, mobile, and interaction states
+        run: |
+          npm run start -- --hostname 127.0.0.1 > /tmp/arcade-showcase.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+
+          for attempt in {1..60}; do
+            if curl --fail --silent http://127.0.0.1:3000 > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+
+          curl --fail --silent http://127.0.0.1:3000 > /dev/null
+          ARCADE_CAPTURE_URL=http://127.0.0.1:3000 node scripts/capture-recruiter-showcase.mjs
+
+      - name: Commit refreshed showcase assets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/brand/recruiter
+          if git diff --cached --quiet; then
+            echo "Showcase assets are already current."
+          else
+            git commit -m "docs: refresh recruiter showcase screenshots"
+            git push
+          fi
