@@ -1,12 +1,12 @@
-name: Capture recruiter showcase
+name: Capture product showcase
 
 on:
   push:
     branches:
-      - codex/recruiter-readiness-arcade
+      - docs/product-showcase
     paths:
-      - .github/workflows/capture-recruiter-showcase.yml
-      - scripts/capture-recruiter-showcase.mjs
+      - .github/workflows/capture-product-showcase.yml
+      - scripts/capture-product-showcase.mjs
       - src/**
       - public/games/**
       - package.json
@@ -17,7 +17,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: arcade-recruiter-showcase
+  group: arcade-product-showcase
   cancel-in-progress: true
 
 jobs:
@@ -62,16 +62,16 @@ jobs:
           done
 
           curl --fail --silent http://127.0.0.1:3000 > /dev/null
-          ARCADE_CAPTURE_URL=http://127.0.0.1:3000 node scripts/capture-recruiter-showcase.mjs
+          ARCADE_CAPTURE_URL=http://127.0.0.1:3000 node scripts/capture-product-showcase.mjs
 
       - name: Commit refreshed showcase assets
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/brand/recruiter
+          git add public/brand/showcase
           if git diff --cached --quiet; then
             echo "Showcase assets are already current."
           else
-            git commit -m "docs: refresh recruiter showcase screenshots"
+            git commit -m "docs: refresh product showcase screenshots"
             git push
           fi

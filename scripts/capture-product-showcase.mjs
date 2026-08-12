@@ -1,10 +1,10 @@
-// Captures a production build for recruiter-facing documentation.
+// Captures a production build for public-facing documentation.
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { chromium, devices } from "playwright";
 
 const baseUrl = process.env.ARCADE_CAPTURE_URL ?? "https://arcade.yuvrajkashyap.com";
-const outputRoot = path.resolve("public/brand/recruiter");
+const outputRoot = path.resolve("public/brand/showcase");
 
 const platformRoutes = [
   { slug: "dashboard", route: "/" },
@@ -164,4 +164,4 @@ await mobile.close();
 await browser.close();
 
 const captureCount = games.length * 2 + platformRoutes.length * 2 + 1;
-console.log(`Captured ${captureCount} recruiter-showcase images from ${baseUrl}.`);
+console.log(`Captured ${captureCount} product-showcase images from ${baseUrl}.`);

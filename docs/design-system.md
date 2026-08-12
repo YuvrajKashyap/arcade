@@ -78,4 +78,4 @@ When evolving the interface:
 - avoid turning metadata back into visual clutter
 - treat the shell and the games as separate styling layers
 
-Historical `/design` and `/play-design` experiments remain in the repository as non-indexed implementation references. The recruiter-facing product uses the current production shell and does not present those experiments as separate shipped experiences.
+Historical `/design` and `/play-design` experiments remain in the repository as non-indexed implementation references. The public-facing product uses the current production shell and does not present those experiments as separate shipped experiences.

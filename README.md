@@ -6,9 +6,9 @@
 [![Live Site](https://img.shields.io/badge/play-live-22c55e)](https://arcade.yuvrajkashyap.com)
 [![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
 
-[**Play Arcade**](https://arcade.yuvrajkashyap.com) · [Complete visual showcase](./docs/recruiter-showcase.md) · [Architecture](./docs/architecture.md) · [Adding a game](./docs/adding-a-game.md)
+[**Play Arcade**](https://arcade.yuvrajkashyap.com) · [Complete visual showcase](./docs/product-showcase.md) · [Architecture](./docs/architecture.md) · [Adding a game](./docs/adding-a-game.md)
 
-![Arcade dashboard with the playable catalog](./public/brand/recruiter/desktop/dashboard.jpg)
+![Arcade dashboard with the playable catalog](./public/brand/showcase/desktop/dashboard.jpg)
 
 Arcade is a browser-game platform built as a cohesive product rather than a folder of unrelated demos. A single dashboard, typed catalog, dynamic route model, shared game theater, lazy runtime map, input system, responsive framing, and local persistence support **30 published games** across Canvas, DOM, board, word, timing, physics, and incremental interaction models.
 
@@ -26,12 +26,12 @@ The games provide the content. The engineering signal is the platform around the
 | Keyboard and touch metadata | **30 / 30 games** |
 | Public route model | Dashboard, Library, About, and 30 statically generated game pages |
 | Verification gate | ESLint, TypeScript, Next.js production build |
-| Recruiter showcase | **67** desktop, mobile, and interaction-state captures |
+| Product showcase | **67** desktop, mobile, and interaction-state captures |
 | Deployment | Vercel at [arcade.yuvrajkashyap.com](https://arcade.yuvrajkashyap.com) |
 
 These counts are derived from [the typed registry](./src/content/games/registry.ts), the product's source of truth.
 
-## What recruiters should notice
+## What technical reviewers should notice
 
 - **Platform design:** one registry powers discovery cards, categories, related games, controls, metadata, routing, static generation, and mobile-support labels.
 - **Runtime isolation:** client-only games load lazily behind a shared theater and error boundary instead of inflating every route.
@@ -48,21 +48,21 @@ The showcase system captures a production build of the current branch rather tha
 - dashboard, Library, and About at desktop and mobile sizes
 - all **30 game routes** at desktop and mobile sizes
 - the shared How to Play interaction state
-- **67 verified recruiter-showcase captures** in total
+- **67 verified product-showcase captures** in total
 
-[**Open the complete route-by-route visual catalog →**](./docs/recruiter-showcase.md)
+[**Open the complete route-by-route visual catalog →**](./docs/product-showcase.md)
 
 ### Platform
 
-![Arcade dashboard game catalog](./public/brand/recruiter/desktop/dashboard.jpg)
+![Arcade dashboard game catalog](./public/brand/showcase/desktop/dashboard.jpg)
 
 ### Representative advanced runtimes
 
 | Tetris | Snakes and Ladders |
 | --- | --- |
-| ![Tetris runtime](./public/brand/recruiter/desktop/games/tetris.jpg) | ![Snakes and Ladders runtime](./public/brand/recruiter/desktop/games/snakes-and-ladders.jpg) |
+| ![Tetris runtime](./public/brand/showcase/desktop/games/tetris.jpg) | ![Snakes and Ladders runtime](./public/brand/showcase/desktop/games/snakes-and-ladders.jpg) |
 
-The repository includes an automated [Playwright capture script](./scripts/capture-recruiter-showcase.mjs) and [showcase workflow](./.github/workflows/capture-recruiter-showcase.yml) so the evidence can be refreshed whenever the interface changes.
+The repository includes an automated [Playwright capture script](./scripts/capture-product-showcase.mjs) and [showcase workflow](./.github/workflows/capture-product-showcase.yml) so the evidence can be refreshed whenever the interface changes.
 
 ## Complete game catalog
 
@@ -216,7 +216,7 @@ No open-source license has been selected for the original Arcade repository code
 ## Documentation
 
 - [Architecture](./docs/architecture.md)
-- [Complete recruiter showcase](./docs/recruiter-showcase.md)
+- [Complete product showcase](./docs/product-showcase.md)
 - [Adding a game](./docs/adding-a-game.md)
 - [Design system](./docs/design-system.md)
 - [Roadmap](./docs/roadmap.md)

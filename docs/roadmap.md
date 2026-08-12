@@ -12,7 +12,7 @@ The shipped platform includes:
 - shared keyboard, touch, Canvas, storage, and viewport mechanics
 - lightweight analytics
 - automated lint, typecheck, production build, and visual capture workflows
-- complete desktop and mobile recruiter showcase
+- complete desktop and mobile product showcase
 - explicit third-party attribution for the vendored Flutter Pinball integration
 
 The current release intentionally does not include:
